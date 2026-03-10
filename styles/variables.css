@@ -6,8 +6,8 @@
   --accent-color: #10B981; /* green for success */
   --highlight-color: #F59E0B; /* amber for highlights */
   --card-color: #FFFFFF;
-  --navbar-color: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
-  --navbar-text-color: #FFFFFF;
+  --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
+  --navbar-text-color: #1E293B;
   --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
 
   /* rgb helpers for the gradient used in globals.css */
@@ -24,8 +24,8 @@
   --accent-color: #10B981;
   --highlight-color: #F59E0B;
   --card-color: #FFFFFF;
-  --navbar-color: linear-gradient(135deg, #3B82F6 0%, #10B981 100%);
-  --navbar-text-color: #FFFFFF;
+  --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
+  --navbar-text-color: #1E293B;
   --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
 
   --foreground-rgb: 30, 41, 59;
@@ -41,7 +41,7 @@
   --accent-color: #34D399;
   --highlight-color: #FBBF24;
   --card-color: #1E293B;
-  --navbar-color: linear-gradient(135deg, #1E3A8A 0%, #065F46 100%);
+  --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
   --navbar-text-color: #F1F5F9;
   --bg-gradient: linear-gradient(135deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%);
 
@@ -59,7 +59,7 @@
     --accent-color: #34D399;
     --highlight-color: #FBBF24;
     --card-color: #1E293B;
-    --navbar-color: linear-gradient(135deg, #1E3A8A 0%, #065F46 100%);
+    --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
     --navbar-text-color: #F1F5F9;
     --bg-gradient: linear-gradient(135deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%);
 
