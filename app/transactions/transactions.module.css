@@ -1,0 +1,43 @@
+/* Transactions-specific styles */
+
+.container {
+  padding: 1rem 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.addButton {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.listWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table tr:nth-child(even) {
+  background-color: var(--bg-color);
+}
+
+.table tr:hover {
+  background-color: var(--card-color);
+}

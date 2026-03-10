@@ -1,0 +1,44 @@
+:root {
+  /* base colors */
+  --bg-color: #F7F7F7;
+  --text-color: #111827;
+  --primary-color: #4F46E5;
+  --accent-color: #10B981;
+  --card-color: #FFFFFF;
+  --navbar-color: #4F46E5;
+
+  /* rgb helpers for the gradient used in globals.css */
+  --foreground-rgb: 17, 24, 39;
+  --background-start-rgb: 247, 247, 247;
+  --background-end-rgb: 247, 247, 247;
+}
+
+/* dark mode variables triggered either by system preference or data-theme attribute */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #1E1E2F;
+    --text-color: #E5E7EB;
+    --primary-color: #6366F1;
+    --accent-color: #22C55E;
+    --card-color: #2A2A3E;
+    --navbar-color: #6366F1;
+
+    --foreground-rgb: 229, 231, 235;
+    --background-start-rgb: 30, 30, 47;
+    --background-end-rgb: 30, 30, 47;
+  }
+}
+
+/* allow manual toggle by setting data-theme="dark" on <html> or <body> */
+[data-theme='dark'] {
+  --bg-color: #1E1E2F;
+  --text-color: #E5E7EB;
+  --primary-color: #6366F1;
+  --accent-color: #22C55E;
+  --card-color: #2A2A3E;
+  --navbar-color: #6366F1;
+
+  --foreground-rgb: 229, 231, 235;
+  --background-start-rgb: 30, 30, 47;
+  --background-end-rgb: 30, 30, 47;
+}

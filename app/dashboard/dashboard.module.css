@@ -1,0 +1,32 @@
+/* Dashboard-specific styles */
+
+.container {
+  padding: 1rem 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  flex: 1 1 200px;
+  background-color: var(--card-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chartSection {
+  background-color: var(--card-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
