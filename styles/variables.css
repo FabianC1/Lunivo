@@ -1,11 +1,12 @@
 :root {
   /* base colors */
   --bg-color: #F7F7F7;
-  --text-color: #111827;
-  --primary-color: #4F46E5;
-  --accent-color: #10B981;
+  --text-color: #1F2937;
+  --primary-color: #5B21B6; /* richer indigo */
+  --accent-color: #0D9488; /* teal-ish for contrast */
+  --highlight-color: #F59E0B; /* amber for highlights */
   --card-color: #FFFFFF;
-  --navbar-color: #4F46E5;
+  --navbar-color: linear-gradient(90deg, #5B21B6 0%, #0D9488 100%);
 
   /* rgb helpers for the gradient used in globals.css */
   --foreground-rgb: 17, 24, 39;
@@ -18,10 +19,11 @@
   :root {
     --bg-color: #1E1E2F;
     --text-color: #E5E7EB;
-    --primary-color: #6366F1;
-    --accent-color: #22C55E;
+    --primary-color: #818CF8; /* lighter indigo for dark */
+    --accent-color: #34D399; /* light green */
+    --highlight-color: #FBBF24;
     --card-color: #2A2A3E;
-    --navbar-color: #6366F1;
+    --navbar-color: linear-gradient(90deg, #818CF8 0%, #34D399 100%);
 
     --foreground-rgb: 229, 231, 235;
     --background-start-rgb: 30, 30, 47;
@@ -33,10 +35,11 @@
 [data-theme='dark'] {
   --bg-color: #1E1E2F;
   --text-color: #E5E7EB;
-  --primary-color: #6366F1;
-  --accent-color: #22C55E;
+  --primary-color: #818CF8;
+  --accent-color: #34D399;
+  --highlight-color: #FBBF24;
   --card-color: #2A2A3E;
-  --navbar-color: #6366F1;
+  --navbar-color: linear-gradient(90deg, #818CF8 0%, #34D399 100%);
 
   --foreground-rgb: 229, 231, 235;
   --background-start-rgb: 30, 30, 47;

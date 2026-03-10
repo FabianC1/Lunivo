@@ -1,7 +1,9 @@
 /* Dashboard-specific styles */
 
 .container {
-  padding: 1rem 1.5rem;
+  padding: 2rem 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 .title {
@@ -17,16 +19,21 @@
 }
 
 .card {
-  flex: 1 1 200px;
-  background-color: var(--card-color);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1 1 220px;
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
 }
 
 .chartSection {
-  background-color: var(--card-color);
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }

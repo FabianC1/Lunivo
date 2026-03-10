@@ -18,16 +18,30 @@
   gap: 1rem;
 }
 
-.page_button__52WaL {
-  padding: 0.75rem 1.25rem;
-  background-color: var(--primary-color);
+.page_button__52WaL,
+.page_buttonSecondary__kW1Gq {
+  padding: 0.85rem 1.5rem;
   color: #fff;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.page_button__52WaL {
+  background-color: var(--primary-color);
+}
+
+.page_button__52WaL:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-2px);
 }
 
 .page_buttonSecondary__kW1Gq {
-  padding: 0.75rem 1.25rem;
+  background-color: var(--highlight-color);
+}
+
+.page_buttonSecondary__kW1Gq:hover {
   background-color: var(--accent-color);
-  color: #fff;
-  border-radius: 0.375rem;
+  transform: translateY(-2px);
 }

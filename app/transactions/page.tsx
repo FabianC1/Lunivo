@@ -30,13 +30,13 @@ export default function Transactions() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container + ' container'}>
       <h1 className={styles.title}>Transactions</h1>
       <button className={styles.addButton} onClick={() => setShowForm(true)}>
         + Add Transaction
       </button>
       {showForm && <TransactionForm onSubmit={addTransaction} />}
-      <div className={styles.listWrapper}>
+      <div className={styles.listWrapper + ' card'}>
         <table className={styles.table}>
           <thead>
             <tr>

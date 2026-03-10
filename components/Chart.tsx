@@ -19,6 +19,10 @@ export default function Chart({ data }: ChartProps) {
 
   // helper to resolve CSS variable into computed color string
   const getColor = (varName: string) => {
+    if (typeof window === 'undefined') {
+      // server-side: return the variable name as a fallback (will be ignored)
+      return varName;
+    }
     const val = getComputedStyle(document.documentElement).getPropertyValue(varName);
     return val ? val.trim() : varName;
   };
