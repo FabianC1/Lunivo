@@ -2,6 +2,14 @@
 
 .chartWrapper {
   width: 100%;
-  max-width: 400px;
+  max-width: 350px;
+  height: 300px;
   margin: 0 auto;
+  position: relative;
+}
+
+/* ensure canvas fills parent */
+.chartWrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
