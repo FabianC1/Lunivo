@@ -9,6 +9,8 @@
   background: var(--navbar-color);
   color: var(--navbar-text-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 3px solid;
+  border-image: linear-gradient(90deg, var(--highlight-color), var(--accent-color), transparent) 1;
   border-bottom-left-radius: 1.5rem;
   border-bottom-right-radius: 1.5rem;
 }
