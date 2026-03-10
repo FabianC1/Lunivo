@@ -1,5 +1,5 @@
 :root {
-  /* base colors */
+  /* base colors - light mode (default) */
   --bg-color: #F8FAFC; /* soft off-white */
   --text-color: #1E293B; /* dark slate */
   --primary-color: #3B82F6; /* modern blue */
@@ -7,33 +7,31 @@
   --highlight-color: #F59E0B; /* amber for highlights */
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
-  --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+  --bg-gradient: linear-gradient(90deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
 
   /* rgb helpers for the gradient used in globals.css */
   --foreground-rgb: 30, 41, 59;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 226, 232, 240;
+  --background-start-rgb: 224, 242, 254;
+  --background-end-rgb: 254, 226, 226;
 }
 
-/* dark mode variables triggered either by system preference or data-theme attribute */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #0F172A; /* dark slate */
-    --text-color: #F1F5F9; /* light gray */
-    --primary-color: #60A5FA; /* lighter blue */
-    --accent-color: #34D399; /* light green */
-    --highlight-color: #FBBF24;
-    --card-color: #1E293B; /* darker card */
-    --navbar-color: linear-gradient(90deg, #60A5FA 0%, #34D399 100%);
-    --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+/* explicit light mode when data-theme="light" is set */
+[data-theme='light'] {
+  --bg-color: #F8FAFC;
+  --text-color: #1E293B;
+  --primary-color: #3B82F6;
+  --accent-color: #10B981;
+  --highlight-color: #F59E0B;
+  --card-color: #FFFFFF;
+  --navbar-color: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
+  --bg-gradient: linear-gradient(90deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
 
-    --foreground-rgb: 241, 245, 249;
-    --background-start-rgb: 15, 23, 42;
-    --background-end-rgb: 30, 41, 59;
-  }
+  --foreground-rgb: 30, 41, 59;
+  --background-start-rgb: 224, 242, 254;
+  --background-end-rgb: 254, 226, 226;
 }
 
-/* allow manual toggle by setting data-theme="dark" on <html> or <body> */
+/* dark mode variables triggered by data-theme attribute (takes precedence) */
 [data-theme='dark'] {
   --bg-color: #0F172A;
   --text-color: #F1F5F9;
@@ -41,10 +39,28 @@
   --accent-color: #34D399;
   --highlight-color: #FBBF24;
   --card-color: #1E293B;
-  --navbar-color: linear-gradient(90deg, #60A5FA 0%, #34D399 100%);
-  --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  --navbar-color: linear-gradient(90deg, #1E3A8A 0%, #065F46 100%);
+  --bg-gradient: linear-gradient(90deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%);
 
   --foreground-rgb: 241, 245, 249;
-  --background-start-rgb: 15, 23, 42;
-  --background-end-rgb: 30, 41, 59;
+  --background-start-rgb: 12, 29, 61;
+  --background-end-rgb: 45, 27, 61;
+}
+
+/* fallback for system preference when no data-theme is set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg-color: #0F172A;
+    --text-color: #F1F5F9;
+    --primary-color: #60A5FA;
+    --accent-color: #34D399;
+    --highlight-color: #FBBF24;
+    --card-color: #1E293B;
+    --navbar-color: linear-gradient(90deg, #1E3A8A 0%, #065F46 100%);
+    --bg-gradient: linear-gradient(90deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%);
+
+    --foreground-rgb: 241, 245, 249;
+    --background-start-rgb: 12, 29, 61;
+    --background-end-rgb: 45, 27, 61;
+  }
 }

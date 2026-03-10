@@ -1,11 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useTheme } from "./ThemeProvider";
 import styles from "./Navbar.module.css";
+import { useEffect, useState } from "react";
+
+interface ThemeContextType {
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+}
 
 export default function Navbar() {
-  const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [toggleFn, setToggleFn] = useState<() => void>(() => {});
+
+  useEffect(() => {
+    // Only run this on the client side
+    const { useTheme } = require("./ThemeProvider");
+    
+    // Get the current theme from localStorage or systempreference
+    const saved = localStorage.getItem("theme");
+    let initialTheme: "light" | "dark" = "light";
+    
+    if (saved === "light" || saved === "dark") {
+      initialTheme = saved;
+    } else {
+      const prefers = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      initialTheme = prefers ? "dark" : "light";
+    }
+    
+    setTheme(initialTheme);
+    
+    // Set the toggle function
+    setToggleFn(() => {
+      const newTheme = initialTheme === "light" ? "dark" : "light";
+      setTheme(newTheme);
+      document.documentElement.setAttribute("data-theme", newTheme);
+      localStorage.setItem("theme", newTheme);
+    });
+
+    setMounted(true);
+  }, []);
+
+  const handleToggle = () => {
+    const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    const newTheme = currentTheme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+  };
+
+  if (!mounted) {
+    return <nav className={styles.navbar}><div className={styles.logo}>Lunivo</div></nav>;
+  }
 
   return (
     <nav className={styles.navbar}>
@@ -20,7 +67,7 @@ export default function Navbar() {
       </ul>
       <div className={styles.actions}>
         <button
-          onClick={toggleTheme}
+          onClick={handleToggle}
           className={styles.toggle}
           aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
