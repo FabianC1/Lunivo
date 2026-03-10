@@ -1,1 +1,13 @@
-{"/_not-found":"/_not-found","/api/login/route":"/api/login","/api/register/route":"/api/register","/api/transactions/[id]/route":"/api/transactions/[id]","/api/transactions/route":"/api/transactions","/dashboard/page":"/dashboard","/login/page":"/login","/page":"/","/register/page":"/register","/transactions/page":"/transactions"}
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/login/route": "/api/login",
+  "/api/register/route": "/api/register",
+  "/api/transactions/[id]/route": "/api/transactions/[id]",
+  "/api/transactions/route": "/api/transactions",
+  "/dashboard/page": "/dashboard",
+  "/login/page": "/login",
+  "/page": "/",
+  "/register/page": "/register",
+  "/transactions/page": "/transactions"
+}
