@@ -1,47 +1,50 @@
 :root {
   /* base colors */
-  --bg-color: #F7F7F7;
-  --text-color: #1F2937;
-  --primary-color: #5B21B6; /* richer indigo */
-  --accent-color: #0D9488; /* teal-ish for contrast */
+  --bg-color: #F8FAFC; /* soft off-white */
+  --text-color: #1E293B; /* dark slate */
+  --primary-color: #3B82F6; /* modern blue */
+  --accent-color: #10B981; /* green for success */
   --highlight-color: #F59E0B; /* amber for highlights */
   --card-color: #FFFFFF;
-  --navbar-color: linear-gradient(90deg, #5B21B6 0%, #0D9488 100%);
+  --navbar-color: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
+  --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
 
   /* rgb helpers for the gradient used in globals.css */
-  --foreground-rgb: 17, 24, 39;
-  --background-start-rgb: 247, 247, 247;
-  --background-end-rgb: 247, 247, 247;
+  --foreground-rgb: 30, 41, 59;
+  --background-start-rgb: 248, 250, 252;
+  --background-end-rgb: 226, 232, 240;
 }
 
 /* dark mode variables triggered either by system preference or data-theme attribute */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: #1E1E2F;
-    --text-color: #E5E7EB;
-    --primary-color: #818CF8; /* lighter indigo for dark */
+    --bg-color: #0F172A; /* dark slate */
+    --text-color: #F1F5F9; /* light gray */
+    --primary-color: #60A5FA; /* lighter blue */
     --accent-color: #34D399; /* light green */
     --highlight-color: #FBBF24;
-    --card-color: #2A2A3E;
-    --navbar-color: linear-gradient(90deg, #818CF8 0%, #34D399 100%);
+    --card-color: #1E293B; /* darker card */
+    --navbar-color: linear-gradient(90deg, #60A5FA 0%, #34D399 100%);
+    --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
 
-    --foreground-rgb: 229, 231, 235;
-    --background-start-rgb: 30, 30, 47;
-    --background-end-rgb: 30, 30, 47;
+    --foreground-rgb: 241, 245, 249;
+    --background-start-rgb: 15, 23, 42;
+    --background-end-rgb: 30, 41, 59;
   }
 }
 
 /* allow manual toggle by setting data-theme="dark" on <html> or <body> */
 [data-theme='dark'] {
-  --bg-color: #1E1E2F;
-  --text-color: #E5E7EB;
-  --primary-color: #818CF8;
+  --bg-color: #0F172A;
+  --text-color: #F1F5F9;
+  --primary-color: #60A5FA;
   --accent-color: #34D399;
   --highlight-color: #FBBF24;
-  --card-color: #2A2A3E;
-  --navbar-color: linear-gradient(90deg, #818CF8 0%, #34D399 100%);
+  --card-color: #1E293B;
+  --navbar-color: linear-gradient(90deg, #60A5FA 0%, #34D399 100%);
+  --bg-gradient: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
 
-  --foreground-rgb: 229, 231, 235;
-  --background-start-rgb: 30, 30, 47;
-  --background-end-rgb: 30, 30, 47;
+  --foreground-rgb: 241, 245, 249;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 30, 41, 59;
 }

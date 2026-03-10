@@ -48,14 +48,22 @@
   background: rgba(255,255,255,0.2);
   border: none;
   color: inherit;
-  font-size: 1.2rem;
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
+  width: 2.4rem;
+  height: 2.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.toggle:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.icon {
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
 .toggle:hover {

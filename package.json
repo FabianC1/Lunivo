@@ -14,7 +14,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "mongoose": "^9.2.4",
-    "next": "14.0.0",
+    "next": "^16.1.6",
     "react": "^18",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18"
@@ -24,8 +24,8 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.0.0",
+    "eslint": "^10.0.3",
+    "eslint-config-next": "^16.1.6",
     "typescript": "^5"
   }
 }
