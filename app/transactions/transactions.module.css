@@ -53,3 +53,16 @@
 .table tr:hover {
   background-color: var(--card-color);
 }
+
+.deleteButton {
+  background: transparent;
+  border: none;
+  color: red;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.deleteButton:hover {
+  background-color: rgba(255, 0, 0, 0.1);
+}

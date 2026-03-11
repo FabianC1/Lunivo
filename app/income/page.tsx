@@ -48,6 +48,7 @@ export default function Income() {
               <th>Date</th>
               <th>Description</th>
               <th>Amount</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +57,15 @@ export default function Income() {
                 <td>{formatDate(t.date)}</td>
                 <td>{t.description}</td>
                 <td>{formatCurrency(t.amount)}</td>
+                <td>
+                  <button
+                    className={styles.deleteButton}
+                    onClick={() => setTransactions((prev) => prev.filter(x => x.id !== t.id))}
+                    aria-label="Delete"
+                  >
+                    ×
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
