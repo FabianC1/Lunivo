@@ -64,6 +64,15 @@ export default function Navbar() {
         <li>
           <Link href="/transactions">Transactions</Link>
         </li>
+        <li>
+          <Link href="/income">Income</Link>
+        </li>
+        <li>
+          <Link href="/budgets">Budgets</Link>
+        </li>
+        <li>
+          <Link href="/reports">Reports</Link>
+        </li>
       </ul>
       <div className={styles.actions}>
         <button

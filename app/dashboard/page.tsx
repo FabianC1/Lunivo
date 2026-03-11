@@ -52,6 +52,21 @@ export default function Dashboard() {
         <h2>Spending by Category</h2>
         <Chart data={spendingByCategory} />
       </div>
+
+      {/* additional report chart */}
+      <div className={styles.chartSection}>
+        <h2>Monthly Activity (sample)</h2>
+        <Chart
+          data={{
+            Jan: 1000,
+            Feb: 900,
+            Mar: 1200,
+            Apr: 1100,
+            May: 1300,
+          }}
+          type="line"
+        />
+      </div>
     </div>
   );
 }[{

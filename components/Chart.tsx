@@ -1,17 +1,38 @@
 "use client";
 
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Doughnut, Line, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+} from 'chart.js';
 import styles from './Chart.module.css';
 import { useEffect, useState } from 'react';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+// register anything we might need for the three chart types
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement
+);
 
 interface ChartProps {
   data: Record<string, number>;
+  type?: 'doughnut' | 'line' | 'bar';
 }
 
-export default function Chart({ data }: ChartProps) {
+export default function Chart({ data, type = 'doughnut' }: ChartProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const labels = Object.keys(data);
   const values = Object.values(data);
@@ -85,10 +106,10 @@ export default function Chart({ data }: ChartProps) {
     ],
   };
 
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: '50%',
+    cutout: type === 'doughnut' ? '50%' : undefined,
     plugins: {
       legend: {
         position: 'bottom' as const,
@@ -96,7 +117,7 @@ export default function Chart({ data }: ChartProps) {
           color: theme === 'dark' ? '#F1F5F9' : '#1E293B',
           font: {
             size: 14,
-            weight: 500,
+            weight: 500 as any, // cast to satisfy TS
           },
           padding: 16,
           usePointStyle: true,
@@ -117,7 +138,9 @@ export default function Chart({ data }: ChartProps) {
 
   return (
     <div className={styles.chartWrapper}>
-      <Doughnut data={chartData} options={options} />
+      {type === 'doughnut' && <Doughnut data={chartData} options={options} />}
+      {type === 'line' && <Line data={chartData} options={options} />}
+      {type === 'bar' && <Bar data={chartData} options={options} />}
     </div>
   );
 }
