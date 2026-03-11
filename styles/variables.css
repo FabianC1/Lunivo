@@ -3,7 +3,7 @@
   --bg-color: #F8FAFC; /* soft off-white */
   --text-color: #1E293B; /* dark slate */
   --primary-color: #3B82F6; /* modern blue */
-  --accent-color: #10B981; /* green for success */
+  --accent-color: #40E0D0; /* turquoise for accents */
   --highlight-color: #F59E0B; /* amber for highlights */
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
@@ -21,8 +21,8 @@
   --bg-color: #F8FAFC;
   --text-color: #1E293B;
   --primary-color: #3B82F6;
-  --accent-color: #8B5CF6;
-  --highlight-color: #3B82F6;
+  --accent-color: #40E0D0; /* turquoise */
+  --highlight-color: #8B5CF6;
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
   --navbar-text-color: #1E293B;
@@ -38,8 +38,8 @@
   --bg-color: #0F172A;
   --text-color: #F1F5F9;
   --primary-color: #60A5FA;
-  --accent-color: #34D399;
-  --highlight-color: #FBBF24;
+  --accent-color: #F97316; /* bright orange */
+  --highlight-color: #EC4899; /* hot pink */
   --card-color: #1E293B;
   --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
   --navbar-text-color: #F1F5F9;
@@ -56,8 +56,8 @@
     --bg-color: #0F172A;
     --text-color: #F1F5F9;
     --primary-color: #60A5FA;
-    --accent-color: #14B8A6;
-    --highlight-color: #8B5CF6;
+    --accent-color: #F97316; /* bright orange */
+    --highlight-color: #EC4899; /* hot pink */
     --card-color: #1E293B;
     --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
     --navbar-text-color: #F1F5F9;

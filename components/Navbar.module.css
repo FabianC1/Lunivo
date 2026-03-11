@@ -9,10 +9,24 @@
   background: var(--navbar-color);
   color: var(--navbar-text-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-bottom: 3px solid;
-  border-image: linear-gradient(90deg, var(--highlight-color), var(--accent-color), transparent) 1;
+  /* use transparent bottom border and an ::after gradient so we can round both corners */
+  border-bottom: 3px solid transparent;
+  border-radius: 0 0 1.5rem 1.5rem;
+  position: relative; /* for pseudo element positioning */
+  overflow: hidden; /* clip the ::after bar to curved corners */
+}
+
+.navbar::after {
+  content: '';
+  position: absolute;
+  /* nudge up slightly so the bar overlaps and removes any visible gap */
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 6px; /* a bit taller for a solid border look */
   border-bottom-left-radius: 1.5rem;
   border-bottom-right-radius: 1.5rem;
+  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
 }
 
 .logo {
