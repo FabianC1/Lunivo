@@ -15,19 +15,14 @@ const initialBudgets: Budgets = {
   Other: 100,
 };
 
-// dummy spending so chart has something
-const dummySpending: Budgets = {
-  Food: 420,
-  Transport: 90,
-  Utilities: 160,
-  Other: 72,
-};
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState<Budgets>(initialBudgets);
 
   function updateCategory(cat: string, amt: number) {
-    setBudgets((prev) => ({ ...prev, [cat]: amt }));
+    // ensure we don't store NaN; fall back to 0 if parsing fails
+    const safe = isNaN(amt) ? 0 : amt;
+    setBudgets((prev) => ({ ...prev, [cat]: safe }));
   }
 
   return (
@@ -48,8 +43,11 @@ export default function Budgets() {
                 <td>
                   <input
                     type="number"
-                    value={amt}
-                    onChange={(e) => updateCategory(cat, parseFloat(e.target.value))}
+                    value={amt === 0 ? "" : amt}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      updateCategory(cat, v === "" ? 0 : parseFloat(v));
+                    }}
                   />
                 </td>
               </tr>
@@ -59,14 +57,8 @@ export default function Budgets() {
       </div>
 
       <div className={styles.chartSection}>
-        <h2>Budget vs Spending</h2>
-        <Chart data={{
-          ...budgets,
-          ...(Object.keys(dummySpending).reduce((acc, k) => ({
-            ...acc,
-            [k + " spent"]: dummySpending[k],
-          }), {} as Record<string, number>))
-        }} type="bar" />
+        <h2>Budgets</h2>
+        <Chart data={budgets} type="bar" />
       </div>
     </div>
   );
