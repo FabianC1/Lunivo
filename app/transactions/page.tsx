@@ -44,6 +44,7 @@ export default function Transactions() {
               <th>Description</th>
               <th>Category</th>
               <th>Amount</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -53,6 +54,15 @@ export default function Transactions() {
                 <td>{t.description}</td>
                 <td>{t.category}</td>
                 <td>{formatCurrency(t.amount)}</td>
+                <td>
+                  <button
+                    className={styles.deleteButton}
+                    onClick={() => setTransactions((prev) => prev.filter(x => x.id !== t.id))}
+                    aria-label="Delete"
+                  >
+                    ×
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
