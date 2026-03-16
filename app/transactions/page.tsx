@@ -35,7 +35,12 @@ export default function Transactions() {
       <button className={styles.addButton} onClick={() => setShowForm(true)}>
         + Add Transaction
       </button>
-      {showForm && <TransactionForm onSubmit={addTransaction} />}
+      {showForm && (
+        <TransactionForm
+          onSubmit={addTransaction}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
       <div className={styles.listWrapper + ' card'}>
         <table className={styles.table}>
           <thead>

@@ -17,9 +17,10 @@ interface TransactionFormProps {
     category: string;
     description: string;
   }) => void;
+  onCancel?: () => void;
 }
 
-export default function TransactionForm({ initial, onSubmit }: TransactionFormProps) {
+export default function TransactionForm({ initial, onSubmit, onCancel }: TransactionFormProps) {
   const [date, setDate] = useState(initial?.date || new Date().toISOString().substr(0, 10));
   const [amount, setAmount] = useState(initial?.amount || 0);
   const [category, setCategory] = useState(initial?.category || "");
@@ -81,9 +82,16 @@ export default function TransactionForm({ initial, onSubmit }: TransactionFormPr
           onChange={(e) => setDescription(e.target.value)}
         />
       </label>
-      <button type="submit" className={styles.submit}>
-        Save
-      </button>
+      <div className={styles.actions}>
+        {onCancel && (
+          <button type="button" className={styles.cancel} onClick={onCancel}>
+            Cancel
+          </button>
+        )}
+        <button type="submit" className={styles.submit}>
+          Save
+        </button>
+      </div>
     </form>
   );
 }

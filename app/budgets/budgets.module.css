@@ -60,6 +60,23 @@
   background-color: var(--card-color);
 }
 
+.table input[type="number"] {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 0.5rem;
+  background-color: var(--card-color);
+  color: var(--text-color);
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
 .chartSection {
   margin-top: 2rem;
   background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);

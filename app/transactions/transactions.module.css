@@ -10,19 +10,33 @@
 }
 
 .addButton {
-  padding: 0.6rem 1.2rem;
-  background-color: var(--highlight-color);
+  padding: 0.6rem 1.15rem;
+  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
   color: #fff;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 0.55rem;
   margin-bottom: 1rem;
-  font-weight: 500;
-  transition: background 0.2s, transform 0.2s;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
 }
 
 .addButton:hover {
-  background-color: var(--accent-color);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
+.addButton:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+.addButton:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.25),
+    0 10px 22px rgba(0, 0, 0, 0.16);
 }
 
 .listWrapper {

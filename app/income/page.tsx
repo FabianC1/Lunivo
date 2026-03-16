@@ -38,6 +38,7 @@ export default function Income() {
       {showForm && (
         <TransactionForm
           onSubmit={(data) => addTransaction(data)}
+          onCancel={() => setShowForm(false)}
           initial={{ category: 'Income', date: '', amount: 0, description: '' }}
         />
       )}
