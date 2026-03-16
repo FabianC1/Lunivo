@@ -109,6 +109,7 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
         // make points more visible on line charts
         pointRadius: type === 'line' ? 6 : 0,
         pointHoverRadius: type === 'line' ? 8 : 0,
+        label: type === 'bar' ? 'Budget' : undefined,
       },
     ],
   };

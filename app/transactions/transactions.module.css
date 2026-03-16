@@ -42,8 +42,10 @@
 }
 
 .table thead tr {
-  background-color: var(--primary-color);
-  color: #fff;
+  background-color: var(--card-color);
+  color: var(--text-color);
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .table tr:nth-child(even) {
