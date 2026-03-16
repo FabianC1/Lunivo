@@ -102,9 +102,16 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
         hoverOffset: 6,
         borderWidth: 2,
         borderColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+
+        // make points more visible on line charts
+        pointRadius: type === 'line' ? 6 : 0,
+        pointHoverRadius: type === 'line' ? 8 : 0,
       },
     ],
   };
+
+  const textColor = theme === 'dark' ? '#F1F5F9' : '#1E293B';
+  const gridColor = theme === 'dark' ? 'rgba(241, 245, 249, 0.2)' : 'rgba(30, 41, 59, 0.1)';
 
   const options: any = {
     responsive: true,
@@ -114,7 +121,7 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
       legend: {
         position: 'bottom' as const,
         labels: {
-          color: theme === 'dark' ? '#F1F5F9' : '#1E293B',
+          color: textColor,
           font: {
             size: 14,
             weight: 500 as any, // cast to satisfy TS
@@ -126,14 +133,24 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
       },
       tooltip: {
         backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(248, 250, 252, 0.9)',
-        titleColor: theme === 'dark' ? '#F1F5F9' : '#1E293B',
-        bodyColor: theme === 'dark' ? '#F1F5F9' : '#1E293B',
+        titleColor: textColor,
+        bodyColor: textColor,
         borderColor: theme === 'dark' ? '#334155' : '#CBD5E1',
         borderWidth: 1,
         cornerRadius: 8,
         displayColors: true,
       },
     },
+    scales: (type === 'line' || type === 'bar') ? {
+      x: {
+        ticks: { color: textColor },
+        grid: { color: gridColor },
+      },
+      y: {
+        ticks: { color: textColor },
+        grid: { color: gridColor },
+      },
+    } : undefined,
   };
 
   return (
