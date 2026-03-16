@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./transactions.module.css";
 import TransactionForm from "../../components/TransactionForm";
+import Chart from "../../components/Chart";
+import BudgetComparisonChart from "../../components/BudgetComparisonChart";
 import { formatCurrency, formatDate } from "../../lib/utils";
+import { initialBudgets, loadBudgets, type BudgetMap } from "../../lib/budgets";
 
 interface Transaction {
   id: number;
@@ -22,6 +25,11 @@ const dummy: Transaction[] = [
 export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>(dummy);
   const [showForm, setShowForm] = useState(false);
+  const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
+
+  useEffect(() => {
+    setBudgets(loadBudgets());
+  }, []);
 
   function addTransaction(data: Omit<Transaction, 'id'>) {
     const next: Transaction = { id: Date.now(), ...data };
@@ -29,11 +37,20 @@ export default function Transactions() {
     setShowForm(false);
   }
 
+  const spendingsByCategory = transactions.reduce((totals, transaction) => {
+    if (transaction.category === "Income") {
+      return totals;
+    }
+
+    totals[transaction.category] = (totals[transaction.category] ?? 0) + transaction.amount;
+    return totals;
+  }, {} as Record<string, number>);
+
   return (
     <div className={styles.container + ' container'}>
-      <h1 className={styles.title}>Transactions</h1>
+      <h1 className={styles.title}>Spendings</h1>
       <button className={styles.addButton} onClick={() => setShowForm(true)}>
-        + Add Transaction
+        + Add Spending
       </button>
       {showForm && (
         <TransactionForm
@@ -72,6 +89,18 @@ export default function Transactions() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className={styles.charts}>
+        <section className={styles.chartSection}>
+          <h2 className={styles.chartTitle}>Spendings</h2>
+          <Chart data={spendingsByCategory} type="doughnut" />
+        </section>
+
+        <section className={styles.chartSection}>
+          <h2 className={styles.chartTitle}>Budget</h2>
+          <BudgetComparisonChart spendings={spendingsByCategory} budgets={budgets} />
+        </section>
       </div>
     </div>
   );

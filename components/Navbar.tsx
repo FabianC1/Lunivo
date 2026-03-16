@@ -43,13 +43,13 @@ export default function Navbar() {
           <Link href="/dashboard" className={pathname === '/dashboard' ? styles.active : ''}>Dashboard</Link>
         </li>
         <li>
-          <Link href="/transactions" className={pathname === '/transactions' ? styles.active : ''}>Transactions</Link>
+          <Link href="/transactions" className={pathname === '/transactions' ? styles.active : ''}>Spendings</Link>
         </li>
         <li>
           <Link href="/income" className={pathname === '/income' ? styles.active : ''}>Income</Link>
         </li>
         <li>
-          <Link href="/budgets" className={pathname === '/budgets' ? styles.active : ''}>Budgets</Link>
+          <Link href="/budgets" className={pathname === '/budgets' ? styles.active : ''}>Not Decided</Link>
         </li>
         <li>
           <Link href="/reports" className={pathname === '/reports' ? styles.active : ''}>Reports</Link>

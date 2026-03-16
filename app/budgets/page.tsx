@@ -1,23 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./budgets.module.css";
-import Chart from "../../components/Chart";
-
-interface Budgets {
-  [category: string]: number;
-}
-
-const initialBudgets: Budgets = {
-  Food: 500,
-  Transport: 150,
-  Utilities: 200,
-  Other: 100,
-};
+import { initialBudgets, loadBudgets, saveBudgets, type BudgetMap } from "../../lib/budgets";
 
 
 export default function Budgets() {
-  const [budgets, setBudgets] = useState<Budgets>(initialBudgets);
+  const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
+  const [hasLoadedBudgets, setHasLoadedBudgets] = useState(false);
+
+  useEffect(() => {
+    setBudgets(loadBudgets());
+    setHasLoadedBudgets(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedBudgets) {
+      return;
+    }
+
+    saveBudgets(budgets);
+  }, [budgets, hasLoadedBudgets]);
 
   function updateCategory(cat: string, amt: number) {
     // ensure we don't store NaN; fall back to 0 if parsing fails
@@ -27,7 +30,7 @@ export default function Budgets() {
 
   return (
     <div className={styles.container + ' container'}>
-      <h1 className={styles.title}>Budgets</h1>
+      <h1 className={styles.title}>Not Decided</h1>
       <div className={styles.budgetList + ' card'}>
         <table className={styles.table}>
           <thead>
@@ -54,11 +57,6 @@ export default function Budgets() {
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className={styles.chartSection}>
-        <h2>Budgets</h2>
-        <Chart data={budgets} type="bar" />
       </div>
     </div>
   );
