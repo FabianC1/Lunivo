@@ -3,6 +3,8 @@
 import { useState } from "react";
 import styles from "../transactions/transactions.module.css";
 import TransactionForm from "../../components/TransactionForm";
+import Chart from "../../components/Chart";
+import IncomeTrendChart from "../../components/IncomeTrendChart";
 import { formatCurrency, formatDate } from "../../lib/utils";
 
 interface Transaction {
@@ -28,6 +30,19 @@ export default function Income() {
     setTransactions((prev) => [...prev, next]);
     setShowForm(false);
   }
+
+  const incomeBySource = transactions.reduce((totals, transaction) => {
+    const source = transaction.description.trim() || "Other";
+    totals[source] = (totals[source] ?? 0) + transaction.amount;
+    return totals;
+  }, {} as Record<string, number>);
+
+  const incomeTrendPoints = [...transactions]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((transaction) => ({
+      date: transaction.date,
+      amount: transaction.amount,
+    }));
 
   return (
     <div className={styles.container + ' container'}>
@@ -71,6 +86,18 @@ export default function Income() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className={styles.charts}>
+        <section className={styles.chartSection}>
+          <h2 className={styles.chartTitle}>Income Breakdown</h2>
+          <Chart data={incomeBySource} type="doughnut" />
+        </section>
+
+        <section className={styles.chartSection}>
+          <h2 className={styles.chartTitle}>Income Trend</h2>
+          <IncomeTrendChart points={incomeTrendPoints} />
+        </section>
       </div>
     </div>
   );
