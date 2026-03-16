@@ -93,6 +93,9 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
   // assign a color per label by index; this guarantees uniqueness up to palette length
   const backgroundColor = labels.map((_, idx) => palette[idx % palette.length]);
 
+  const textColor = theme === 'dark' ? '#F1F5F9' : '#1E293B';
+  const gridColor = theme === 'dark' ? 'rgba(241, 245, 249, 0.2)' : 'rgba(30, 41, 59, 0.1)';
+
   const chartData = {
     labels,
     datasets: [
@@ -101,7 +104,7 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
         backgroundColor,
         hoverOffset: 6,
         borderWidth: 2,
-        borderColor: theme === 'dark' ? '#1E293B' : '#FFFFFF',
+        borderColor: textColor, // theme-aware for visibility on all chart types
 
         // make points more visible on line charts
         pointRadius: type === 'line' ? 6 : 0,
@@ -110,8 +113,6 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
     ],
   };
 
-  const textColor = theme === 'dark' ? '#F1F5F9' : '#1E293B';
-  const gridColor = theme === 'dark' ? 'rgba(241, 245, 249, 0.2)' : 'rgba(30, 41, 59, 0.1)';
 
   const options: any = {
     responsive: true,
