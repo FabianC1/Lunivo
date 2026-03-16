@@ -42,6 +42,8 @@
   gap: 0.5rem;
   margin: 0;
   padding: 0;
+  width: 100%;
+  justify-content: space-evenly;
 }
 
 .links a {
@@ -53,6 +55,23 @@
   background: transparent;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.active {
+  /* underline with theme gradient */
+  background: none;
+}
+.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
+  pointer-events: none;
 }
 
 .links a:hover {
