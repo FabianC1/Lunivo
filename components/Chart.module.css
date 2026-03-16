@@ -2,10 +2,13 @@
 
 .chartWrapper {
   width: 100%;
-  max-width: 350px;
-  height: 300px;
+  max-width: 900px;
+  height: 360px;
   margin: 0 auto;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ensure canvas fills parent */
