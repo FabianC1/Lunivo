@@ -41,6 +41,9 @@
 
 .listWrapper {
   overflow-x: auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .table {
@@ -48,26 +51,37 @@
   border-collapse: collapse;
 }
 
-.table th,
-.table td {
-  padding: 0.75rem;
+.table th {
+  padding: 0.9rem 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.table thead tr {
-  background-color: var(--card-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-color);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-}
-
-.table tr:nth-child(even) {
-  background-color: var(--bg-color);
-}
-
-.table tr:hover {
   background-color: var(--card-color);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+}
+
+.table td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  font-size: 0.925rem;
+  color: var(--text-color);
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:nth-child(even) td {
+  background-color: rgba(148, 163, 184, 0.04);
+}
+
+.table tbody tr:hover td {
+  background-color: rgba(148, 163, 184, 0.1);
 }
 
 .deleteButton {

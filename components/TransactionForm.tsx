@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import styles from "./TransactionForm.module.css";
 import { formatDate } from "../lib/utils";
 
@@ -26,6 +26,20 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
   const [category, setCategory] = useState(initial?.category || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [error, setError] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const categories = ['Income', 'Food', 'Transport', 'Utilities', 'Other'];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,18 +75,35 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
       </label>
       <label>
         Category
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          required
-        >
-          <option value="">Select</option>
-          <option value="Income">Income</option>
-          <option value="Food">Food</option>
-          <option value="Transport">Transport</option>
-          <option value="Utilities">Utilities</option>
-          <option value="Other">Other</option>
-        </select>
+        <div className={styles.dropdown} ref={dropdownRef}>
+          <div
+            className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <span className={category ? '' : styles.dropdownPlaceholder}>
+              {category || 'Select'}
+            </span>
+            <svg
+              className={`${styles.dropdownArrow} ${isDropdownOpen ? styles.dropdownArrowUp : ''}`}
+              width="12" height="12" viewBox="0 0 12 12"
+            >
+              <path fill="currentColor" d="M6 8L1 3h10z" />
+            </svg>
+          </div>
+          {isDropdownOpen && (
+            <div className={styles.dropdownList}>
+              {categories.map((cat) => (
+                <div
+                  key={cat}
+                  className={`${styles.dropdownOption} ${category === cat ? styles.dropdownOptionActive : ''}`}
+                  onClick={() => { setCategory(cat); setIsDropdownOpen(false); }}
+                >
+                  {cat}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </label>
       <label>
         Description
