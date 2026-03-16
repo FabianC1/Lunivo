@@ -54,12 +54,11 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
   position: relative;
 }
 
 .active {
-  /* underline with theme gradient */
   background: none;
 }
 .active::after {
@@ -72,6 +71,19 @@
   border-radius: 2px;
   background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
   pointer-events: none;
+  animation: underlineSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: left;
+}
+
+@keyframes underlineSlideIn {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 .links a:hover {
@@ -80,6 +92,7 @@
 
 .links a:active {
   background-color: rgba(255, 255, 255, 0.25);
+  transform: scale(0.95);
 }
 
 .actions {
