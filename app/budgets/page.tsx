@@ -30,7 +30,7 @@ export default function Budgets() {
 
   return (
     <div className={styles.container + ' container'}>
-      <h1 className={styles.title}>Not Decided</h1>
+      <h1 className={styles.title}>Budget</h1>
       <div className={styles.budgetList + ' card'}>
         <table className={styles.table}>
           <thead>

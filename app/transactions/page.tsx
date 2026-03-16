@@ -98,7 +98,7 @@ export default function Transactions() {
         </section>
 
         <section className={styles.chartSection}>
-          <h2 className={styles.chartTitle}>Budget</h2>
+          <h2 className={styles.chartTitle}>Budget vs Spendings</h2>
           <BudgetComparisonChart spendings={spendingsByCategory} budgets={budgets} />
         </section>
       </div>
