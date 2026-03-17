@@ -50,6 +50,7 @@
   border-radius: 0.75rem;
   transition: background-color 0.2s ease;
   font-weight: 500;
+  position: relative;
 }
 
 .links a:hover {
@@ -57,7 +58,33 @@
 }
 
 .active {
-  background: rgba(255, 255, 255, 0.22);
+  background: none;
+}
+
+.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
+  pointer-events: none;
+  animation: publicUnderlineSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: left;
+}
+
+@keyframes publicUnderlineSlideIn {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 .actions {

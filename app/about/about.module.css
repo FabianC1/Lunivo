@@ -37,6 +37,8 @@
   background: var(--card-color);
   border-radius: 1rem;
   padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .card h2 {
@@ -52,11 +54,11 @@
 }
 
 .chartFrame {
-  height: 320px;
+  height: 380px;
 }
 
 .chartFrameLarge {
-  height: 430px;
+  height: 470px;
 }
 
 @media (max-width: 960px) {
@@ -65,6 +67,6 @@
   }
 
   .chartFrameLarge {
-    height: 380px;
+    height: 420px;
   }
 }
