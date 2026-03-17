@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import styles from "./register.module.css";
+import { getSession, registerUser, setSession } from "../../lib/auth";
 
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "" };
@@ -24,6 +26,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
 }
 
 export default function Register() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,6 +38,12 @@ export default function Register() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const strength = getStrength(password);
+
+  useEffect(() => {
+    if (getSession()) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
 
   function clearError(key: string) {
     setErrors((prev) => ({ ...prev, [key]: "" }));
@@ -60,10 +69,25 @@ export default function Register() {
       setErrors(validation);
       return;
     }
+
     setErrors({});
     setLoading(true);
-    // TODO: call register API
-    setTimeout(() => setLoading(false), 800);
+
+    const result = registerUser({ name, email, password });
+    if (!result.ok) {
+      setLoading(false);
+      setErrors({ email: result.error ?? "Unable to create account." });
+      return;
+    }
+
+    setSession({
+      email: email.trim().toLowerCase(),
+      name: name.trim(),
+      isDemo: false,
+    });
+
+    setLoading(false);
+    router.replace("/dashboard");
   }
 
   return (

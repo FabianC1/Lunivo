@@ -1,6 +1,7 @@
 {
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
+  "/about/page": "/about",
   "/api/login/route": "/api/login",
   "/api/register/route": "/api/register",
   "/api/transactions/[id]/route": "/api/transactions/[id]",
@@ -12,5 +13,6 @@
   "/page": "/",
   "/register/page": "/register",
   "/reports/page": "/reports",
+  "/subscriptions/page": "/subscriptions",
   "/transactions/page": "/transactions"
 }

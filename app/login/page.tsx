@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
+import {
+  getSession,
+  loginUser,
+  setSession,
+} from "../../lib/auth";
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -12,16 +19,33 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (getSession()) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     if (!email.trim() || !password) {
       setError("Please fill in all fields.");
       return;
     }
+
     setError("");
     setLoading(true);
-    // TODO: call login API
-    setTimeout(() => setLoading(false), 800);
+
+    const result = loginUser({ email, password });
+    if (!result.ok || !result.session) {
+      setLoading(false);
+      setError(result.error ?? "Unable to log in.");
+      return;
+    }
+
+    setSession(result.session);
+    setLoading(false);
+    router.replace("/dashboard");
   }
 
   return (
@@ -64,7 +88,7 @@ export default function Login() {
               <label htmlFor="login-password" className={styles.label}>
                 Password
               </label>
-              <a href="#" className={styles.forgotLink}>Forgot password?</a>
+              <span className={styles.forgotLink}>Forgot password?</span>
             </div>
             <div className={styles.inputWrapper}>
               <input

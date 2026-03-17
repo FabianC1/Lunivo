@@ -1,65 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import styles from "./Navbar.module.css";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { clearSession } from "../lib/auth";
+import styles from "./PublicNavbar.module.css";
 
-export default function Navbar() {
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+export default function PublicNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     let initialTheme: "light" | "dark" = "light";
+
     if (saved === "light" || saved === "dark") {
       initialTheme = saved;
     } else {
       const prefers = window.matchMedia("(prefers-color-scheme: dark)").matches;
       initialTheme = prefers ? "dark" : "light";
     }
+
     setTheme(initialTheme);
     setMounted(true);
   }, []);
 
   const handleToggle = () => {
     const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    const newTheme = currentTheme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
-  };
-
-  const handleLogout = () => {
-    clearSession();
-    router.replace("/login");
+    const nextTheme = currentTheme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("theme", nextTheme);
   };
 
   if (!mounted) {
-    return <nav className={styles.navbar}><div className={styles.logo}>Lunivo</div></nav>;
+    return (
+      <nav className={styles.navbar}>
+        <Link href="/" className={styles.logo}>Lunivo</Link>
+      </nav>
+    );
   }
 
   return (
     <nav className={styles.navbar}>
-      <div className={styles.logo}>Lunivo</div>
+      <Link href="/" className={styles.logo}>Lunivo</Link>
       <ul className={styles.links}>
         <li>
-          <Link href="/dashboard" className={pathname === '/dashboard' ? styles.active : ''}>Dashboard</Link>
+          <Link href="/about" className={pathname === "/about" ? styles.active : ""}>About</Link>
         </li>
         <li>
-          <Link href="/income" className={pathname === '/income' ? styles.active : ''}>Income</Link>
-        </li>
-        <li>
-          <Link href="/budgets" className={pathname === '/budgets' ? styles.active : ''}>Budget</Link>
-        </li>
-        <li>
-          <Link href="/transactions" className={pathname === '/transactions' ? styles.active : ''}>Spendings</Link>
-        </li>
-        <li>
-          <Link href="/reports" className={pathname === '/reports' ? styles.active : ''}>Reports</Link>
+          <Link href="/subscriptions" className={pathname === "/subscriptions" ? styles.active : ""}>Subscriptions</Link>
         </li>
       </ul>
       <div className={styles.actions}>
@@ -79,9 +69,8 @@ export default function Navbar() {
             </svg>
           )}
         </button>
-        <button type="button" className={styles.logout} onClick={handleLogout}>
-          Logout
-        </button>
+        <Link href="/login" className={styles.login}>Log in</Link>
+        <Link href="/register" className={styles.register}>Register</Link>
       </div>
     </nav>
   );

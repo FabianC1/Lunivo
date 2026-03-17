@@ -1,6 +1,7 @@
 {
   "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
+  "/about/page": "app/about/page.js",
   "/api/login/route": "app/api/login/route.js",
   "/api/register/route": "app/api/register/route.js",
   "/api/transactions/[id]/route": "app/api/transactions/[id]/route.js",
@@ -12,5 +13,6 @@
   "/page": "app/page.js",
   "/register/page": "app/register/page.js",
   "/reports/page": "app/reports/page.js",
+  "/subscriptions/page": "app/subscriptions/page.js",
   "/transactions/page": "app/transactions/page.js"
 }
