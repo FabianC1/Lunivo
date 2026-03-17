@@ -20,6 +20,7 @@ const dummy: Transaction[] = [
   { id: 1, date: '2025-12-01', description: 'Groceries', category: 'Food', amount: 45.2 },
   { id: 2, date: '2025-12-03', description: 'Bus fare', category: 'Transport', amount: 3.5 },
   { id: 3, date: '2025-12-05', description: 'Electricity bill', category: 'Utilities', amount: 120 },
+  { id: 4, date: '2025-12-08', description: 'Movie night', category: 'Entertainment', amount: 28 },
 ];
 
 export default function Transactions() {

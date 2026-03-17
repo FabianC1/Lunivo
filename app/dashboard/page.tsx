@@ -9,6 +9,7 @@ const dummyTransactions = [
   { category: "Food", amount: 45.2 },
   { category: "Transport", amount: 12 },
   { category: "Utilities", amount: 100 },
+  { category: "Entertainment", amount: 52 },
   { category: "Income", amount: 2000 },
   { category: "Other", amount: 60 },
 ];

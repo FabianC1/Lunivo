@@ -172,14 +172,14 @@ export default function BudgetComparisonChart({ spendings, budgets }: BudgetComp
             const overBudget = Math.max(0, spending - budget);
 
             if (context.dataset.label === "Spendings") {
-              return `Spendings: $${spending.toFixed(2)}`;
+              return `Spendings: £${spending.toFixed(2)}`;
             }
 
             if (context.dataset.label === "Over budget") {
-              return overBudget > 0 ? `Over budget: $${overBudget.toFixed(2)}` : null;
+              return overBudget > 0 ? `Over budget: £${overBudget.toFixed(2)}` : null;
             }
 
-            return `Budget limit: $${budget.toFixed(2)}`;
+            return `Budget limit: £${budget.toFixed(2)}`;
           },
           footer(items: Array<{ label: string }>) {
             const category = items[0]?.label;
@@ -189,8 +189,8 @@ export default function BudgetComparisonChart({ spendings, budgets }: BudgetComp
 
             const difference = (budgets[category] ?? 0) - (spendings[category] ?? 0);
             return difference >= 0
-              ? `Remaining: $${difference.toFixed(2)}`
-              : `Exceeded by: $${Math.abs(difference).toFixed(2)}`;
+              ? `Remaining: £${difference.toFixed(2)}`
+              : `Exceeded by: £${Math.abs(difference).toFixed(2)}`;
           },
         },
       },
@@ -215,7 +215,7 @@ export default function BudgetComparisonChart({ spendings, budgets }: BudgetComp
         ticks: {
           color: textColor,
           callback(value: number | string) {
-            return `$${value}`;
+            return `£${value}`;
           },
         },
         grid: {
@@ -230,7 +230,7 @@ export default function BudgetComparisonChart({ spendings, budgets }: BudgetComp
     <div className={styles.wrapper}>
       <div className={chartStyles.chartWrapper}>
         {visibleLabels.length > 0 ? (
-          <Bar data={chartData} options={options} />
+          <Bar data={chartData as any} options={options} />
         ) : (
           <div className={styles.emptyState}>Select at least one category below to view the chart.</div>
         )}

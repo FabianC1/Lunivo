@@ -39,7 +39,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const categories = ['Income', 'Food', 'Transport', 'Utilities', 'Other'];
+  const categories = ['Income', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Other'];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -5,9 +5,12 @@
   "/api/register/route": "app/api/register/route.js",
   "/api/transactions/[id]/route": "app/api/transactions/[id]/route.js",
   "/api/transactions/route": "app/api/transactions/route.js",
+  "/budgets/page": "app/budgets/page.js",
   "/dashboard/page": "app/dashboard/page.js",
+  "/income/page": "app/income/page.js",
   "/login/page": "app/login/page.js",
   "/page": "app/page.js",
   "/register/page": "app/register/page.js",
+  "/reports/page": "app/reports/page.js",
   "/transactions/page": "app/transactions/page.js"
 }

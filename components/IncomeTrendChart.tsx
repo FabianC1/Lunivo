@@ -105,7 +105,7 @@ export default function IncomeTrendChart({ points }: IncomeTrendChartProps) {
         cornerRadius: 10,
         callbacks: {
           label(context: any) {
-            return `Income: $${Number(context.raw ?? 0).toFixed(2)}`;
+            return `Income: £${Number(context.raw ?? 0).toFixed(2)}`;
           },
         },
       },
@@ -125,7 +125,7 @@ export default function IncomeTrendChart({ points }: IncomeTrendChartProps) {
         ticks: {
           color: textColor,
           callback(value: number | string) {
-            return `$${value}`;
+            return `£${value}`;
           },
         },
         grid: {

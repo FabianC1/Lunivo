@@ -6,6 +6,7 @@ export const initialBudgets: BudgetMap = {
   Food: 500,
   Transport: 150,
   Utilities: 200,
+  Entertainment: 180,
   Other: 100,
 };
 

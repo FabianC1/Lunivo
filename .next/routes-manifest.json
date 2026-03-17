@@ -68,10 +68,22 @@
       "namedRegex": "^/api/transactions(?:/)?$"
     },
     {
+      "page": "/budgets",
+      "regex": "^/budgets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/budgets(?:/)?$"
+    },
+    {
       "page": "/dashboard",
       "regex": "^/dashboard(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/income",
+      "regex": "^/income(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/income(?:/)?$"
     },
     {
       "page": "/login",
@@ -84,6 +96,12 @@
       "regex": "^/register(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/register(?:/)?$"
+    },
+    {
+      "page": "/reports",
+      "regex": "^/reports(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/reports(?:/)?$"
     },
     {
       "page": "/transactions",
