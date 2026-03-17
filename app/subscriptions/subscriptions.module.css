@@ -1,11 +1,18 @@
 .page {
-  max-width: 1200px;
+  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: 3.5rem 2rem 3rem;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 1.5rem;
 }
 
 .hero {
-  margin-bottom: 1rem;
+  width: 100%;
   padding: 1.4rem;
   border-radius: 1rem;
   border: 1px solid rgba(148, 163, 184, 0.32);
@@ -25,9 +32,10 @@
 }
 
 .grid {
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  gap: 1.5rem;
 }
 
 .card {
@@ -121,6 +129,16 @@
 }
 
 @media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 2.2rem 1rem 2.5rem;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
