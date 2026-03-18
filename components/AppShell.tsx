@@ -8,7 +8,7 @@ import styles from "./AppShell.module.css";
 import { isLoggedIn } from "../lib/auth";
 
 const AUTH_ROUTES = new Set(["/login", "/register"]);
-const PUBLIC_ROUTES = new Set(["/", "/login", "/register", "/about", "/subscriptions"]);
+const PUBLIC_ROUTES = new Set(["/", "/login", "/register", "/about", "/subscriptions", "/terms", "/privacy"]);
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

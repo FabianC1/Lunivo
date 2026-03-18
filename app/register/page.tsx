@@ -214,8 +214,8 @@ export default function Register() {
               />
               <span>
                 I agree to the{" "}
-                <a href="#" className={styles.termsLink}>Terms of Service</a>{" "}and{" "}
-                <a href="#" className={styles.termsLink}>Privacy Policy</a>
+                <Link href="/terms" className={styles.termsLink}>Terms of Service</Link>{" "}and{" "}
+                <Link href="/privacy" className={styles.termsLink}>Privacy Policy</Link>
               </span>
             </label>
             {errors.terms && <span className={styles.fieldError}>{errors.terms}</span>}
