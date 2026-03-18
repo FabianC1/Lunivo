@@ -134,6 +134,8 @@
   background: var(--highlight-color);
   color: #fff;
   border-radius: 0.75rem;
+  font-family: inherit;
+  font-size: inherit;
   font-weight: 500;
   border: none;
   cursor: pointer;

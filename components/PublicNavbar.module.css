@@ -130,11 +130,11 @@
 
 .register {
   color: #fff;
-  background: var(--highlight-color);
+  background: var(--primary-color);
 }
 
 .register:hover {
-  background: var(--accent-color);
+  opacity: 0.88;
 }
 
 @media (max-width: 900px) {

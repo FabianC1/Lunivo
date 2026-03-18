@@ -9,6 +9,7 @@
 html {
   background: var(--bg-gradient);
   transition: background 0.3s ease;
+  scrollbar-gutter: stable;
 }
 
 html,
