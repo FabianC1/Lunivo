@@ -205,8 +205,9 @@ export default function Register() {
 
           {/* Terms */}
           <div className={styles.field}>
-            <label className={`${styles.checkRow} ${errors.terms ? styles.checkError : ""}`}>
+            <div className={`${styles.checkRow} ${errors.terms ? styles.checkError : ""}`}>
               <input
+                id="reg-terms"
                 type="checkbox"
                 className={styles.checkbox}
                 checked={agreeTerms}
@@ -217,7 +218,7 @@ export default function Register() {
                 <Link href="/terms" className={styles.termsLink}>Terms of Service</Link>{" "}and{" "}
                 <Link href="/privacy" className={styles.termsLink}>Privacy Policy</Link>
               </span>
-            </label>
+            </div>
             {errors.terms && <span className={styles.fieldError}>{errors.terms}</span>}
           </div>
 
