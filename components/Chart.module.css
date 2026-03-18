@@ -3,16 +3,15 @@
 .chartWrapper {
   width: 100%;
   max-width: 900px;
-  height: 360px;
+  height: 100%;
+  min-height: 260px;
   margin: 0 auto;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* ensure canvas fills parent */
 .chartWrapper canvas {
   width: 100% !important;
   height: 100% !important;
+  display: block;
 }

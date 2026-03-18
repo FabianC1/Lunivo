@@ -11,6 +11,10 @@ interface TransactionFormProps {
     category: string;
     description: string;
   };
+  categoryOptions: string[];
+  categoryLabel?: string;
+  categoryPlaceholder?: string;
+  descriptionLabel?: string;
   onSubmit: (data: {
     date: string;
     amount: number;
@@ -20,7 +24,15 @@ interface TransactionFormProps {
   onCancel?: () => void;
 }
 
-export default function TransactionForm({ initial, onSubmit, onCancel }: TransactionFormProps) {
+export default function TransactionForm({
+  initial,
+  categoryOptions,
+  categoryLabel = "Category",
+  categoryPlaceholder = "Select",
+  descriptionLabel = "Description",
+  onSubmit,
+  onCancel,
+}: TransactionFormProps) {
   const [date, setDate] = useState(initial?.date || new Date().toISOString().substr(0, 10));
   const [amount, setAmount] = useState(initial?.amount || 0);
   const [category, setCategory] = useState(initial?.category || "");
@@ -38,8 +50,6 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const categories = ['Income', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Other'];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,14 +84,14 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
         />
       </label>
       <label>
-        Category
+        {categoryLabel}
         <div className={styles.dropdown} ref={dropdownRef}>
           <div
             className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
             <span className={category ? '' : styles.dropdownPlaceholder}>
-              {category || 'Select'}
+              {category || categoryPlaceholder}
             </span>
             <svg
               className={`${styles.dropdownArrow} ${isDropdownOpen ? styles.dropdownArrowUp : ''}`}
@@ -92,7 +102,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
           </div>
           {isDropdownOpen && (
             <div className={styles.dropdownList}>
-              {categories.map((cat) => (
+              {categoryOptions.map((cat) => (
                 <div
                   key={cat}
                   className={`${styles.dropdownOption} ${category === cat ? styles.dropdownOptionActive : ''}`}
@@ -106,7 +116,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel }: Transac
         </div>
       </label>
       <label>
-        Description
+        {descriptionLabel}
         <input
           type="text"
           value={description}
