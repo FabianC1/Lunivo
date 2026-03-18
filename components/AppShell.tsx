@@ -25,11 +25,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Redirect unauthenticated users to /about instead of /login
     if (!logged && !PUBLIC_ROUTES.has(pathname)) {
-      router.replace("/login");
+      router.replace("/about");
       return;
     }
 
+    // Redirect unauthenticated users from / to /about
+    if (!logged && pathname === "/") {
+      router.replace("/about");
+      return;
+    }
+
+    // Redirect authenticated users from / and /login/register to /dashboard
     if (logged && (AUTH_ROUTES.has(pathname) || pathname === "/")) {
       router.replace("/dashboard");
     }

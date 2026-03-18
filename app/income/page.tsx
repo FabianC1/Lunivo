@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import styles from "../transactions/transactions.module.css";
+import styles from "./income.module.css";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import IncomeTrendChart from "../../components/IncomeTrendChart";

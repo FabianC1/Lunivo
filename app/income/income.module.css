@@ -1,0 +1,154 @@
+/* Income-specific styles */
+
+.container {
+  padding: 1rem 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.addButton {
+  padding: 0.6rem 1.15rem;
+  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
+  color: #fff;
+  border: none;
+  border-radius: 0.55rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
+}
+
+.addButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
+.addButton:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+.addButton:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.25),
+    0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+.listWrapper {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.chartSection {
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.chartSection::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.chartSection:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.chartSection:hover::before {
+  left: 100%;
+}
+
+.chartTitle {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-color);
+  background-color: var(--card-color);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+}
+
+.table td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  font-size: 0.925rem;
+  color: var(--text-color);
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:nth-child(even) td {
+  background-color: rgba(148, 163, 184, 0.04);
+}
+
+.table tbody tr:hover td {
+  background-color: rgba(148, 163, 184, 0.1);
+}
+
+.deleteButton {
+  background: transparent;
+  border: none;
+  color: red;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.deleteButton:hover {
+  background-color: rgba(255, 0, 0, 0.1);
+}

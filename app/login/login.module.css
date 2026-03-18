@@ -32,6 +32,7 @@
   box-shadow: 0 10px 42px rgba(2, 6, 23, 0.45);
 }
 
+/* ── Brand header ── */
 .brand {
   display: flex;
   align-items: center;
@@ -59,6 +60,7 @@
   color: var(--text-color);
 }
 
+/* ── Heading ── */
 .title {
   font-size: 1.625rem;
   font-weight: 700;
@@ -76,23 +78,11 @@
   color: #94a3b8;
 }
 
-.errorBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #ef4444;
-  border-radius: 0.625rem;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
+/* ── Form ── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 .field {
@@ -101,16 +91,16 @@
   gap: 0.35rem;
 }
 
-.labelRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .label {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-color);
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .input {
@@ -136,6 +126,20 @@
   color: #94a3b8;
 }
 
+.inputError {
+  border-color: #ef4444 !important;
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.fieldError {
+  font-size: 0.8125rem;
+  color: #ef4444;
+}
+
+/* ── Password wrapper ── */
 .inputWrapper {
   position: relative;
 }
@@ -164,24 +168,11 @@
   color: var(--text-color);
 }
 
-.forgotLink {
-  font-size: 0.8125rem;
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.forgotLink:hover {
-  text-decoration: underline;
-}
-
-.checkRow {
+/* ── Remember me ── */
+.rememberRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-color);
-  cursor: pointer;
-  user-select: none;
+  gap: 0.375rem;
 }
 
 .checkbox {
@@ -192,8 +183,46 @@
   flex-shrink: 0;
 }
 
+.rememberLabel {
+  font-size: 0.875rem;
+  color: var(--text-color);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Forgot password ── */
+.forgotLink {
+  font-size: 0.8125rem;
+  color: var(--primary-color);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Error banner ── */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.625rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+[data-theme='dark'] .errorBanner {
+  background-color: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Submit button ── */
 .submitBtn {
-  margin-top: 0.375rem;
+  margin-top: 0.25rem;
   width: 100%;
   padding: 0.75rem;
   background: var(--primary-color);
@@ -224,6 +253,7 @@
   cursor: not-allowed;
 }
 
+/* ── Spinner ── */
 .spinner {
   display: inline-block;
   width: 1.125rem;
@@ -235,11 +265,10 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
+/* ── Switch link ── */
 .switchText {
   text-align: center;
   margin-top: 1.5rem;

@@ -112,15 +112,17 @@ export default function Login() {
             </div>
           </div>
 
-          <label className={styles.checkRow}>
-            <input
-              type="checkbox"
-              className={styles.checkbox}
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-            />
-            Remember me for 30 days
-          </label>
+          <div className={styles.field}>
+            <label className={styles.rememberRow}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span className={styles.rememberLabel}>Remember me</span>
+            </label>
+          </div>
 
           <button
             type="submit"
@@ -133,9 +135,7 @@ export default function Login() {
 
         <p className={styles.switchText}>
           Don&apos;t have an account?{" "}
-          <Link href="/register" className={styles.switchLink}>
-            Create one free
-          </Link>
+          <Link href="/register" className={styles.switchLink}>Create one</Link>
         </p>
       </div>
     </div>
@@ -154,15 +154,14 @@ function EyeIcon() {
 function EyeOffIcon() {
   return (
     <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
-      <line x1="1" y1="1" x2="23" y2="23" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-4.753 4.753m7.228-1.803a21.042 21.042 0 015.25 5.103m-2.025 2.25a10.08 10.08 0 01-14.794-3.55m12.081-12.402a15.063 15.063 0 012.318 1.979M9.5 9.5L3 3m6 6l-6-6" />
     </svg>
   );
 }
 
 function ErrorIcon() {
   return (
-    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0 }}>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />

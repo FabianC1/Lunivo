@@ -5,18 +5,17 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
-        <p className={styles.badge}>UK-focused personal finance</p>
-        <h1>Money clarity for everyday life</h1>
+        <h1>Lunivo</h1>
         <p className={styles.subtitle}>
-          Lunivo helps you track income, analyze spendings, and compare budgets with clear charts.
-          Sign up to unlock your full private dashboard.
+          A modern personal-finance workspace built to help you track spending,
+          monitor trends, and keep budgets under control.
         </p>
         <div className={styles.actions}>
           <Link href="/register" className={styles.buttonPrimary}>
-            Create free account
+            Create Account
           </Link>
-          <Link href="/login" className={styles.buttonSecondary}>
-            Log in
+          <Link href="/about" className={styles.buttonSecondary}>
+            Learn More
           </Link>
         </div>
       </section>
@@ -25,11 +24,11 @@ export default function Home() {
         <article className={styles.card}>
           <h2>Explore the product</h2>
           <p>See chart previews and how Lunivo visualizes your money data.</p>
-          <Link href="/about" className={styles.cardLink}>Visit About</Link>
+          <Link href="/about" className={styles.cardLink}>View Examples</Link>
         </article>
         <article className={styles.card}>
-          <h2>Subscriptions</h2>
-          <p>Compare our 3 tiers and choose the plan that fits your goals.</p>
+          <h2>Plans & Pricing</h2>
+          <p>Choose the subscription plan that fits your financial goals.</p>
           <Link href="/subscriptions" className={styles.cardLink}>View Plans</Link>
         </article>
       </section>
