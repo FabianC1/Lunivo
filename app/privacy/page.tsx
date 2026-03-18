@@ -1,3 +1,4 @@
+import Link from "next/link";
 import styles from "./privacy.module.css";
 
 export const metadata = {
@@ -7,6 +8,10 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div className={styles.page}>
+      <Link href="/register" className={styles.backButton}>
+        &larr; Back to registration
+      </Link>
+
       <header className={styles.header}>
         <h1>Privacy Policy</h1>
         <p className={styles.meta}>Last updated: March 2026 &mdash; Placeholder draft, subject to change.</p>
