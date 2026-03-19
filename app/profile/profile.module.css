@@ -1,56 +1,277 @@
 .page {
   min-height: calc(100vh - 92px);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.25rem;
   display: grid;
-  place-items: center;
-  padding: 2rem 1rem;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
 }
 
-.card {
-  width: min(560px, 100%);
-  background: var(--surface-color);
-  color: var(--text-color);
-  border-radius: 1rem;
-  padding: 2rem;
+.sidebar {
+  position: sticky;
+  top: 100px;
+  background: color-mix(in srgb, var(--surface-color) 88%, transparent);
   border: 1px solid var(--border-color);
-  box-shadow: 0 16px 34px color-mix(in srgb, var(--text-color) 11%, transparent);
-  text-align: center;
+  border-radius: 1rem;
+  padding: 0.9rem;
+}
+
+.sidebarTitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-color) 65%, transparent);
+}
+
+.menu {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.menuButton {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-color);
+  text-align: left;
+  border-radius: 0.65rem;
+  padding: 0.58rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.menuButton:hover {
+  background: color-mix(in srgb, var(--text-color) 7%, transparent);
+  border-color: color-mix(in srgb, var(--text-color) 14%, transparent);
+}
+
+.menuButton:active {
+  transform: scale(0.98);
+}
+
+.menuButtonActive {
+  background: color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 45%, transparent);
+}
+
+.content {
+  min-width: 0;
+}
+
+.panel {
+  background: color-mix(in srgb, var(--surface-color) 95%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--text-color) 8%, transparent);
+}
+
+.heading {
+  margin: 0;
+  font-size: clamp(1.4rem, 2vw, 1.95rem);
+}
+
+.subheading {
+  margin: 0.4rem 0 1.2rem;
+  color: color-mix(in srgb, var(--text-color) 73%, transparent);
+}
+
+.accountHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  margin-bottom: 1.2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
 }
 
 .avatar {
-  width: 5.4rem;
-  height: 5.4rem;
-  margin: 0 auto 1rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 999px;
   display: grid;
   place-items: center;
   color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--button-gradient-start) 28%, transparent);
 }
 
-.avatarIcon {
-  width: 2.3rem;
-  height: 2.3rem;
-  fill: currentColor;
-}
-
-.title {
+.accountMeta h3 {
   margin: 0;
-  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-size: 1.05rem;
 }
 
-.subtitle {
-  margin: 0.65rem 0 0;
-  color: color-mix(in srgb, var(--text-color) 75%, transparent);
+.accountMeta p {
+  margin: 0.2rem 0 0;
+  color: color-mix(in srgb, var(--text-color) 68%, transparent);
+  word-break: break-all;
+}
+
+.form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.fieldLabel {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 90%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+  color: var(--text-color);
+  font: inherit;
+  padding: 0.65rem 0.72rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: color-mix(in srgb, var(--button-gradient-start) 75%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-gradient-end) 28%, transparent);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.primaryButton,
+.secondaryButton {
+  border: none;
+  border-radius: 0.72rem;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.primaryButton {
+  margin-top: 0.3rem;
+  color: #fff;
+  background: linear-gradient(90deg, var(--button-gradient-start) 0%, var(--button-gradient-end) 100%);
+}
+
+.secondaryButton {
+  background: color-mix(in srgb, var(--text-color) 11%, transparent);
+  color: var(--text-color);
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  opacity: 0.9;
+}
+
+.primaryButton:active,
+.secondaryButton:active {
+  transform: scale(0.98);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorText {
+  margin: 0.2rem 0 0;
+  color: #d14343;
+  font-size: 0.9rem;
+}
+
+.successText {
+  margin: 0.2rem 0 0;
+  color: #2e9f4b;
+  font-size: 0.9rem;
+}
+
+.inlineCard {
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 89%, transparent);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.inlineCard p {
+  margin: 0;
   line-height: 1.5;
 }
 
-@media (max-width: 640px) {
-  .card {
-    padding: 1.3rem;
+.optionList {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 89%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.optionRow span {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.optionRow input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--button-gradient-start);
+}
+
+@media (max-width: 1024px) {
+  .page {
+    grid-template-columns: 1fr;
   }
 
-  .avatar {
-    width: 4.8rem;
-    height: 4.8rem;
+  .sidebar {
+    position: static;
+    top: auto;
+  }
+
+  .menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .menuButton {
+    text-align: center;
+  }
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: 1rem 0.7rem 1.7rem;
+  }
+
+  .menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .accountHeader {
+    align-items: flex-start;
   }
 }
