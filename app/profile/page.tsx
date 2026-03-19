@@ -65,6 +65,7 @@ export default function ProfilePage() {
   const [timezone, setTimezone] = useState("UTC");
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("GBP");
+  const [country, setCountry] = useState("");
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState("");
   const [contactMessage, setContactMessage] = useState("");
@@ -400,7 +401,7 @@ export default function ProfilePage() {
         {activeTab === "preferences" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Preferences</h1>
-            <p className={styles.subheading}>Set your regional defaults for language, currency, and time display.</p>
+            <p className={styles.subheading}>Set your regional defaults for language, timezone, country, and currency display.</p>
 
             <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
               <label className={styles.fieldLabel} htmlFor="language">
@@ -438,8 +439,40 @@ export default function ProfilePage() {
                 <option value="JST">JST</option>
               </select>
 
+              <label className={styles.fieldLabel} htmlFor="country">
+                Country
+              </label>
+              <select
+                id="country"
+                className={styles.input}
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="">Select your country</option>
+                <option value="GB">United Kingdom</option>
+                <option value="US">United States</option>
+                <option value="AU">Australia</option>
+                <option value="CA">Canada</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="ES">Spain</option>
+                <option value="PT">Portugal</option>
+                <option value="IN">India</option>
+                <option value="JP">Japan</option>
+                <option value="BR">Brazil</option>
+                <option value="ZA">South Africa</option>
+                <option value="NG">Nigeria</option>
+                <option value="NZ">New Zealand</option>
+                <option value="SG">Singapore</option>
+                <option value="AE">United Arab Emirates</option>
+                <option value="MX">Mexico</option>
+                <option value="IT">Italy</option>
+                <option value="NL">Netherlands</option>
+                <option value="SE">Sweden</option>
+              </select>
+
               <label className={styles.fieldLabel} htmlFor="currency">
-                Primary currency
+                Preferred currency symbol
               </label>
               <select
                 id="currency"
@@ -447,14 +480,23 @@ export default function ProfilePage() {
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
               >
-                <option value="GBP">GBP</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="AUD">AUD</option>
-                <option value="CAD">CAD</option>
-                <option value="JPY">JPY</option>
-                <option value="INR">INR</option>
+                <option value="GBP">GBP — British Pound (£)</option>
+                <option value="USD">USD — US Dollar ($)</option>
+                <option value="EUR">EUR — Euro (€)</option>
+                <option value="AUD">AUD — Australian Dollar (A$)</option>
+                <option value="CAD">CAD — Canadian Dollar (C$)</option>
+                <option value="JPY">JPY — Japanese Yen (¥)</option>
+                <option value="INR">INR — Indian Rupee (₹)</option>
+                <option value="ZAR">ZAR — South African Rand (R)</option>
+                <option value="NGN">NGN — Nigerian Naira (₦)</option>
+                <option value="BRL">BRL — Brazilian Real (R$)</option>
+                <option value="SEK">SEK — Swedish Krona (kr)</option>
+                <option value="SGD">SGD — Singapore Dollar (S$)</option>
+                <option value="AED">AED — UAE Dirham (د.إ)</option>
               </select>
+              <p className={styles.hintText}>
+                This is a display label only. Lunivo does not convert between currencies — all amounts you enter are already in your own currency.
+              </p>
 
               {prefsMessage && <p className={styles.successText}>{prefsMessage}</p>}
               <button type="button" className={styles.primaryButton} onClick={savePreferences} disabled={isSavingPrefs}>

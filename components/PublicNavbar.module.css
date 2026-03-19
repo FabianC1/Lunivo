@@ -101,15 +101,21 @@
   height: 2.4rem;
   border: none;
   border-radius: 0.7rem;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.74);
   color: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .toggle:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.toggle:active {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .icon {

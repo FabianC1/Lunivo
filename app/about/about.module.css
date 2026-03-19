@@ -17,6 +17,79 @@
   background: var(--card-color);
   border-radius: 1rem;
   padding: 1.4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.heroRight {
+  border-left: 1px solid rgba(148, 163, 184, 0.22);
+  padding-left: 1.4rem;
+}
+
+.heroRight h2 {
+  margin: 0 0 0.7rem;
+  font-size: 1.05rem;
+  color: var(--text-color);
+  opacity: 0.9;
+}
+
+.heroFeatures {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.heroFeatures li {
+  color: var(--text-color);
+  opacity: 0.82;
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.heroActions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.primaryCta,
+.secondaryCta {
+  text-decoration: none;
+  border-radius: 0.72rem;
+  padding: 0.65rem 0.95rem;
+  font-weight: 600;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.primaryCta {
+  color: #fff;
+  background: linear-gradient(90deg, var(--button-gradient-start), var(--button-gradient-end));
+}
+
+.secondaryCta {
+  color: var(--text-color);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: color-mix(in srgb, var(--text-color) 10%, transparent);
+}
+
+.primaryCta:hover,
+.secondaryCta:hover {
+  opacity: 0.92;
+}
+
+.primaryCta:active,
+.secondaryCta:active {
+  transform: scale(0.98);
 }
 
 .hero h1 {
@@ -25,10 +98,10 @@
   margin-bottom: 0.6rem;
 }
 
-.hero p {
+.heroLeft p {
   color: var(--text-color);
   opacity: 0.85;
-  max-width: 700px;
+  margin: 0;
 }
 
 .grid {
@@ -36,6 +109,30 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem;
+}
+
+.highlights {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.highlightCard {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: color-mix(in srgb, var(--card-color) 94%, transparent);
+  border-radius: 0.95rem;
+  padding: 1rem;
+}
+
+.highlightCard h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.04rem;
+}
+
+.highlightCard p {
+  margin: 0;
+  opacity: 0.8;
 }
 
 .card {
@@ -68,12 +165,76 @@
   height: 580px;
 }
 
+.featureList {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.featureList li {
+  color: var(--text-color);
+  opacity: 0.86;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.step {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--card-color) 93%, transparent);
+  padding: 0.8rem;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.step span {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
+}
+
+.step p {
+  margin: 0.2rem 0 0;
+  opacity: 0.84;
+}
+
 @media (max-width: 960px) {
   .page {
     padding: 2.2rem 1rem 2.5rem;
   }
 
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .heroRight {
+    border-left: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    padding-left: 0;
+    padding-top: 1rem;
+  }
+
+  .highlights {
+    grid-template-columns: 1fr;
+  }
+
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .steps {
     grid-template-columns: 1fr;
   }
 
