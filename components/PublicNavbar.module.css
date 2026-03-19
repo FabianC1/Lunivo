@@ -219,3 +219,17 @@
     height: 1.2rem;
   }
 }
+
+@media (hover: none), (pointer: coarse) {
+  .links a:hover {
+    background: transparent;
+  }
+
+  .toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .register:hover {
+    opacity: 1;
+  }
+}
