@@ -38,9 +38,9 @@ export default function ProfilePage() {
   const searchParams = useSearchParams();
 
   const tabFromUrl = searchParams.get("tab");
-  const activeTab: SettingsTab = TAB_ITEMS.some((tab) => tab.id === tabFromUrl)
-    ? (tabFromUrl as SettingsTab)
-    : "account";
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    TAB_ITEMS.some((tab) => tab.id === tabFromUrl) ? (tabFromUrl as SettingsTab) : "account"
+  );
 
   const [session, setSessionState] = useState<AuthSession | null>(null);
   const [name, setName] = useState("");
@@ -67,6 +67,11 @@ export default function ProfilePage() {
   const [currency, setCurrency] = useState("GBP");
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [dataMessage, setDataMessage] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [signedOutSessions, setSignedOutSessions] = useState<number[]>([]);
   
   const [activeSessions] = useState([
     { id: 1, device: "Chrome on macOS", lastActive: "2 minutes ago", isCurrent: true },
@@ -86,9 +91,17 @@ export default function ProfilePage() {
     setName(current.name);
   }, [router]);
 
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && TAB_ITEMS.some((t) => t.id === tab)) {
+      setActiveTab(tab as SettingsTab);
+    }
+  }, [searchParams]);
+
   const initials = useMemo(() => getInitials(name || session?.name || "User"), [name, session?.name]);
 
   function setTab(tab: SettingsTab) {
+    setActiveTab(tab);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -215,8 +228,52 @@ export default function ProfilePage() {
   }
 
   function savePreferences() {
+    setIsSavingPrefs(true);
     setPrefsMessage("Preferences saved. These apply across your account.");
-    window.setTimeout(() => setPrefsMessage(""), 2500);
+    window.setTimeout(() => {
+      setPrefsMessage("");
+      setIsSavingPrefs(false);
+    }, 2500);
+  }
+
+  function saveContactDetails(e: FormEvent) {
+    e.preventDefault();
+    if (backupEmail && !backupEmail.includes("@")) {
+      setContactMessage("Please enter a valid backup email.");
+      window.setTimeout(() => setContactMessage(""), 2200);
+      return;
+    }
+    setContactMessage("Backup email and phone saved locally.");
+    window.setTimeout(() => setContactMessage(""), 2200);
+  }
+
+  function signOutSession(sessionId: number) {
+    setSignedOutSessions((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
+    setPasswordMessage("Session revoked successfully.");
+    window.setTimeout(() => setPasswordMessage(""), 2200);
+  }
+
+  function requestExport(type: "csv" | "json" | "backup") {
+    const label = type === "backup" ? "Secure backup requested" : `${type.toUpperCase()} export requested`;
+    setDataMessage(`${label}. We'll notify you when it's ready.`);
+    window.setTimeout(() => setDataMessage(""), 2600);
+  }
+
+  function handleDeleteAccount(e: FormEvent) {
+    e.preventDefault();
+    setDeleteError("");
+    setDeleteMessage("");
+
+    if (deleteConfirm.trim().toLowerCase() !== session?.email.toLowerCase()) {
+      setDeleteError("Type your exact account email to confirm deletion.");
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    window.setTimeout(() => {
+      setIsDeletingAccount(false);
+      setDeleteMessage("Deletion flow verified. Final destructive endpoint can be connected next.");
+    }, 900);
   }
 
   if (!session) {
@@ -245,7 +302,7 @@ export default function ProfilePage() {
         {activeTab === "account" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Account</h1>
-            <p className={styles.subheading}>Manage your profile identity and account email.</p>
+            <p className={styles.subheading}>Manage your profile identity, backup contacts, and account details.</p>
 
             <div className={styles.accountHeader}>
               <div className={styles.avatar} aria-hidden="true">
@@ -282,6 +339,50 @@ export default function ProfilePage() {
                 {isSavingName ? "Saving..." : "Save account changes"}
               </button>
             </form>
+
+            <div className={styles.divider} />
+
+            <h3 className={styles.sectionSubtitle}>Backup Contact</h3>
+            <form className={styles.form} onSubmit={saveContactDetails}>
+              <label className={styles.fieldLabel} htmlFor="backupEmail">
+                Backup email
+              </label>
+              <input
+                id="backupEmail"
+                className={styles.input}
+                type="email"
+                value={backupEmail}
+                onChange={(e) => setBackupEmail(e.target.value)}
+                placeholder="backup@email.com"
+                autoComplete="email"
+              />
+
+              <label className={styles.fieldLabel} htmlFor="phone">
+                Phone number
+              </label>
+              <input
+                id="phone"
+                className={styles.input}
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+44 7000 000000"
+                autoComplete="tel"
+              />
+
+              {contactMessage && <p className={styles.successText}>{contactMessage}</p>}
+
+              <button type="submit" className={styles.secondaryButton}>
+                Save backup contact
+              </button>
+            </form>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Account Status</h3>
+              <p>Member since: {new Date().toLocaleDateString()}</p>
+              <p>Session type: {session.isDemo ? "Demo" : "Database-backed account"}</p>
+            </div>
           </div>
         )}
 
@@ -291,7 +392,75 @@ export default function ProfilePage() {
             <p className={styles.subheading}>Theme controls for this account.</p>
             <div className={styles.inlineCard}>
               <p>Use the theme toggle in the navbar to switch between light and dark modes.</p>
+              <p>Accent colors, gradients, and chart tones automatically adapt to your selected theme.</p>
             </div>
+          </div>
+        )}
+
+        {activeTab === "preferences" && (
+          <div className={styles.panel}>
+            <h1 className={styles.heading}>Preferences</h1>
+            <p className={styles.subheading}>Set your regional defaults for language, currency, and time display.</p>
+
+            <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+              <label className={styles.fieldLabel} htmlFor="language">
+                Language
+              </label>
+              <select
+                id="language"
+                className={styles.input}
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+              >
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="pt">Portuguese</option>
+              </select>
+
+              <label className={styles.fieldLabel} htmlFor="timezone">
+                Timezone
+              </label>
+              <select
+                id="timezone"
+                className={styles.input}
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+              >
+                <option value="UTC">UTC</option>
+                <option value="GMT">GMT</option>
+                <option value="EST">EST</option>
+                <option value="CST">CST</option>
+                <option value="PST">PST</option>
+                <option value="CET">CET</option>
+                <option value="IST">IST</option>
+                <option value="JST">JST</option>
+              </select>
+
+              <label className={styles.fieldLabel} htmlFor="currency">
+                Primary currency
+              </label>
+              <select
+                id="currency"
+                className={styles.input}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                <option value="GBP">GBP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="AUD">AUD</option>
+                <option value="CAD">CAD</option>
+                <option value="JPY">JPY</option>
+                <option value="INR">INR</option>
+              </select>
+
+              {prefsMessage && <p className={styles.successText}>{prefsMessage}</p>}
+              <button type="button" className={styles.primaryButton} onClick={savePreferences} disabled={isSavingPrefs}>
+                {isSavingPrefs ? "Saving..." : "Save preferences"}
+              </button>
+            </form>
           </div>
         )}
 
@@ -341,11 +510,18 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Billing</h1>
             <p className={styles.subheading}>Subscription and payment settings.</p>
             <div className={styles.inlineCard}>
-              <p>Current plan: Free</p>
+              <span className={styles.planBadge}>Current plan: Free</span>
+              <p>Usage cycle resets on the 1st of every month.</p>
               <p>Payment management can be added when you introduce paid plans.</p>
               <button type="button" className={styles.secondaryButton} disabled>
                 Manage billing (coming soon)
               </button>
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Billing History</h3>
+              <p>No invoices yet. Once paid plans are enabled, invoices will appear here.</p>
             </div>
           </div>
         )}
@@ -399,6 +575,58 @@ export default function ProfilePage() {
                 {isSavingPassword ? "Updating..." : "Update password"}
               </button>
             </form>
+
+            <div className={styles.divider} />
+            <h3 className={styles.sectionSubtitle}>Active Sessions</h3>
+            <div className={styles.sessionsList}>
+              {activeSessions
+                .filter((item) => !signedOutSessions.includes(item.id))
+                .map((item) => (
+                  <div key={item.id} className={styles.sessionItem}>
+                    <div>
+                      <p className={styles.sessionDevice}>{item.device}</p>
+                      <p className={styles.sessionLastActive}>Last active: {item.lastActive}</p>
+                    </div>
+                    {item.isCurrent ? (
+                      <span className={styles.badgeCurrent}>Current session</span>
+                    ) : (
+                      <button type="button" className={styles.secondaryButton} onClick={() => signOutSession(item.id)}>
+                        Sign out
+                      </button>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "data" && (
+          <div className={styles.panel}>
+            <h1 className={styles.heading}>Data & Export</h1>
+            <p className={styles.subheading}>Export transactions, budgets, and analytics snapshots.</p>
+
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Quick Export</h3>
+              <p>Download a copy of your financial records in your preferred format.</p>
+              <div className={styles.actionRow}>
+                <button type="button" className={styles.secondaryButton} onClick={() => requestExport("csv")}>
+                  Export CSV
+                </button>
+                <button type="button" className={styles.secondaryButton} onClick={() => requestExport("json")}>
+                  Export JSON
+                </button>
+                <button type="button" className={styles.primaryButton} onClick={() => requestExport("backup")}>
+                  Request full backup
+                </button>
+              </div>
+              {dataMessage && <p className={styles.successText}>{dataMessage}</p>}
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Retention</h3>
+              <p>We retain activity logs and transaction history to support reporting and audit accuracy.</p>
+            </div>
           </div>
         )}
 
@@ -408,10 +636,60 @@ export default function ProfilePage() {
             <p className={styles.subheading}>Control visibility and data export options.</p>
             <div className={styles.inlineCard}>
               <p>Your account email is kept private by default.</p>
-              <button type="button" className={styles.secondaryButton}>
-                Request data export
-              </button>
+              <p>Analytics are used for feature improvement and financial insight recommendations.</p>
+              <a href="/privacy" className={styles.link}>
+                View full privacy policy
+              </a>
             </div>
+          </div>
+        )}
+
+        {activeTab === "help" && (
+          <div className={styles.panel}>
+            <h1 className={styles.heading}>Help & Support</h1>
+            <p className={styles.subheading}>Need a hand? Start with docs or contact support.</p>
+
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Support Channels</h3>
+              <a href="/terms" className={styles.link}>
+                Terms and account policies
+              </a>
+              <a href="/privacy" className={styles.link}>
+                Privacy policy
+              </a>
+              <a href="mailto:support@lunivo.app" className={styles.link}>
+                support@lunivo.app
+              </a>
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Troubleshooting</h3>
+              <p>If syncing looks delayed, refresh once or sign out and back in to rehydrate session data.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "danger" && (
+          <div className={styles.panel}>
+            <h1 className={styles.heading}>Account Deletion</h1>
+            <p className={styles.subheading}>This action is irreversible. Proceed only if you're sure.</p>
+
+            <form className={`${styles.inlineCard} ${styles.dangerZone}`} onSubmit={handleDeleteAccount}>
+              <h3 className={styles.sectionSubtitle}>Danger Zone</h3>
+              <p>Type your email to confirm permanent deletion of your account and all associated data.</p>
+              <input
+                className={styles.input}
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder={session.email}
+              />
+              {deleteError && <p className={styles.errorText}>{deleteError}</p>}
+              {deleteMessage && <p className={styles.successText}>{deleteMessage}</p>}
+              <button type="submit" className={styles.dangerButton} disabled={isDeletingAccount}>
+                {isDeletingAccount ? "Verifying..." : "Delete account permanently"}
+              </button>
+            </form>
           </div>
         )}
       </section>

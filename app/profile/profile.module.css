@@ -45,12 +45,12 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
-.menuButton:hover {
+.menuButton:hover:not(.menuButtonActive) {
   background: color-mix(in srgb, var(--text-color) 7%, transparent);
   border-color: color-mix(in srgb, var(--text-color) 14%, transparent);
 }
 
-.menuButton:active {
+.menuButton:active:not(.menuButtonActive) {
   transform: scale(0.98);
 }
 
@@ -346,6 +346,13 @@
   padding-bottom: 2px;
 }
 
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
 .link:hover {
   color: var(--button-gradient-end);
   border-color: color-mix(in srgb, var(--button-gradient-end) 55%, transparent);
@@ -390,5 +397,18 @@
   .sessionItem {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .actionRow {
+    width: 100%;
+  }
+
+  .menuButton:hover {
+    background: transparent;
+    border-color: transparent;
+  }
+
+  .menuButton:active {
+    transform: none;
   }
 }
