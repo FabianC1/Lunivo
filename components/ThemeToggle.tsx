@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import darkIcon from "../public/icons/dark.png";
+import sunIcon from "../public/icons/sun1.png";
 import { useTheme } from "./ThemeProvider";
 
 interface ThemeToggleProps {
@@ -16,7 +18,7 @@ export default function ThemeToggle({
 }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
   const nextTheme = theme === "light" ? "dark" : "light";
-  const iconSrc = nextTheme === "dark" ? "/icons/dark.png" : "/icons/light.png";
+  const iconSrc = nextTheme === "dark" ? darkIcon : sunIcon;
 
   return (
     <button
