@@ -5,15 +5,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import styles from "./profile.module.css";
 import { AuthSession, getSession, setSession } from "../../lib/auth";
 
-type SettingsTab = "account" | "appearance" | "notifications" | "billing" | "security" | "privacy";
+type SettingsTab = "account" | "appearance" | "preferences" | "notifications" | "billing" | "security" | "data" | "privacy" | "help" | "danger";
 
 const TAB_ITEMS: Array<{ id: SettingsTab; label: string }> = [
   { id: "account", label: "Account" },
   { id: "appearance", label: "Appearance" },
+  { id: "preferences", label: "Preferences" },
   { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
   { id: "security", label: "Security" },
+  { id: "data", label: "Data & Export" },
   { id: "privacy", label: "Privacy & Data" },
+  { id: "help", label: "Help & Support" },
+  { id: "danger", label: "Account Deletion" },
 ];
 
 function getInitials(name: string) {
@@ -40,6 +44,8 @@ export default function ProfilePage() {
 
   const [session, setSessionState] = useState<AuthSession | null>(null);
   const [name, setName] = useState("");
+  const [backupEmail, setBackupEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameMessage, setNameMessage] = useState("");
   const [nameError, setNameError] = useState("");
@@ -55,6 +61,20 @@ export default function ProfilePage() {
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [notifMessage, setNotifMessage] = useState("");
+
+  const [timezone, setTimezone] = useState("UTC");
+  const [language, setLanguage] = useState("en");
+  const [currency, setCurrency] = useState("GBP");
+  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
+  const [prefsMessage, setPrefsMessage] = useState("");
+  
+  const [activeSessions] = useState([
+    { id: 1, device: "Chrome on macOS", lastActive: "2 minutes ago", isCurrent: true },
+    { id: 2, device: "Safari on iPhone", lastActive: "5 hours ago", isCurrent: false },
+  ]);
+
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     const current = getSession();
@@ -192,6 +212,11 @@ export default function ProfilePage() {
   function saveNotificationPrefs() {
     setNotifMessage("Notification preferences saved locally.");
     window.setTimeout(() => setNotifMessage(""), 2000);
+  }
+
+  function savePreferences() {
+    setPrefsMessage("Preferences saved. These apply across your account.");
+    window.setTimeout(() => setPrefsMessage(""), 2500);
   }
 
   if (!session) {

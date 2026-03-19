@@ -239,6 +239,118 @@
   accent-color: var(--button-gradient-start);
 }
 
+.sectionSubtitle {
+  margin: 0.8rem 0 0.6rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: color-mix(in srgb, var(--border-color) 73%, transparent);
+  margin: 1.2rem 0;
+}
+
+.sessionsList {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.sessionItem {
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 89%, transparent);
+  border-radius: 0.72rem;
+  padding: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sessionDevice {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.sessionLastActive {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--text-color) 68%, transparent);
+}
+
+.badgeCurrent {
+  display: inline-block;
+  background: color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+  color: var(--button-gradient-start);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dangerZone {
+  border-color: #d14343 !important;
+  background: color-mix(in srgb, #d14343 8%, transparent) !important;
+}
+
+.dangerZone h4 {
+  color: #d14343;
+  margin-top: 0;
+}
+
+.dangerButton {
+  background: #d14343;
+  color: #fff;
+  border: none;
+  border-radius: 0.72rem;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.dangerButton:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.dangerButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.dangerButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.planBadge {
+  display: inline-block;
+  background: color-mix(in srgb, var(--button-gradient-start) 22%, transparent);
+  color: var(--button-gradient-start);
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0.4rem 0;
+}
+
+.link {
+  display: inline-block;
+  color: var(--button-gradient-start);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid color-mix(in srgb, var(--button-gradient-start) 35%, transparent);
+  transition: border-color 0.2s ease, color 0.2s ease;
+  padding-bottom: 2px;
+}
+
+.link:hover {
+  color: var(--button-gradient-end);
+  border-color: color-mix(in srgb, var(--button-gradient-end) 55%, transparent);
+}
+
 @media (max-width: 1024px) {
   .page {
     grid-template-columns: 1fr;
@@ -272,6 +384,11 @@
   }
 
   .accountHeader {
+    align-items: flex-start;
+  }
+
+  .sessionItem {
+    flex-direction: column;
     align-items: flex-start;
   }
 }
