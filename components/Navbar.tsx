@@ -37,6 +37,16 @@ export default function Navbar() {
       </ul>
       <div className={styles.actions}>
         <ThemeToggle buttonClassName={styles.toggle} iconClassName={styles.icon} />
+        <Link
+          href="/profile"
+          className={`${styles.profileButton} ${pathname === "/profile" ? styles.profileButtonActive : ""}`}
+          aria-label="Open profile"
+          title="Profile"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className={styles.profileIcon}>
+            <path d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Zm0 2c-3.92 0-7.1 2.36-7.1 5.26 0 .3.24.54.54.54h13.12c.3 0 .54-.24.54-.54 0-2.9-3.18-5.26-7.1-5.26Z" />
+          </svg>
+        </Link>
         <button type="button" className={styles.logout} onClick={handleLogout}>
           Logout
         </button>

@@ -1,0 +1,56 @@
+.page {
+  min-height: calc(100vh - 92px);
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.card {
+  width: min(560px, 100%);
+  background: var(--surface-color);
+  color: var(--text-color);
+  border-radius: 1rem;
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--text-color) 11%, transparent);
+  text-align: center;
+}
+
+.avatar {
+  width: 5.4rem;
+  height: 5.4rem;
+  margin: 0 auto 1rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
+}
+
+.avatarIcon {
+  width: 2.3rem;
+  height: 2.3rem;
+  fill: currentColor;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+}
+
+.subtitle {
+  margin: 0.65rem 0 0;
+  color: color-mix(in srgb, var(--text-color) 75%, transparent);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 1.3rem;
+  }
+
+  .avatar {
+    width: 4.8rem;
+    height: 4.8rem;
+  }
+}
