@@ -28,7 +28,7 @@
 
 .addButton {
   padding: 0.6rem 1.15rem;
-  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
+  background: var(--navbar-border-gradient);
   color: #fff;
   border: none;
   border-radius: 0.55rem;

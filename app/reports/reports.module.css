@@ -92,7 +92,7 @@
 }
 
 .toggleButtonActive {
-  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
+  background: var(--navbar-border-gradient);
   color: #fff;
   opacity: 1;
 }

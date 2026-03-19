@@ -7,7 +7,7 @@
   --highlight-color: #F59E0B; /* amber for highlights */
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #db48ec 0%, #ff4d00 100%);
   --navbar-text-color: #1E293B;
   --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
 
@@ -26,7 +26,7 @@
   --highlight-color: #8B5CF6;
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #db48ec 0%, #ff4d00 100%);
   --navbar-text-color: #1E293B;
   --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
 
@@ -44,7 +44,7 @@
   --highlight-color: #db48ec; /* hot pink */
   --card-color: #1E293B;
   --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #db48ec 0%, #ff4d00 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
   --navbar-text-color: #F1F5F9;
   --bg-gradient: linear-gradient(135deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%);
 
@@ -63,7 +63,7 @@
     --highlight-color: #db48ec; /* hot pink */
     --card-color: #1E293B;
     --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-    --navbar-border-gradient: linear-gradient(90deg, #db48ec 0%, #ff4d00 100%);
+    --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
     --navbar-text-color: #F1F5F9;
     --bg-gradient: linear-gradient(135deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%);
 
