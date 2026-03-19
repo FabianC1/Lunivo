@@ -1,47 +1,19 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import styles from "./Navbar.module.css";
-import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { clearSession } from "../lib/auth";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    let initialTheme: "light" | "dark" = "light";
-    if (saved === "light" || saved === "dark") {
-      initialTheme = saved;
-    } else {
-      const prefers = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      initialTheme = prefers ? "dark" : "light";
-    }
-    setTheme(initialTheme);
-    setMounted(true);
-  }, []);
-
-  const handleToggle = () => {
-    const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    const newTheme = currentTheme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
-  };
 
   const handleLogout = () => {
     clearSession();
     router.replace("/login");
   };
-
-  if (!mounted) {
-    return <nav className={styles.navbar}><div className={styles.logo}>Lunivo</div></nav>;
-  }
 
   return (
     <nav className={styles.navbar}>
@@ -64,20 +36,7 @@ export default function Navbar() {
         </li>
       </ul>
       <div className={styles.actions}>
-        <button
-          onClick={handleToggle}
-          className={styles.toggle}
-          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-        >
-          <Image
-            src={theme === "light" ? "/icons/light.png" : "/icons/dark.png"}
-            alt=""
-            aria-hidden="true"
-            width={22}
-            height={22}
-            className={styles.icon}
-          />
-        </button>
+        <ThemeToggle buttonClassName={styles.toggle} iconClassName={styles.icon} />
         <button type="button" className={styles.logout} onClick={handleLogout}>
           Logout
         </button>

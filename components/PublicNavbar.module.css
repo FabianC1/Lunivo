@@ -115,6 +115,8 @@
 .icon {
   width: 1.3rem;
   height: 1.3rem;
+  object-fit: contain;
+  display: block;
 }
 
 .login,
