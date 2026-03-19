@@ -147,6 +147,21 @@ export default function Chart({
     ],
   };
 
+  // For bar charts: compute a smart Y-axis baseline so bars reflect relative differences
+  // instead of always spanning from 0 (which makes similar values look identical and huge).
+  const barYMin = (() => {
+    if (type !== 'bar' || visibleChartValues.length === 0) return undefined;
+    const minVal = Math.min(...visibleChartValues);
+    const maxVal = Math.max(...visibleChartValues);
+    const range = Math.max(maxVal - minVal, 1);
+    // Pick a round step that gives ~4 intervals over the visible range
+    const rawStep = range / 4;
+    const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const norm = rawStep / mag;
+    const step = norm < 1.5 ? mag : norm < 3.5 ? 2 * mag : norm < 7.5 ? 5 * mag : 10 * mag;
+    // Drop 2 steps below the minimum value, clamped to 0
+    return Math.max(0, Math.floor(minVal / step) * step - 2 * step);
+  })();
 
   const options: any = {
     responsive: true,
@@ -182,7 +197,19 @@ export default function Chart({
         grid: { color: gridColor },
       },
       y: {
-        ticks: { color: textColor },
+        ...(barYMin !== undefined ? { min: barYMin } : {}),
+        ticks: {
+          color: textColor,
+          ...(type === 'bar' ? {
+            maxTicksLimit: 6,
+            callback: (value: number | string) => {
+              const v = Number(value);
+              return v >= 1000
+                ? `£${(v / 1000).toFixed(1).replace(/\.0$/, '')}k`
+                : `£${v}`;
+            },
+          } : {}),
+        },
         grid: { color: gridColor },
       },
     } : undefined,
