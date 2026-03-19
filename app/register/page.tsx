@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./register.module.css";
-import { getSession, registerUser, setSession } from "../../lib/auth";
+import { getSession, setSession } from "../../lib/auth";
 
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "" };
@@ -62,7 +62,7 @@ export default function Register() {
     return e;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const validation = validate();
     if (Object.keys(validation).length > 0) {
@@ -73,21 +73,37 @@ export default function Register() {
     setErrors({});
     setLoading(true);
 
-    const result = registerUser({ name, email, password });
-    if (!result.ok) {
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.user) {
+        setErrors({ email: payload?.error ?? "Unable to create account." });
+        setLoading(false);
+        return;
+      }
+
+      setSession({
+        userId: payload.user.id,
+        email: payload.user.email,
+        name: payload.user.name,
+        isDemo: false,
+      });
+
       setLoading(false);
-      setErrors({ email: result.error ?? "Unable to create account." });
-      return;
+      router.replace("/dashboard");
+    } catch {
+      setErrors({ email: "Unable to create account right now. Please try again." });
+      setLoading(false);
     }
-
-    setSession({
-      email: email.trim().toLowerCase(),
-      name: name.trim(),
-      isDemo: false,
-    });
-
-    setLoading(false);
-    router.replace("/dashboard");
   }
 
   return (

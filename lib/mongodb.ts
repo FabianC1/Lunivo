@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
 // Note: we avoid throwing at import time so builds without a real database
-// will still succeed. The check is performed when attempting to connect.
+// will still succeed. The che is performed when attempting to connect.
 
 
 let cached: any = globalThis;

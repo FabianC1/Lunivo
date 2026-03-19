@@ -4,11 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
-import {
-  getSession,
-  loginUser,
-  setSession,
-} from "../../lib/auth";
+import { getSession, setSession, DEMO_EMAIL, DEMO_PASSWORD, DEMO_NAME } from "../../lib/auth";
 
 export default function Login() {
   const router = useRouter();
@@ -25,7 +21,7 @@ export default function Login() {
     }
   }, [router]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!email.trim() || !password) {
@@ -36,16 +32,47 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    const result = loginUser({ email, password });
-    if (!result.ok || !result.session) {
-      setLoading(false);
-      setError(result.error ?? "Unable to log in.");
-      return;
-    }
+    const normalizedEmail = email.trim().toLowerCase();
 
-    setSession(result.session);
-    setLoading(false);
-    router.replace("/dashboard");
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.user) {
+        // DB may be down — allow admin account to bypass
+        if (normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
+          setSession({ email: DEMO_EMAIL, name: DEMO_NAME, isDemo: true });
+          router.replace("/dashboard");
+          return;
+        }
+        setError(payload?.error ?? "Unable to log in.");
+        setLoading(false);
+        return;
+      }
+
+      setSession({
+        userId: payload.user.id,
+        email: payload.user.email,
+        name: payload.user.name,
+        isDemo: false,
+      });
+
+      setLoading(false);
+      router.replace("/dashboard");
+    } catch {
+      // Network completely down — allow admin account to bypass
+      if (normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        setSession({ email: DEMO_EMAIL, name: DEMO_NAME, isDemo: true });
+        router.replace("/dashboard");
+        return;
+      }
+      setError("Unable to log in right now. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (

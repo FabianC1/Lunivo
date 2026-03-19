@@ -10,8 +10,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
   }
 
+  const normalizedEmail = String(email).trim().toLowerCase();
+
   await connectToDatabase();
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
@@ -21,6 +23,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
-  // TODO: generate JWT or session
-  return NextResponse.json({ success: true, userId: user._id });
+  return NextResponse.json({
+    success: true,
+    user: {
+      id: String(user._id),
+      name: user.name,
+      email: user.email,
+    },
+  });
 }
