@@ -232,7 +232,7 @@ export default function Transactions() {
             <p className={styles.chartSub}>Running total across the period — see your spending velocity.</p>
           </div>
           <div className={styles.chartFrameTall}>
-            <Chart data={cumulativeSpending} type="line" />
+            <Chart data={cumulativeSpending} type="line" showLegend={false} />
           </div>
         </section>
 
@@ -261,7 +261,7 @@ export default function Transactions() {
               <p className={styles.chartSub}>See which week of the month drove the most spending.</p>
             </div>
             <div className={styles.chartFrameSquare}>
-              <Chart data={weeklySpending} type="bar" />
+              <Chart data={weeklySpending} type="bar" showLegend={false} />
             </div>
           </section>
         </div>

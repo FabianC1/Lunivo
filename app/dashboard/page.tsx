@@ -147,7 +147,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className={styles.chartFrameTall}>
-          <Chart data={trendData} type={trendChart} />
+          <Chart data={trendData} type={trendChart} showLegend={false} />
         </div>
       </section>
 
@@ -159,8 +159,8 @@ export default function Dashboard() {
               <p>Where your money went this month.</p>
             </div>
           </div>
-          <div className={styles.chartFrame}>
-            <Chart data={monthData.spendings} type="doughnut" />
+          <div className={`${styles.chartFrame} ${styles.chartFrameRoomy}`}>
+            <Chart data={monthData.spendings} type="doughnut" legendSpacing="roomy" />
           </div>
         </section>
 

@@ -190,6 +190,10 @@
   height: 320px;
 }
 
+.chartFrameRoomy {
+  height: 380px;
+}
+
 .chartFrameTall {
   height: 360px;
 }
@@ -208,6 +212,10 @@
   .chartFrame,
   .chartFrameTall {
     height: 300px;
+  }
+
+  .chartFrameRoomy {
+    height: 340px;
   }
 
   .title {

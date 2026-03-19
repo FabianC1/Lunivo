@@ -159,7 +159,7 @@ export default function Income() {
             <p className={styles.chartSub}>Full-year breakdown — spot your strongest and weakest months.</p>
           </div>
           <div className={styles.chartFrameTall}>
-            <Chart data={MONTHLY_INCOME} type="bar" />
+            <Chart data={MONTHLY_INCOME} type="bar" showLegend={false} />
           </div>
         </section>
 

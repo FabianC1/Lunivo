@@ -260,7 +260,7 @@ export default function Reports() {
           <p>{selectedMonth}: {formatCurrency(currentMetricValue)} · {monthChangeLabel}</p>
         </div>
         <div className={styles.chartFrameTall}>
-          <Chart data={monthlyMetricData} type={mainChartType} />
+          <Chart data={monthlyMetricData} type={mainChartType} showLegend={false} />
         </div>
       </section>
 
@@ -270,8 +270,8 @@ export default function Reports() {
             <h2>{selectedMonth} Category Breakdown</h2>
             <p>See where your monthly spendings went.</p>
           </div>
-          <div className={styles.chartFrame}>
-            <Chart data={monthDetails.categories} type="doughnut" />
+          <div className={`${styles.chartFrame} ${styles.chartFrameRoomy}`}>
+            <Chart data={monthDetails.categories} type="doughnut" legendSpacing="roomy" />
           </div>
         </section>
 
@@ -304,7 +304,7 @@ export default function Reports() {
           </div>
         </div>
         <div className={styles.chartFrameTall}>
-          <Chart data={categoryTrend} type="line" />
+          <Chart data={categoryTrend} type="line" showLegend={false} />
         </div>
       </section>
     </div>

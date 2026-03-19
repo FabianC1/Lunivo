@@ -6,7 +6,6 @@ import {
   CategoryScale,
   Chart as ChartJS,
   Filler,
-  Legend,
   LinearScale,
   LineElement,
   PointElement,
@@ -15,7 +14,7 @@ import {
 import styles from "./Chart.module.css";
 import { formatDate } from "../lib/utils";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 interface IncomeTrendPoint {
   date: string;
@@ -68,6 +67,10 @@ export default function IncomeTrendChart({ points }: IncomeTrendChartProps) {
   const gridColor = theme === "dark" ? "rgba(241, 245, 249, 0.18)" : "rgba(30, 41, 59, 0.1)";
   const lineColor = theme === "dark" ? "#22C55E" : "#10B981";
   const fillColor = theme === "dark" ? "rgba(34, 197, 94, 0.14)" : "rgba(16, 185, 129, 0.12)";
+  const lightPalette = ["#3B82F6", "#10B981", "#FBBF24", "#EF4444", "#8B5CF6", "#06B6D4"];
+  const darkPalette = ["#6366F1", "#22C55E", "#FBBF24", "#EF4444", "#8B5CF6", "#3B82F6"];
+  const palette = theme === "dark" ? darkPalette : lightPalette;
+  const pointColors = labels.map((_, index) => palette[index % palette.length]);
 
   const data = {
     labels,
@@ -82,7 +85,8 @@ export default function IncomeTrendChart({ points }: IncomeTrendChartProps) {
         borderWidth: 3,
         pointRadius: 4,
         pointHoverRadius: 6,
-        pointBackgroundColor: lineColor,
+        pointBackgroundColor: pointColors,
+        pointHoverBackgroundColor: pointColors,
         pointBorderColor: theme === "dark" ? "#0F172A" : "#FFFFFF",
         pointBorderWidth: 2,
       },
@@ -136,8 +140,14 @@ export default function IncomeTrendChart({ points }: IncomeTrendChartProps) {
   };
 
   return (
-    <div className={styles.chartWrapper}>
-      <Line data={data} options={options} />
+    <div className={styles.chartContainer}>
+      <div className={styles.chartWrapper}>
+        {labels.length > 0 ? (
+          <Line data={data} options={options} />
+        ) : (
+          <div className={styles.emptyState}>No income entries to display.</div>
+        )}
+      </div>
     </div>
   );
 }

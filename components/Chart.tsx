@@ -5,7 +5,6 @@ import {
   Chart as ChartJS,
   ArcElement,
   Tooltip,
-  Legend,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -14,12 +13,12 @@ import {
 } from 'chart.js';
 import styles from './Chart.module.css';
 import { useEffect, useState } from 'react';
+import ChartLegend from './ChartLegend';
 
 // register anything we might need for the three chart types
 ChartJS.register(
   ArcElement,
   Tooltip,
-  Legend,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -30,12 +29,22 @@ ChartJS.register(
 interface ChartProps {
   data: Record<string, number>;
   type?: 'doughnut' | 'line' | 'bar';
+  showLegend?: boolean;
+  legendSpacing?: 'default' | 'relaxed' | 'roomy';
 }
 
-export default function Chart({ data, type = 'doughnut' }: ChartProps) {
+export default function Chart({
+  data,
+  type = 'doughnut',
+  showLegend = true,
+  legendSpacing,
+}: ChartProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [visibleLabels, setVisibleLabels] = useState<Record<string, boolean>>({});
   const labels = Object.keys(data);
   const values = Object.values(data);
+  const labelSignature = labels.join('::');
+  const resolvedLegendSpacing = legendSpacing ?? (type === 'doughnut' ? 'relaxed' : 'default');
 
   useEffect(() => {
     // Get theme from localStorage or system preference
@@ -69,6 +78,18 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    setVisibleLabels((previous) => {
+      const next: Record<string, boolean> = {};
+
+      for (const label of labels) {
+        next[label] = previous[label] ?? true;
+      }
+
+      return next;
+    });
+  }, [labelSignature]);
+
   // define base palettes using actual values
   const lightPalette = [
     '#3B82F6', // blue
@@ -92,16 +113,24 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
 
   // assign a color per label by index; this guarantees uniqueness up to palette length
   const backgroundColor = labels.map((_, idx) => palette[idx % palette.length]);
+  const visibleEntries = labels.map((label, index) => ({
+    label,
+    value: values[index],
+    color: backgroundColor[index],
+  })).filter((entry) => !showLegend || visibleLabels[entry.label] !== false);
+  const visibleChartLabels = visibleEntries.map((entry) => entry.label);
+  const visibleChartValues = visibleEntries.map((entry) => entry.value);
+  const visibleChartColors = visibleEntries.map((entry) => entry.color);
 
   const textColor = theme === 'dark' ? '#F1F5F9' : '#1E293B';
   const gridColor = theme === 'dark' ? 'rgba(241, 245, 249, 0.2)' : 'rgba(30, 41, 59, 0.1)';
 
   const chartData = {
-    labels,
+    labels: visibleChartLabels,
     datasets: [
       {
-        data: values,
-        backgroundColor,
+        data: visibleChartValues,
+        backgroundColor: visibleChartColors,
         hoverOffset: 6,
         borderWidth: 2,
         borderColor: textColor, // theme-aware for visibility on all chart types
@@ -109,7 +138,11 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
         // make points more visible on line charts
         pointRadius: type === 'line' ? 6 : 0,
         pointHoverRadius: type === 'line' ? 8 : 0,
-        label: type === 'bar' ? 'Budget' : type === 'line' ? 'Trend' : undefined,
+        pointBackgroundColor: type === 'line' ? visibleChartColors : undefined,
+        pointHoverBackgroundColor: type === 'line' ? visibleChartColors : undefined,
+        pointBorderColor: type === 'line' ? (theme === 'dark' ? '#0F172A' : '#FFFFFF') : undefined,
+        pointBorderWidth: type === 'line' ? 2 : 0,
+        label: 'Value',
       },
     ],
   };
@@ -121,17 +154,7 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
     cutout: type === 'doughnut' ? '50%' : undefined,
     plugins: {
       legend: {
-        position: 'bottom' as const,
-        labels: {
-          color: textColor,
-          font: {
-            size: 14,
-            weight: 500 as any, // cast to satisfy TS
-          },
-          padding: 16,
-          usePointStyle: true,
-          pointStyle: 'circle',
-        },
+        display: false,
       },
       tooltip: {
         backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(248, 250, 252, 0.9)',
@@ -141,6 +164,16 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
         borderWidth: 1,
         cornerRadius: 8,
         displayColors: true,
+        callbacks: {
+          label(context: any) {
+            return Number(context.raw ?? 0).toLocaleString();
+          },
+        },
+      },
+    },
+    layout: {
+      padding: {
+        bottom: type === 'doughnut' ? 8 : 0,
       },
     },
     scales: (type === 'line' || type === 'bar') ? {
@@ -156,10 +189,35 @@ export default function Chart({ data, type = 'doughnut' }: ChartProps) {
   };
 
   return (
-    <div className={styles.chartWrapper}>
-      {type === 'doughnut' && <Doughnut data={chartData} options={options} />}
-      {type === 'line' && <Line data={chartData} options={options} />}
-      {type === 'bar' && <Bar data={chartData} options={options} />}
+    <div className={[styles.chartContainer, showLegend ? styles.chartContainerWithLegend : ''].join(' ').trim()}>
+      <div className={[styles.chartWrapper, showLegend ? styles.chartWrapperWithLegend : ''].join(' ').trim()}>
+        {visibleChartLabels.length > 0 ? (
+          <>
+            {type === 'doughnut' && <Doughnut data={chartData} options={options} />}
+            {type === 'line' && <Line data={chartData} options={options} />}
+            {type === 'bar' && <Bar data={chartData} options={options} />}
+          </>
+        ) : (
+          <div className={styles.emptyState}>Select at least one legend item to view the chart.</div>
+        )}
+      </div>
+
+      {showLegend && (
+        <ChartLegend
+          items={labels.map((label, index) => ({
+            label,
+            color: backgroundColor[index],
+            hidden: visibleLabels[label] === false,
+          }))}
+          onToggle={(label) => {
+            setVisibleLabels((previous) => ({
+              ...previous,
+              [label]: !(previous[label] ?? true),
+            }));
+          }}
+          spacing={resolvedLegendSpacing}
+        />
+      )}
     </div>
   );
 }

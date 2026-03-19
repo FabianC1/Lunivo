@@ -1,12 +1,29 @@
 /* Chart styles */
 
+.chartContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartContainerWithLegend {
+  padding-bottom: 0.1rem;
+}
+
 .chartWrapper {
   width: 100%;
   max-width: 900px;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 260px;
   margin: 0 auto;
   position: relative;
+}
+
+.chartWrapperWithLegend {
+  min-height: 0;
+  flex-basis: 0;
 }
 
 /* ensure canvas fills parent */
@@ -14,4 +31,16 @@
   width: 100% !important;
   height: 100% !important;
   display: block;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-color);
+  opacity: 0.7;
+  text-align: center;
+  padding: 1rem;
 }

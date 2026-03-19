@@ -180,6 +180,7 @@
 
 .chartFrame     { height: 300px; }
 .chartFrameTall { height: 340px; }
+.chartFrameRoomy { height: 360px; }
 
 /* Recent activity feed */
 .activityList {
@@ -247,4 +248,5 @@
   .kpiGrid  { grid-template-columns: repeat(2, 1fr); }
   .chartGrid { grid-template-columns: 1fr; }
   .header   { flex-direction: column; }
+  .chartFrameRoomy { height: 340px; }
 }
