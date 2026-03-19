@@ -167,7 +167,11 @@
     order: 3;
     justify-content: flex-start;
     overflow-x: auto;
-    padding-bottom: 0.2rem;
+    overflow-y: hidden;
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
+    overscroll-behavior-y: none;
+    padding-bottom: 0;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
@@ -177,6 +181,7 @@
   }
 
   .links a {
+    flex: 0 0 auto;
     white-space: nowrap;
     padding: 0.55rem 0.82rem;
   }
