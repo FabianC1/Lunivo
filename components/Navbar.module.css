@@ -69,7 +69,7 @@
   height: 4px;
   width: 100%;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--highlight-color), var(--accent-color));
+  background: var(--navbar-border-gradient);
   pointer-events: none;
   animation: underlineSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   transform-origin: left;
