@@ -163,6 +163,24 @@ export default function Chart({
     return Math.max(0, Math.floor(minVal / step) * step - 2 * step);
   })();
 
+  const formatCurrencyTick = (value: number | string) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return '£0';
+    }
+
+    const absoluteValue = Math.abs(numericValue);
+    const sign = numericValue < 0 ? '-' : '';
+
+    if (absoluteValue >= 1000) {
+      const thousands = absoluteValue / 1000;
+      return `${sign}£${thousands.toFixed(1).replace(/\.0$/, '')}k`;
+    }
+
+    return `${sign}£${absoluteValue.toLocaleString('en-GB')}`;
+  };
+
   const options: any = {
     responsive: true,
     maintainAspectRatio: false,
@@ -181,7 +199,7 @@ export default function Chart({
         displayColors: true,
         callbacks: {
           label(context: any) {
-            return Number(context.raw ?? 0).toLocaleString();
+            return `£${Number(context.raw ?? 0).toLocaleString('en-GB')}`;
           },
         },
       },
@@ -200,15 +218,8 @@ export default function Chart({
         ...(barYMin !== undefined ? { min: barYMin } : {}),
         ticks: {
           color: textColor,
-          ...(type === 'bar' ? {
-            maxTicksLimit: 6,
-            callback: (value: number | string) => {
-              const v = Number(value);
-              return v >= 1000
-                ? `£${(v / 1000).toFixed(1).replace(/\.0$/, '')}k`
-                : `£${v}`;
-            },
-          } : {}),
+          maxTicksLimit: type === 'bar' ? 6 : undefined,
+          callback: (value: number | string) => formatCurrencyTick(value),
         },
         grid: { color: gridColor },
       },
