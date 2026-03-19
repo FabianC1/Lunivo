@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import styles from "./profile.module.css";
-import { AuthSession, getSession, setSession } from "../../lib/auth";
+import { AuthSession, clearSession, getSession, setSession } from "../../lib/auth";
 
 type SettingsTab = "account" | "appearance" | "preferences" | "notifications" | "billing" | "security" | "data" | "privacy" | "help" | "danger";
 
@@ -62,7 +62,6 @@ export default function ProfilePage() {
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [notifMessage, setNotifMessage] = useState("");
 
-  const [timezone, setTimezone] = useState("UTC");
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("GBP");
   const [country, setCountry] = useState("");
@@ -108,6 +107,11 @@ export default function ProfilePage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
+  function handleLogout() {
+    clearSession();
+    router.replace("/login");
+  }
+
   async function handleNameSave(e: FormEvent) {
     e.preventDefault();
     if (!session) {
@@ -129,7 +133,7 @@ export default function ProfilePage() {
       const updated = { ...session, name: normalizedName };
       setSession(updated);
       setSessionState(updated);
-      setNameMessage("Name updated for this demo session.");
+      setNameMessage("Changes saved for this local admin session.");
       setIsSavingName(false);
       return;
     }
@@ -156,7 +160,7 @@ export default function ProfilePage() {
       setSession(updated);
       setSessionState(updated);
       setName(payload.user.name);
-      setNameMessage("Profile name updated.");
+      setNameMessage("Account changes saved.");
       setIsSavingName(false);
     } catch {
       setNameError("Unable to update your name right now.");
@@ -303,7 +307,7 @@ export default function ProfilePage() {
         {activeTab === "account" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Account</h1>
-            <p className={styles.subheading}>Manage your profile identity, backup contacts, and account details.</p>
+            <p className={styles.subheading}>Manage your profile identity and backup contacts.</p>
 
             <div className={styles.accountHeader}>
               <div className={styles.avatar} aria-hidden="true">
@@ -313,6 +317,10 @@ export default function ProfilePage() {
                 <h3>{session.name}</h3>
                 <p>{session.email}</p>
               </div>
+              <p className={styles.accountHeaderBadge}>
+                {session.isDemo ? "Local admin" : "Database account"}<br />
+                Member since {new Date().toLocaleDateString()}
+              </p>
             </div>
 
             <form className={styles.form} onSubmit={handleNameSave}>
@@ -333,18 +341,10 @@ export default function ProfilePage() {
               </label>
               <input id="email" className={styles.input} value={session.email} disabled />
 
-              {nameError && <p className={styles.errorText}>{nameError}</p>}
-              {nameMessage && <p className={styles.successText}>{nameMessage}</p>}
+              <div className={styles.divider} style={{ marginBottom: 0 }} />
 
-              <button type="submit" className={styles.primaryButton} disabled={isSavingName}>
-                {isSavingName ? "Saving..." : "Save account changes"}
-              </button>
-            </form>
+              <h3 className={styles.sectionSubtitle} style={{ marginTop: "0.4rem" }}>Backup Contact</h3>
 
-            <div className={styles.divider} />
-
-            <h3 className={styles.sectionSubtitle}>Backup Contact</h3>
-            <form className={styles.form} onSubmit={saveContactDetails}>
               <label className={styles.fieldLabel} htmlFor="backupEmail">
                 Backup email
               </label>
@@ -371,19 +371,20 @@ export default function ProfilePage() {
                 autoComplete="tel"
               />
 
-              {contactMessage && <p className={styles.successText}>{contactMessage}</p>}
+              {nameError && <p className={styles.errorText}>{nameError}</p>}
+              {(nameMessage || contactMessage) && (
+                <p className={styles.successText}>{nameMessage || contactMessage}</p>
+              )}
 
-              <button type="submit" className={styles.secondaryButton}>
-                Save backup contact
-              </button>
+              <div className={styles.accountActions}>
+                <button type="submit" className={styles.primaryButton} disabled={isSavingName}>
+                  {isSavingName ? "Saving..." : "Save account changes"}
+                </button>
+                <button type="button" className={styles.secondaryButton} onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
             </form>
-
-            <div className={styles.divider} />
-            <div className={styles.inlineCard}>
-              <h3 className={styles.sectionSubtitle}>Account Status</h3>
-              <p>Member since: {new Date().toLocaleDateString()}</p>
-              <p>Session type: {session.isDemo ? "Demo" : "Database-backed account"}</p>
-            </div>
           </div>
         )}
 
@@ -401,7 +402,7 @@ export default function ProfilePage() {
         {activeTab === "preferences" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Preferences</h1>
-            <p className={styles.subheading}>Set your regional defaults for language, timezone, country, and currency display.</p>
+            <p className={styles.subheading}>Set your regional defaults for language, country, and currency display.</p>
 
             <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
               <label className={styles.fieldLabel} htmlFor="language">
@@ -418,25 +419,6 @@ export default function ProfilePage() {
                 <option value="fr">French</option>
                 <option value="de">German</option>
                 <option value="pt">Portuguese</option>
-              </select>
-
-              <label className={styles.fieldLabel} htmlFor="timezone">
-                Timezone
-              </label>
-              <select
-                id="timezone"
-                className={styles.input}
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-              >
-                <option value="UTC">UTC</option>
-                <option value="GMT">GMT</option>
-                <option value="EST">EST</option>
-                <option value="CST">CST</option>
-                <option value="PST">PST</option>
-                <option value="CET">CET</option>
-                <option value="IST">IST</option>
-                <option value="JST">JST</option>
               </select>
 
               <label className={styles.fieldLabel} htmlFor="country">
@@ -469,6 +451,7 @@ export default function ProfilePage() {
                 <option value="IT">Italy</option>
                 <option value="NL">Netherlands</option>
                 <option value="SE">Sweden</option>
+                <option value="RO">Romania</option>
               </select>
 
               <label className={styles.fieldLabel} htmlFor="currency">
@@ -493,6 +476,7 @@ export default function ProfilePage() {
                 <option value="SEK">SEK — Swedish Krona (kr)</option>
                 <option value="SGD">SGD — Singapore Dollar (S$)</option>
                 <option value="AED">AED — UAE Dirham (د.إ)</option>
+                <option value="RON">RON — Romanian Leu (lei)</option>
               </select>
               <p className={styles.hintText}>
                 This is a display label only. Lunivo does not convert between currencies — all amounts you enter are already in your own currency.

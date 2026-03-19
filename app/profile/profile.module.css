@@ -90,6 +90,14 @@
   border-bottom: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
 }
 
+.accountHeaderBadge {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--button-gradient-start) 85%, transparent);
+  text-align: right;
+  white-space: nowrap;
+}
+
 .avatar {
   width: 3.5rem;
   height: 3.5rem;
@@ -112,6 +120,10 @@
   margin: 0.2rem 0 0;
   color: color-mix(in srgb, var(--text-color) 68%, transparent);
   word-break: break-all;
+}
+
+.sessionBadge {
+  display: none;
 }
 
 .form {
@@ -144,6 +156,22 @@
 .input:disabled {
   cursor: not-allowed;
   opacity: 0.75;
+}
+
+.accountActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.accountActions .primaryButton {
+  flex: 1 1 260px;
+  margin-top: 0;
+}
+
+.accountActions .secondaryButton {
+  flex: 0 0 auto;
 }
 
 select.input {

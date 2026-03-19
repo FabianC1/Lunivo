@@ -45,7 +45,7 @@ export default function Login() {
       if (!response.ok || !payload?.user) {
         // DB may be down — allow admin account to bypass
         if (normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
-          setSession({ email: DEMO_EMAIL, name: DEMO_NAME, isDemo: true });
+          setSession({ email: DEMO_EMAIL, name: DEMO_NAME, isDemo: true }, rememberMe);
           router.replace("/dashboard");
           return;
         }
@@ -59,14 +59,14 @@ export default function Login() {
         email: payload.user.email,
         name: payload.user.name,
         isDemo: false,
-      });
+      }, rememberMe);
 
       setLoading(false);
       router.replace("/dashboard");
     } catch {
       // Network completely down — allow admin account to bypass
       if (normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
-        setSession({ email: DEMO_EMAIL, name: DEMO_NAME, isDemo: true });
+        setSession({ email: DEMO_EMAIL, name: DEMO_NAME, isDemo: true }, rememberMe);
         router.replace("/dashboard");
         return;
       }

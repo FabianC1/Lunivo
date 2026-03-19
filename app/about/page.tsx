@@ -61,7 +61,7 @@ export default function AboutPage() {
             <li>Reports: bar, line, and trend charts</li>
             <li>Multi-account support (Main + Savings)</li>
             <li>Secure signup, login, and bcrypt-hashed passwords</li>
-            <li>Profile with timezone, country &amp; currency preferences</li>
+            <li>Profile with country &amp; currency preferences</li>
           </ul>
         </div>
       </section>
