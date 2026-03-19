@@ -183,12 +183,17 @@
 
 .listWrapper {
   overflow-x: auto;
+  overflow-y: hidden;
   border-radius: 0.75rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-.table { width: 100%; border-collapse: collapse; }
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
 
 .table th {
   padding: 0.9rem 1rem;
@@ -221,6 +226,7 @@
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .emptyRow { text-align: center; opacity: 0.5; padding: 2rem !important; }
