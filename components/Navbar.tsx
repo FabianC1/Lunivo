@@ -25,7 +25,7 @@ export default function Navbar() {
           <Link href="/transactions" className={pathname === '/transactions' ? styles.active : ''}>Spendings</Link>
         </li>
         <li>
-          <Link href="/events" className={pathname === '/events' ? styles.active : ''}>Events</Link>
+          <Link href="/goals" className={pathname === '/goals' ? styles.active : ''}>Goals</Link>
         </li>
       </ul>
       <div className={styles.actions}>
