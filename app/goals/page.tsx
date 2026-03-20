@@ -36,13 +36,45 @@ function storageKey(): string {
 }
 
 function loadGoals(): GoalItem[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return getInitialGoals();
   try {
     const raw = localStorage.getItem(storageKey());
-    return raw ? (JSON.parse(raw) as GoalItem[]) : [];
+    return raw ? (JSON.parse(raw) as GoalItem[]) : getInitialGoals();
   } catch {
-    return [];
+    return getInitialGoals();
   }
+}
+
+function getInitialGoals(): GoalItem[] {
+  const session = getSession();
+  // Only show sample goals for demo/admin accounts
+  const isDemo = session?.isDemo || session?.email === "galaselfabian@gmail.com";
+  if (!isDemo) return [];
+
+  return [
+    {
+      id: crypto.randomUUID(),
+      title: "Buy an apartment",
+      kind: "Home",
+      targetAmount: 150000,
+      savedAmount: 42500,
+      targetDate: "2027-12-31",
+      notes: "First-time buyer. Need to save for down payment and closing costs.",
+      completed: false,
+      createdAt: new Date("2026-01-15").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "Summer wedding in Portugal",
+      kind: "Wedding",
+      targetAmount: 25000,
+      savedAmount: 18900,
+      targetDate: "2026-07-20",
+      notes: "Ceremony, reception, and travel for 80 guests.",
+      completed: false,
+      createdAt: new Date("2025-10-20").toISOString(),
+    },
+  ];
 }
 
 function persistGoals(goals: GoalItem[]) {

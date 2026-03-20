@@ -113,16 +113,14 @@
 .formActions {
   grid-column: 1 / -1;
   display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 /* ── Buttons ────────────────────────────────────────────────────── */
 .primaryButton {
   border: none;
   border-radius: 0.72rem;
-  padding: 0.72rem 1.1rem;
+  padding: 0.72rem 1rem;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -132,13 +130,22 @@
     var(--button-gradient-start) 0%,
     var(--button-gradient-end) 100%
   );
-  white-space: nowrap;
-  flex-shrink: 0;
-  align-self: flex-start;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
 .primaryButton:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+}
+
+.primaryButton:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+.formActions .primaryButton {
+  flex: 1;
 }
 
 .cancelButton {
@@ -146,15 +153,30 @@
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.5);
   border-radius: 0.72rem;
-  padding: 0.72rem 1.1rem;
+  padding: 0.72rem 1rem;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
 .cancelButton:hover {
   background: rgba(239, 68, 68, 0.08);
   border-color: #ef4444;
+}
+
+.cancelButton:active {
+  opacity: 0.9;
+}
+
+.formActions .cancelButton {
+  flex: 1;
+}
+
+.primaryButton:focus-visible,
+.cancelButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .completeButton {
