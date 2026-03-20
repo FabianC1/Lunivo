@@ -5,191 +5,306 @@ import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
 import { formatCurrency } from "../../lib/utils";
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] as const;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 type MonthKey = (typeof MONTHS)[number];
-type TrendMetric = "income" | "spendings" | "net";
-type ChartKind = "bar" | "line";
+type Metric = "spendings" | "income" | "net";
+type ChartKind = "line" | "bar";
+type CategoryName = "Food" | "Transport" | "Utilities" | "Entertainment" | "Other";
 
-interface MonthData {
+interface MonthReport {
   income: number;
-  spendings: Record<string, number>;
+  spendings: number;
+  categories: Record<CategoryName, number>;
 }
 
-const MONTH_DATA: Record<MonthKey, MonthData> = {
-  Jan: { income: 3000, spendings: { Food: 315, Transport: 148, Utilities: 290, Entertainment: 162, Other: 105 } },
-  Feb: { income: 3080, spendings: { Food: 308, Transport: 136, Utilities: 295, Entertainment: 174, Other: 117 } },
-  Mar: { income: 3150, spendings: { Food: 328, Transport: 142, Utilities: 278, Entertainment: 180, Other: 112 } },
-  Apr: { income: 3220, spendings: { Food: 302, Transport: 134, Utilities: 280, Entertainment: 196, Other: 118 } },
-  May: { income: 3320, spendings: { Food: 298, Transport: 132, Utilities: 285, Entertainment: 218, Other: 117 } },
-  Jun: { income: 3400, spendings: { Food: 322, Transport: 152, Utilities: 268, Entertainment: 210, Other: 108 } },
-  Jul: { income: 3360, spendings: { Food: 330, Transport: 143, Utilities: 262, Entertainment: 206, Other: 109 } },
-  Aug: { income: 3440, spendings: { Food: 318, Transport: 128, Utilities: 276, Entertainment: 202, Other: 116 } },
-  Sep: { income: 3480, spendings: { Food: 322, Transport: 133, Utilities: 274, Entertainment: 194, Other: 117 } },
-  Oct: { income: 3560, spendings: { Food: 338, Transport: 148, Utilities: 272, Entertainment: 172, Other: 130 } },
-  Nov: { income: 3620, spendings: { Food: 340, Transport: 151, Utilities: 278, Entertainment: 175, Other: 126 } },
-  Dec: { income: 3740, spendings: { Food: 300, Transport: 130, Utilities: 288, Entertainment: 212, Other: 120 } },
-};
+type YearReport = Record<MonthKey, MonthReport>;
 
-const RECENT_TRANSACTIONS = [
-  { id: 1, date: "18 Mar 2026", description: "Groceries",    category: "Food",          amount: -42.5  },
-  { id: 2, date: "17 Mar 2026", description: "Salary",       category: "Income",        amount:  3000  },
-  { id: 3, date: "15 Mar 2026", description: "Electricity",  category: "Utilities",     amount: -95.0  },
-  { id: 4, date: "14 Mar 2026", description: "Bus pass",     category: "Transport",     amount: -35.0  },
-  { id: 5, date: "12 Mar 2026", description: "Netflix",      category: "Entertainment", amount: -15.99 },
-  { id: 6, date: "10 Mar 2026", description: "Freelance",    category: "Income",        amount:  750   },
+const CATEGORY_SPLITS: Record<CategoryName, number>[] = [
+  { Food: 0.32, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Other: 0.16 },
+  { Food: 0.31, Transport: 0.13, Utilities: 0.23, Entertainment: 0.17, Other: 0.16 },
+  { Food: 0.33, Transport: 0.14, Utilities: 0.21, Entertainment: 0.17, Other: 0.15 },
+  { Food: 0.3, Transport: 0.13, Utilities: 0.22, Entertainment: 0.19, Other: 0.16 },
+  { Food: 0.29, Transport: 0.13, Utilities: 0.22, Entertainment: 0.21, Other: 0.15 },
+  { Food: 0.31, Transport: 0.15, Utilities: 0.2, Entertainment: 0.2, Other: 0.14 },
+  { Food: 0.32, Transport: 0.14, Utilities: 0.2, Entertainment: 0.2, Other: 0.14 },
+  { Food: 0.3, Transport: 0.12, Utilities: 0.23, Entertainment: 0.2, Other: 0.15 },
+  { Food: 0.31, Transport: 0.13, Utilities: 0.22, Entertainment: 0.18, Other: 0.16 },
+  { Food: 0.33, Transport: 0.14, Utilities: 0.21, Entertainment: 0.16, Other: 0.16 },
+  { Food: 0.32, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Other: 0.16 },
+  { Food: 0.29, Transport: 0.12, Utilities: 0.24, Entertainment: 0.2, Other: 0.15 },
 ];
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Food: "#3B82F6",
-  Transport: "#10B981",
-  Utilities: "#FBBF24",
-  Entertainment: "#EF4444",
-  Other: "#8B5CF6",
-  Income: "#22C55E",
+function splitSpendings(total: number, monthIndex: number): Record<CategoryName, number> {
+  const split = CATEGORY_SPLITS[monthIndex];
+  const categories: Record<CategoryName, number> = {
+    Food: Math.round(total * split.Food),
+    Transport: Math.round(total * split.Transport),
+    Utilities: Math.round(total * split.Utilities),
+    Entertainment: Math.round(total * split.Entertainment),
+    Other: 0,
+  };
+
+  const assigned = categories.Food + categories.Transport + categories.Utilities + categories.Entertainment;
+  categories.Other = Math.max(0, total - assigned);
+
+  return categories;
+}
+
+function buildYearReport(incomes: number[], spendings: number[]): YearReport {
+  const year = {} as YearReport;
+
+  MONTHS.forEach((month, index) => {
+    year[month] = {
+      income: incomes[index],
+      spendings: spendings[index],
+      categories: splitSpendings(spendings[index], index),
+    };
+  });
+
+  return year;
+}
+
+const REPORT_DATA: Record<string, YearReport> = {
+  "2025": buildYearReport(
+    [2850, 2900, 3000, 3050, 3150, 3200, 3100, 3180, 3220, 3300, 3350, 3500],
+    [1960, 2020, 2140, 2080, 2230, 2310, 2260, 2210, 2190, 2340, 2400, 2480]
+  ),
+  "2026": buildYearReport(
+    [3000, 3080, 3150, 3220, 3320, 3400, 3360, 3440, 3480, 3560, 3620, 3740],
+    [2100, 2180, 2240, 2200, 2350, 2420, 2380, 2440, 2470, 2520, 2590, 2680]
+  ),
 };
 
+function formatPercentage(value: number): string {
+  return `${value.toFixed(1)}%`;
+}
+
 export default function Dashboard() {
+  const years = Object.keys(REPORT_DATA);
+  const [selectedYear, setSelectedYear] = useState(years[years.length - 1]);
   const [selectedMonth, setSelectedMonth] = useState<MonthKey>("Mar");
-  const [trendMetric, setTrendMetric] = useState<TrendMetric>("spendings");
-  const [trendChart, setTrendChart] = useState<ChartKind>("bar");
+  const [selectedMetric, setSelectedMetric] = useState<Metric>("spendings");
+  const [mainChartType, setMainChartType] = useState<ChartKind>("line");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryName>("Food");
 
-  const monthData = MONTH_DATA[selectedMonth];
-  const totalSpendings = Object.values(monthData.spendings).reduce((s, v) => s + v, 0);
-  const balance = monthData.income - totalSpendings;
-  const savingsRate = monthData.income > 0 ? ((balance / monthData.income) * 100).toFixed(1) : "0.0";
-  const topCategory = Object.entries(monthData.spendings).sort(([, a], [, b]) => b - a)[0];
+  const yearData = REPORT_DATA[selectedYear];
 
-  const trendData = MONTHS.reduce((acc, m) => {
-    const d = MONTH_DATA[m];
-    const spend = Object.values(d.spendings).reduce((s, v) => s + v, 0);
-    acc[m] =
-      trendMetric === "income" ? d.income :
-      trendMetric === "net"    ? d.income - spend :
-      spend;
-    return acc;
+  const monthlyMetricData = MONTHS.reduce((result, month) => {
+    const report = yearData[month];
+    const value =
+      selectedMetric === "income"
+        ? report.income
+        : selectedMetric === "net"
+          ? report.income - report.spendings
+          : report.spendings;
+    result[month] = value;
+    return result;
   }, {} as Record<string, number>);
 
-  const trendLabel =
-    trendMetric === "income" ? "Income Trend (2026)" :
-    trendMetric === "net"    ? "Net Savings Trend (2026)" :
-    "Spending Trend (2026)";
+  const monthDetails = yearData[selectedMonth];
+  const monthNet = monthDetails.income - monthDetails.spendings;
+
+  const categoryTrend = MONTHS.reduce((result, month) => {
+    result[month] = yearData[month].categories[selectedCategory];
+    return result;
+  }, {} as Record<string, number>);
+
+  const selectedMonthSummary = {
+    Income: monthDetails.income,
+    Spendings: monthDetails.spendings,
+    Net: monthNet,
+  };
+
+  const annualIncome = MONTHS.reduce((sum, month) => sum + yearData[month].income, 0);
+  const annualSpendings = MONTHS.reduce((sum, month) => sum + yearData[month].spendings, 0);
+  const annualNet = annualIncome - annualSpendings;
+  const savingsRate = annualIncome > 0 ? (annualNet / annualIncome) * 100 : 0;
+  const averageMonthlySpendings = annualSpendings / MONTHS.length;
+
+  const bestNetMonth = MONTHS.reduce((best, month) => {
+    const value = yearData[month].income - yearData[month].spendings;
+    if (!best || value > best.value) {
+      return { month, value };
+    }
+    return best;
+  }, null as { month: MonthKey; value: number } | null);
+
+  const selectedMonthIndex = MONTHS.indexOf(selectedMonth);
+  const previousMonth = selectedMonthIndex > 0 ? MONTHS[selectedMonthIndex - 1] : null;
+  const currentMetricValue = monthlyMetricData[selectedMonth];
+  const previousMetricValue = previousMonth ? monthlyMetricData[previousMonth] : null;
+  const monthChange = previousMetricValue === null ? null : currentMetricValue - previousMetricValue;
+
+  const metricLabel =
+    selectedMetric === "income"
+      ? "Income"
+      : selectedMetric === "net"
+        ? "Net"
+        : "Spendings";
+
+  const monthChangeLabel =
+    monthChange === null
+      ? "No prior month"
+      : `${monthChange >= 0 ? "+" : ""}${formatCurrency(monthChange)} vs ${previousMonth}`;
 
   return (
-    <div className={styles.container + " container"}>
+    <div className={styles.container + ' container'}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Dashboard</h1>
-          <p className={styles.subtitle}>Your complete financial snapshot for 2026.</p>
+          <p className={styles.subtitle}>Monthly insights, trends, and reports in one place.</p>
         </div>
-        <label className={styles.controlItem}>
-          <span>Month</span>
-          <select
-            className={styles.select}
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value as MonthKey)}
-          >
-            {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </label>
+        <div className={styles.controls}>
+          <label className={styles.controlItem}>
+            <span>Year</span>
+            <select
+              className={styles.select}
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.controlItem}>
+            <span>Month</span>
+            <select
+              className={styles.select}
+              value={selectedMonth}
+              onChange={(event) => setSelectedMonth(event.target.value as MonthKey)}
+            >
+              {MONTHS.map((month) => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
-      <div className={styles.kpiGrid}>
-        <article className={styles.kpiCard}>
-          <p>Balance</p>
-          <h3 className={balance >= 0 ? styles.positive : styles.negative}>{formatCurrency(balance)}</h3>
-          <span>{selectedMonth} net savings</span>
+      <div className={styles.toggleRow}>
+        <div className={styles.toggleGroup}>
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${selectedMetric === "spendings" ? styles.toggleButtonActive : ""}`}
+            onClick={() => setSelectedMetric("spendings")}
+          >
+            Spendings
+          </button>
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${selectedMetric === "income" ? styles.toggleButtonActive : ""}`}
+            onClick={() => setSelectedMetric("income")}
+          >
+            Income
+          </button>
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${selectedMetric === "net" ? styles.toggleButtonActive : ""}`}
+            onClick={() => setSelectedMetric("net")}
+          >
+            Net
+          </button>
+        </div>
+
+        <div className={styles.toggleGroup}>
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${mainChartType === "line" ? styles.toggleButtonActive : ""}`}
+            onClick={() => setMainChartType("line")}
+          >
+            Line
+          </button>
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${mainChartType === "bar" ? styles.toggleButtonActive : ""}`}
+            onClick={() => setMainChartType("bar")}
+          >
+            Bar
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.summaryGrid}>
+        <article className={styles.summaryCard}>
+          <p>Annual Income</p>
+          <h3>{formatCurrency(annualIncome)}</h3>
+          <span>Across {selectedYear}</span>
         </article>
-        <article className={styles.kpiCard}>
-          <p>Income</p>
-          <h3>{formatCurrency(monthData.income)}</h3>
-          <span>This month</span>
+
+        <article className={styles.summaryCard}>
+          <p>Annual Spendings</p>
+          <h3>{formatCurrency(annualSpendings)}</h3>
+          <span>Avg {formatCurrency(averageMonthlySpendings)} / month</span>
         </article>
-        <article className={styles.kpiCard}>
-          <p>Spendings</p>
-          <h3>{formatCurrency(totalSpendings)}</h3>
-          <span>Across {Object.keys(monthData.spendings).length} categories</span>
-        </article>
-        <article className={styles.kpiCard}>
+
+        <article className={styles.summaryCard}>
           <p>Savings Rate</p>
-          <h3>{savingsRate}%</h3>
-          <span>of income saved</span>
+          <h3>{formatPercentage(savingsRate)}</h3>
+          <span>{formatCurrency(annualNet)} net this year</span>
         </article>
-        <article className={styles.kpiCard}>
-          <p>Top Category</p>
-          <h3>{topCategory[0]}</h3>
-          <span>{formatCurrency(topCategory[1])} this month</span>
+
+        <article className={styles.summaryCard}>
+          <p>Best Net Month</p>
+          <h3>{bestNetMonth?.month ?? "-"}</h3>
+          <span>{bestNetMonth ? formatCurrency(bestNetMonth.value) : "No data"}</span>
         </article>
       </div>
 
       <section className={styles.chartSection}>
         <div className={styles.sectionHeader}>
-          <div>
-            <h2>{trendLabel}</h2>
-            <p>Compare across all months of the year.</p>
-          </div>
-          <div className={styles.controlsRow}>
-            <div className={styles.toggleGroup}>
-              {(["income", "spendings", "net"] as TrendMetric[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`${styles.toggleButton} ${trendMetric === m ? styles.toggleButtonActive : ""}`}
-                  onClick={() => setTrendMetric(m)}
-                >
-                  {m.charAt(0).toUpperCase() + m.slice(1)}
-                </button>
-              ))}
-            </div>
-            <div className={styles.toggleGroup}>
-              <button type="button" className={`${styles.toggleButton} ${trendChart === "bar" ? styles.toggleButtonActive : ""}`} onClick={() => setTrendChart("bar")}>Bar</button>
-              <button type="button" className={`${styles.toggleButton} ${trendChart === "line" ? styles.toggleButtonActive : ""}`} onClick={() => setTrendChart("line")}>Line</button>
-            </div>
-          </div>
+          <h2>{metricLabel} Trend ({selectedYear})</h2>
+          <p>{selectedMonth}: {formatCurrency(currentMetricValue)} · {monthChangeLabel}</p>
         </div>
         <div className={styles.chartFrameTall}>
-          <Chart data={trendData} type={trendChart} showLegend={false} />
+          <Chart data={monthlyMetricData} type={mainChartType} showLegend={false} />
         </div>
       </section>
 
       <div className={styles.chartGrid}>
         <section className={styles.chartSection}>
           <div className={styles.sectionHeader}>
-            <div>
-              <h2>{selectedMonth} Breakdown</h2>
-              <p>Where your money went this month.</p>
-            </div>
+            <h2>{selectedMonth} Category Breakdown</h2>
+            <p>See where your monthly spendings went.</p>
           </div>
           <div className={`${styles.chartFrame} ${styles.chartFrameRoomy}`}>
-            <Chart data={monthData.spendings} type="doughnut" legendSpacing="roomy" />
+            <Chart data={monthDetails.categories} type="doughnut" legendSpacing="roomy" />
           </div>
         </section>
 
         <section className={styles.chartSection}>
           <div className={styles.sectionHeader}>
-            <div>
-              <h2>Recent Activity</h2>
-              <p>Your 6 most recent transactions.</p>
-            </div>
+            <h2>{selectedMonth} Income vs Spendings</h2>
+            <p>Quick balance snapshot for the selected month.</p>
           </div>
-          <ul className={styles.activityList}>
-            {RECENT_TRANSACTIONS.map((t) => (
-              <li key={t.id} className={styles.activityItem}>
-                <span
-                  className={styles.activityDot}
-                  style={{ background: CATEGORY_COLORS[t.category] ?? "#8B5CF6" }}
-                />
-                <div className={styles.activityInfo}>
-                  <span className={styles.activityDesc}>{t.description}</span>
-                  <span className={styles.activityDate}>{t.date} · {t.category}</span>
-                </div>
-                <span className={t.amount >= 0 ? styles.activityPos : styles.activityNeg}>
-                  {t.amount >= 0 ? "+" : ""}{formatCurrency(Math.abs(t.amount))}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className={styles.chartFrame}>
+            <Chart data={selectedMonthSummary} type="bar" />
+          </div>
         </section>
       </div>
+
+      <section className={styles.chartSection}>
+        <div className={styles.sectionHeader}>
+          <h2>Category Trend</h2>
+          <div className={styles.inlineControl}>
+            <label htmlFor="dashboard-category">Category</label>
+            <select
+              id="dashboard-category"
+              className={styles.select}
+              value={selectedCategory}
+              onChange={(event) => setSelectedCategory(event.target.value as CategoryName)}
+            >
+              {Object.keys(monthDetails.categories).map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className={styles.chartFrameTall}>
+          <Chart data={categoryTrend} type="line" showLegend={false} />
+        </div>
+      </section>
     </div>
   );
 }[{
