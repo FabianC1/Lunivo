@@ -1,3 +1,4 @@
+import Link from "next/link";
 import styles from "./subscriptions.module.css";
 
 const tiers = [
@@ -65,9 +66,12 @@ export default function SubscriptionsPage() {
                 <li key={feature}>{feature}</li>
               ))}
             </ul>
-            <button type="button" className={styles.cta}>
+            <Link
+              href={`/register?plan=${tier.name.toLowerCase()}`}
+              className={styles.cta}
+            >
               Choose {tier.name}
-            </button>
+            </Link>
           </article>
         ))}
       </section>

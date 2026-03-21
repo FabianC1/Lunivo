@@ -122,6 +122,9 @@
   font-weight: 700;
   color: #fff;
   background: var(--primary-color);
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .cta:hover {
