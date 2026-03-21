@@ -4,6 +4,7 @@
   "/about/page": "app/about/page.js",
   "/api/accounts/[id]/route": "app/api/accounts/[id]/route.js",
   "/api/accounts/route": "app/api/accounts/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/api/login/route": "app/api/login/route.js",
   "/api/profile/password/route": "app/api/profile/password/route.js",
   "/api/profile/route": "app/api/profile/route.js",

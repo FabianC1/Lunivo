@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import styles from "./register.module.css";
 import { getSession, setSession } from "../../lib/auth";
 
@@ -35,6 +36,7 @@ export default function Register() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "">("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const strength = getStrength(password);
@@ -104,6 +106,13 @@ export default function Register() {
       setErrors({ email: "Unable to create account right now. Please try again." });
       setLoading(false);
     }
+  }
+
+  async function handleOAuthRegister(provider: "google") {
+    setErrors({});
+    setOauthLoading(provider);
+    await signIn(provider, { callbackUrl: "/dashboard" });
+    setOauthLoading("");
   }
 
   return (
@@ -247,6 +256,22 @@ export default function Register() {
           </button>
         </form>
 
+        <div className={styles.divider}>
+          <span>or sign up with</span>
+        </div>
+
+        <div className={styles.oauthGrid}>
+          <button
+            type="button"
+            className={styles.oauthBtn}
+            onClick={() => handleOAuthRegister("google")}
+            disabled={loading || oauthLoading !== ""}
+          >
+            <GoogleIcon />
+            {oauthLoading === "google" ? "Connecting..." : "Sign up with Google"}
+          </button>
+        </div>
+
         <p className={styles.switchText}>
           Already have an account?{" "}
           <Link href="/login" className={styles.switchLink}>Sign in</Link>
@@ -270,6 +295,17 @@ function EyeOffIcon() {
     <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
       <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.24-.96 2.3-2.04 3.01l3.3 2.56c1.92-1.77 3.04-4.38 3.04-7.47 0-.7-.06-1.37-.18-2H12z"/>
+      <path fill="#34A853" d="M12 22c2.76 0 5.08-.91 6.78-2.47l-3.3-2.56c-.91.61-2.08.98-3.48.98-2.67 0-4.93-1.8-5.74-4.22l-3.41 2.64A10 10 0 0 0 12 22z"/>
+      <path fill="#4A90E2" d="M6.26 13.73A6.01 6.01 0 0 1 6 12c0-.6.1-1.17.26-1.73l-3.41-2.64A10 10 0 0 0 2 12c0 1.6.38 3.11 1.05 4.37l3.21-2.64z"/>
+      <path fill="#FBBC05" d="M12 6.05c1.5 0 2.84.52 3.9 1.54l2.93-2.93C17.07 2.99 14.76 2 12 2A10 10 0 0 0 3.05 7.63l3.41 2.64C7.07 7.85 9.33 6.05 12 6.05z"/>
     </svg>
   );
 }

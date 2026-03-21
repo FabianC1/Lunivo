@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { signOut } from "next-auth/react";
 import styles from "./profile.module.css";
 import { AuthSession, clearSession, getSession, setSession } from "../../lib/auth";
 
@@ -37,7 +38,7 @@ export default function ProfilePage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const tabFromUrl = searchParams.get("tab");
+  const tabFromUrl = searchParams?.get("tab");
   const [activeTab, setActiveTab] = useState<SettingsTab>(
     TAB_ITEMS.some((tab) => tab.id === tabFromUrl) ? (tabFromUrl as SettingsTab) : "account"
   );
@@ -92,7 +93,7 @@ export default function ProfilePage() {
   }, [router]);
 
   useEffect(() => {
-    const tab = searchParams.get("tab");
+    const tab = searchParams?.get("tab");
     if (tab && TAB_ITEMS.some((t) => t.id === tab)) {
       setActiveTab(tab as SettingsTab);
     }
@@ -102,13 +103,14 @@ export default function ProfilePage() {
 
   function setTab(tab: SettingsTab) {
     setActiveTab(tab);
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", tab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     clearSession();
+    await signOut({ redirect: false });
     router.replace("/login");
   }
 

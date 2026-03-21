@@ -52,6 +52,31 @@ textarea {
   font-family: inherit;
 }
 
+/* Keep browser autofill visually identical to normal typed input. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-color) !important;
+  caret-color: var(--text-color);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-color) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-color) inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+input:autofill,
+textarea:autofill,
+select:autofill {
+  color: var(--text-color) !important;
+  background-color: var(--bg-color) !important;
+  box-shadow: 0 0 0 1000px var(--bg-color) inset !important;
+}
+
 
 a {
   color: inherit;

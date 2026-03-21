@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/predev.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -15,6 +16,7 @@
     "date-fns": "^4.1.0",
     "mongoose": "^9.2.4",
     "next": "^16.1.6",
+    "next-auth": "^4.24.13",
     "react": "^18",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18"

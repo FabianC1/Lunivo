@@ -298,6 +298,56 @@
   cursor: not-allowed;
 }
 
+.divider {
+  margin: 1rem 0 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.oauthGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.oauthBtn {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.625rem;
+  background: var(--card-color);
+  color: var(--text-color);
+  padding: 0.62rem 0.7rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.oauthBtn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--card-color) 75%, var(--bg-color) 25%);
+}
+
+.oauthBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 /* ── Spinner ── */
 .spinner {
   display: inline-block;
@@ -333,4 +383,10 @@
 
 .switchLink:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .oauthGrid {
+    grid-template-columns: 1fr;
+  }
 }
