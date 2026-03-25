@@ -161,13 +161,6 @@
   flex-wrap: wrap;
 }
 
-.controlsBar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.85rem;
-}
-
 .iconControl {
   position: relative;
 }
@@ -335,5 +328,5 @@
   .kpiGrid    { grid-template-columns: repeat(2, 1fr); }
   .pageHeader { flex-direction: column; }
   .tableHeader { flex-direction: column; align-items: flex-start; }
-  .controlsBar { margin-top: 0.2rem; }
+  .tableActions { width: 100%; justify-content: flex-start; }
 }
