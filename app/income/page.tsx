@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./income.module.css";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import IncomeTrendChart from "../../components/IncomeTrendChart";
 import { formatCurrency, formatDate } from "../../lib/utils";
+import { getSession } from "../../lib/auth";
 
 interface Transaction {
-  id: number;
+  id: string;
   date: string;
   description: string;
   category: string;
@@ -25,38 +26,155 @@ const MONTHLY_INCOME: Record<string, number> = {
 };
 
 const dummy: Transaction[] = [
-  { id: 1, date: "2026-01-15", description: "Main payroll",     category: "Salary",       amount: 3000 },
-  { id: 2, date: "2026-01-22", description: "Client website",   category: "Side project", amount:  400 },
-  { id: 3, date: "2026-02-15", description: "Monthly payroll",  category: "Salary",       amount: 3080 },
-  { id: 4, date: "2026-03-10", description: "Design retainer",  category: "Freelance",    amount:  750 },
-  { id: 5, date: "2026-03-15", description: "Monthly payroll",  category: "Salary",       amount: 3000 },
+  { id: "1", date: "2026-01-15", description: "Main payroll",     category: "Salary",       amount: 3000 },
+  { id: "2", date: "2026-01-22", description: "Client website",   category: "Side project", amount:  400 },
+  { id: "3", date: "2026-02-15", description: "Monthly payroll",  category: "Salary",       amount: 3080 },
+  { id: "4", date: "2026-03-10", description: "Design retainer",  category: "Freelance",    amount:  750 },
+  { id: "5", date: "2026-03-15", description: "Monthly payroll",  category: "Salary",       amount: 3000 },
 ];
 
 export default function Income() {
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>(dummy);
   const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  function addTransaction(data: Omit<Transaction, "id">) {
-    const next: Transaction = { id: Date.now(), ...data };
-    setTransactions((prev) => [...prev, next]);
-    setShowForm(false);
+  useEffect(() => {
+    const session = getSession();
+    const userId = session?.isDemo ? null : session?.userId ?? null;
+
+    setSessionUserId(userId);
+    setUsesDatabase(Boolean(userId));
+
+    if (!userId) {
+      setTransactions(dummy);
+      setIsLoading(false);
+      return;
+    }
+
+    const resolvedUserId = userId;
+
+    let isMounted = true;
+
+    async function loadTransactions() {
+      try {
+        setIsLoading(true);
+        setError("");
+        const response = await fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}&kind=income`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load income entries.");
+        }
+
+        const payload = await response.json();
+        if (isMounted) {
+          setTransactions(payload.transactions ?? []);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : "Failed to load income entries.");
+          setTransactions([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadTransactions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  async function addTransaction(data: Omit<Transaction, "id">) {
+    if (!sessionUserId) {
+      const next: Transaction = { id: String(Date.now()), ...data };
+      setTransactions((prev) => [...prev, next]);
+      setShowForm(false);
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, userId: sessionUserId, kind: "income" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save income entry.");
+      }
+
+      const payload = await response.json();
+      setTransactions((prev) => [payload.transaction, ...prev]);
+      setShowForm(false);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Failed to save income entry.");
+    }
+  }
+
+  async function deleteTransaction(id: string) {
+    if (!sessionUserId) {
+      setTransactions((prev) => prev.filter((entry) => entry.id !== id));
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error("Failed to delete income entry.");
+      }
+
+      setTransactions((prev) => prev.filter((entry) => entry.id !== id));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete income entry.");
+    }
   }
 
   // KPI stats
-  const totalIncome   = transactions.reduce((s, t) => s + t.amount, 0);
+  const totalIncome = transactions.reduce((s, t) => s + t.amount, 0);
   const sourceBreakdown = transactions.reduce((totals, t) => {
     const source = t.category.trim() || "Other";
     totals[source] = (totals[source] ?? 0) + t.amount;
     return totals;
   }, {} as Record<string, number>);
-  const largestSource   = Object.entries(sourceBreakdown).sort(([, a], [, b]) => b - a)[0];
-  const monthCount      = new Set(transactions.map((t) => t.date.slice(0, 7))).size;
-  const monthlyAvg      = monthCount > 0 ? totalIncome / monthCount : 0;
+  const largestSource = Object.entries(sourceBreakdown).sort(([, a], [, b]) => b - a)[0];
+  const monthCount = new Set(transactions.map((t) => t.date.slice(0, 7))).size;
+  const monthlyAvg = monthCount > 0 ? totalIncome / monthCount : 0;
   const projectedAnnual = monthlyAvg * 12;
 
-  const incomeTrendPoints = [...transactions]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((t) => ({ date: t.date, amount: t.amount }));
+  const incomeTrendPoints = useMemo(
+    () =>
+      [...transactions]
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .map((t) => ({ date: t.date, amount: t.amount })),
+    [transactions]
+  );
+
+  const monthlyIncome = useMemo(() => {
+    if (!usesDatabase || transactions.length === 0) {
+      return MONTHLY_INCOME;
+    }
+
+    return [...transactions]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .reduce((totals, transaction) => {
+        const monthLabel = new Date(`${transaction.date}T00:00:00`).toLocaleString("en-GB", {
+          month: "short",
+        });
+        totals[monthLabel] = (totals[monthLabel] ?? 0) + transaction.amount;
+        return totals;
+      }, {} as Record<string, number>);
+  }, [transactions, usesDatabase]);
 
   return (
     <div className={styles.container + " container"}>
@@ -101,6 +219,9 @@ export default function Income() {
           </button>
         </div>
 
+        {error && <p className={styles.feedbackError}>{error}</p>}
+        {isLoading && <p className={styles.feedbackMuted}>Loading income entries...</p>}
+
         {showForm && (
           <div className={styles.formWrapper}>
             <TransactionForm
@@ -136,7 +257,7 @@ export default function Income() {
                   <td>
                     <button
                       className={styles.deleteButton}
-                      onClick={() => setTransactions((prev) => prev.filter((x) => x.id !== t.id))}
+                      onClick={() => deleteTransaction(t.id)}
                       aria-label="Delete"
                     >
                       ×
@@ -156,10 +277,12 @@ export default function Income() {
         <section className={styles.chartSection}>
           <div className={styles.chartHeader}>
             <h2 className={styles.chartTitle}>Monthly Income (2026)</h2>
-            <p className={styles.chartSub}>Full-year breakdown — spot your strongest and weakest months.</p>
+            <p className={styles.chartSub}>
+              {usesDatabase ? "Built from saved income entries." : "Full-year breakdown of the sample data."}
+            </p>
           </div>
           <div className={styles.chartFrameTall}>
-            <Chart data={MONTHLY_INCOME} type="bar" showLegend={false} />
+            <Chart data={monthlyIncome} type="bar" showLegend={false} />
           </div>
         </section>
 

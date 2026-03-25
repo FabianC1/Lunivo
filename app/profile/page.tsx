@@ -382,7 +382,7 @@ export default function ProfilePage() {
                 <button type="submit" className={styles.primaryButton} disabled={isSavingName}>
                   {isSavingName ? "Saving..." : "Save account changes"}
                 </button>
-                <button type="button" className={styles.secondaryButton} onClick={handleLogout}>
+                <button type="button" className={styles.logoutButton} onClick={handleLogout}>
                   Logout
                 </button>
               </div>

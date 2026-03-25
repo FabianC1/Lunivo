@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import styles from "./budgets.module.css";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
-import { initialBudgets, loadBudgets, saveBudgets, type BudgetMap } from "../../lib/budgets";
+import { initialBudgets, type BudgetMap } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
+import { getSession } from "../../lib/auth";
 
-// Current month actual spending (Mar 2026, aligned with transactions page)
-const ACTUAL_SPENDING: BudgetMap = {
+const SAMPLE_SPENDING: BudgetMap = {
   Food: 328,
   Transport: 142,
   Utilities: 278,
@@ -18,32 +18,147 @@ const ACTUAL_SPENDING: BudgetMap = {
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
+  const [actualSpending, setActualSpending] = useState<BudgetMap>(SAMPLE_SPENDING);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [usesDatabase, setUsesDatabase] = useState(false);
   const [hasLoadedBudgets, setHasLoadedBudgets] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setBudgets(loadBudgets());
-    setHasLoadedBudgets(true);
+    const session = getSession();
+    const userId = session?.isDemo ? null : session?.userId ?? null;
+
+    setSessionUserId(userId);
+    setUsesDatabase(Boolean(userId));
+
+    if (!userId) {
+      setBudgets(initialBudgets);
+      setActualSpending(SAMPLE_SPENDING);
+      setHasLoadedBudgets(true);
+      setIsLoading(false);
+      return;
+    }
+
+    const resolvedUserId = userId;
+
+    let isMounted = true;
+
+    async function loadData() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const [budgetsResponse, spendingResponse] = await Promise.all([
+          fetch(`/api/budgets?userId=${encodeURIComponent(resolvedUserId)}`, { cache: "no-store" }),
+          fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}&kind=expense`, { cache: "no-store" }),
+        ]);
+
+        if (!budgetsResponse.ok) {
+          throw new Error("Failed to load budgets.");
+        }
+
+        if (!spendingResponse.ok) {
+          throw new Error("Failed to load expenses.");
+        }
+
+        const budgetsPayload = await budgetsResponse.json();
+        const spendingPayload = await spendingResponse.json();
+
+        if (!isMounted) {
+          return;
+        }
+
+        const expenseTransactions = Array.isArray(spendingPayload.transactions)
+          ? spendingPayload.transactions
+          : [];
+
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const monthlySpending = expenseTransactions.reduce((totals: BudgetMap, transaction: { date: string; category: string; amount: number }) => {
+          if (!transaction.date.startsWith(currentMonth)) {
+            return totals;
+          }
+
+          const category = transaction.category || "Other";
+          totals[category] = (totals[category] ?? 0) + transaction.amount;
+          return totals;
+        }, {} as BudgetMap);
+
+        for (const key of Object.keys(initialBudgets)) {
+          monthlySpending[key] = monthlySpending[key] ?? 0;
+        }
+
+        setBudgets(budgetsPayload.budget?.categories ?? initialBudgets);
+        setActualSpending(monthlySpending);
+        setHasLoadedBudgets(true);
+      } catch (loadError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setError(loadError instanceof Error ? loadError.message : "Failed to load budget data.");
+        setBudgets(initialBudgets);
+        setActualSpending(SAMPLE_SPENDING);
+        setHasLoadedBudgets(true);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!hasLoadedBudgets) return;
-    saveBudgets(budgets);
-  }, [budgets, hasLoadedBudgets]);
+    if (!hasLoadedBudgets || !sessionUserId) return;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setIsSaving(true);
+        setError("");
+        const response = await fetch("/api/budgets", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: sessionUserId, categories: budgets, period: "monthly" }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save budgets.");
+        }
+
+        setFeedback("Budgets saved.");
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : "Failed to save budgets.");
+      } finally {
+        setIsSaving(false);
+      }
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [budgets, hasLoadedBudgets, sessionUserId]);
 
   function updateCategory(cat: string, amt: number) {
     const safe = isNaN(amt) ? 0 : amt;
+    setFeedback("");
     setBudgets((prev) => ({ ...prev, [cat]: safe }));
   }
 
   const totalBudget       = Object.values(budgets).reduce((s, v) => s + v, 0);
-  const totalSpent        = Object.values(ACTUAL_SPENDING).reduce((s, v) => s + v, 0);
+  const totalSpent        = Object.values(actualSpending).reduce((s, v) => s + v, 0);
   const remaining         = totalBudget - totalSpent;
-  const overBudgetCount   = Object.keys(ACTUAL_SPENDING).filter(
-    (cat) => (ACTUAL_SPENDING[cat] ?? 0) > (budgets[cat] ?? 0)
+  const overBudgetCount   = Object.keys(actualSpending).filter(
+    (cat) => (actualSpending[cat] ?? 0) > (budgets[cat] ?? 0)
   ).length;
   const budgetUsedPct     = totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(1) : "0.0";
   const remainingByCategory = Object.keys(budgets).reduce((result, cat) => {
-    result[cat] = Math.max(0, (budgets[cat] ?? 0) - (ACTUAL_SPENDING[cat] ?? 0));
+    result[cat] = Math.max(0, (budgets[cat] ?? 0) - (actualSpending[cat] ?? 0));
     return result;
   }, {} as Record<string, number>);
 
@@ -84,11 +199,18 @@ export default function Budgets() {
       <section className={styles.cardSection}>
         <div className={styles.sectionHeader}>
           <h2>Budget Utilisation</h2>
-          <p>How much of each limit has been used this month.</p>
+          <p>
+            {usesDatabase ? "How much of each limit your saved expenses have used this month." : "How much of each limit has been used in the sample month."}
+          </p>
         </div>
+        {error && <p className={styles.feedbackError}>{error}</p>}
+        {isLoading && <p className={styles.feedbackMuted}>Loading budgets...</p>}
+        {!isLoading && usesDatabase && (
+          <p className={styles.feedbackMuted}>{isSaving ? "Saving changes..." : feedback || "Changes save automatically."}</p>
+        )}
         <div className={styles.progressList}>
           {Object.entries(budgets).map(([cat, limit]) => {
-            const spent = ACTUAL_SPENDING[cat] ?? 0;
+            const spent = actualSpending[cat] ?? 0;
             const pct   = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
             const over  = spent > limit;
             return (
@@ -120,7 +242,7 @@ export default function Budgets() {
           <h2>Budget vs Actual</h2>
           <p>Side-by-side comparison per category with the full width it needs.</p>
         </div>
-        <BudgetComparisonChart spendings={ACTUAL_SPENDING} budgets={budgets} />
+        <BudgetComparisonChart spendings={actualSpending} budgets={budgets} />
       </section>
 
       <div className={styles.compactChartGrid}>
@@ -130,7 +252,7 @@ export default function Budgets() {
             <p>How your actual spend is split this month.</p>
           </div>
           <div className={styles.chartFrameSquare}>
-            <Chart data={ACTUAL_SPENDING} type="doughnut" />
+            <Chart data={actualSpending} type="doughnut" />
           </div>
         </section>
 
@@ -162,7 +284,7 @@ export default function Budgets() {
             </thead>
             <tbody>
               {Object.entries(budgets).map(([cat, amt]) => {
-                const spent = ACTUAL_SPENDING[cat] ?? 0;
+                const spent = actualSpending[cat] ?? 0;
                 const over  = spent > amt;
                 return (
                   <tr key={cat}>

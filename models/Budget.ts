@@ -4,14 +4,14 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IBudget extends Document {
   userId: mongoose.Types.ObjectId;
-  total: number;
+  categories: Map<string, number>;
   period: string; // e.g. 'monthly'
 }
 
 const BudgetSchema: Schema<IBudget> = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    total: { type: Number, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true, index: true },
+    categories: { type: Map, of: Number, default: {} },
     period: { type: String, default: 'monthly' },
   },
   { timestamps: true }

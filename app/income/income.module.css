@@ -150,6 +150,20 @@
   margin-bottom: 1rem;
 }
 
+.feedbackMuted,
+.feedbackError {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.feedbackMuted {
+  opacity: 0.65;
+}
+
+.feedbackError {
+  color: #ef4444;
+}
+
 .listWrapper {
   overflow-x: auto;
   border-radius: 0.75rem;

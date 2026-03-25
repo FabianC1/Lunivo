@@ -93,21 +93,76 @@ const BLANK_FORM = {
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalItem[]>([]);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [usesDatabase, setUsesDatabase] = useState(false);
   const [tab, setTab] = useState<Tab>("active");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Load from localStorage on mount
   useEffect(() => {
-    setGoals(loadGoals());
+    const session = getSession();
+    const userId = session?.isDemo ? null : session?.userId ?? null;
+
+    setSessionUserId(userId);
+    setUsesDatabase(Boolean(userId));
+
+    if (!userId) {
+      setGoals(loadGoals());
+      setIsLoading(false);
+      return;
+    }
+
+    const resolvedUserId = userId;
+
+    let isMounted = true;
+
+    async function loadUserGoals() {
+      try {
+        setIsLoading(true);
+        setError("");
+        const response = await fetch(`/api/goals?userId=${encodeURIComponent(resolvedUserId)}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load goals.");
+        }
+
+        const payload = await response.json();
+        if (isMounted) {
+          setGoals(payload.goals ?? []);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : "Failed to load goals.");
+          setGoals([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadUserGoals();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Persist whenever goals change
   useEffect(() => {
+    if (usesDatabase) {
+      return;
+    }
+
     if (goals.length > 0 || localStorage.getItem(storageKey()) !== null) {
       persistGoals(goals);
     }
-  }, [goals]);
+  }, [goals, usesDatabase]);
 
   const activeGoals = useMemo(() => goals.filter((g) => !g.completed), [goals]);
   const completedGoals = useMemo(() => goals.filter((g) => g.completed), [goals]);
@@ -120,10 +175,25 @@ export default function GoalsPage() {
 
   function resetForm() {
     setForm(BLANK_FORM);
+    setEditingGoalId(null);
     setShowForm(false);
   }
 
-  function handleCreate(e: FormEvent<HTMLFormElement>) {
+  function startEditing(goal: GoalItem) {
+    setError("");
+    setEditingGoalId(goal.id);
+    setForm({
+      title: goal.title,
+      kind: goal.kind,
+      targetAmount: String(goal.targetAmount),
+      savedAmount: String(goal.savedAmount),
+      targetDate: goal.targetDate,
+      notes: goal.notes,
+    });
+    setShowForm(true);
+  }
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const parsedTarget = Number(form.targetAmount);
     const parsedSaved = Number(form.savedAmount || "0");
@@ -133,6 +203,87 @@ export default function GoalsPage() {
       !Number.isFinite(parsedTarget) ||
       parsedTarget <= 0
     ) {
+      return;
+    }
+
+    if (editingGoalId && sessionUserId) {
+      try {
+        setError("");
+        const response = await fetch(`/api/goals/${editingGoalId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: form.title.trim(),
+            kind: form.kind,
+            targetAmount: parsedTarget,
+            savedAmount: Math.max(0, Number.isFinite(parsedSaved) ? parsedSaved : 0),
+            targetDate: form.targetDate,
+            notes: form.notes.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update goal.");
+        }
+
+        const payload = await response.json();
+        setGoals((prev) => prev.map((goal) => (goal.id === editingGoalId ? payload.goal : goal)));
+        resetForm();
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : "Failed to update goal.");
+      }
+      return;
+    }
+
+    if (editingGoalId) {
+      setGoals((prev) => {
+        const updated = prev.map((goal) =>
+          goal.id === editingGoalId
+            ? {
+                ...goal,
+                title: form.title.trim(),
+                kind: form.kind,
+                targetAmount: parsedTarget,
+                savedAmount: Math.max(0, Number.isFinite(parsedSaved) ? parsedSaved : 0),
+                targetDate: form.targetDate,
+                notes: form.notes.trim(),
+              }
+            : goal
+        );
+        persistGoals(updated);
+        return updated;
+      });
+      resetForm();
+      return;
+    }
+
+    if (sessionUserId) {
+      try {
+        setError("");
+        const response = await fetch("/api/goals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: sessionUserId,
+            title: form.title.trim(),
+            kind: form.kind,
+            targetAmount: parsedTarget,
+            savedAmount: Math.max(0, Number.isFinite(parsedSaved) ? parsedSaved : 0),
+            targetDate: form.targetDate,
+            notes: form.notes.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create goal.");
+        }
+
+        const payload = await response.json();
+        setGoals((prev) => [payload.goal, ...prev]);
+        resetForm();
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : "Failed to create goal.");
+      }
       return;
     }
 
@@ -156,7 +307,28 @@ export default function GoalsPage() {
     resetForm();
   }
 
-  function markComplete(id: string) {
+  async function markComplete(id: string) {
+    if (sessionUserId) {
+      try {
+        setError("");
+        const response = await fetch(`/api/goals/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed: true }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update goal.");
+        }
+
+        const payload = await response.json();
+        setGoals((prev) => prev.map((goal) => (goal.id === id ? payload.goal : goal)));
+      } catch (updateError) {
+        setError(updateError instanceof Error ? updateError.message : "Failed to update goal.");
+      }
+      return;
+    }
+
     setGoals((prev) => {
       const updated = prev.map((g) =>
         g.id === id
@@ -168,7 +340,22 @@ export default function GoalsPage() {
     });
   }
 
-  function deleteGoal(id: string) {
+  async function deleteGoal(id: string) {
+    if (sessionUserId) {
+      try {
+        setError("");
+        const response = await fetch(`/api/goals/${id}`, { method: "DELETE" });
+        if (!response.ok) {
+          throw new Error("Failed to delete goal.");
+        }
+
+        setGoals((prev) => prev.filter((goal) => goal.id !== id));
+      } catch (deleteError) {
+        setError(deleteError instanceof Error ? deleteError.message : "Failed to delete goal.");
+      }
+      return;
+    }
+
     setGoals((prev) => {
       const updated = prev.filter((g) => g.id !== id);
       persistGoals(updated);
@@ -220,8 +407,8 @@ export default function GoalsPage() {
       {/* Create form */}
       {showForm && (
         <section className={styles.panel}>
-          <h2>New Goal</h2>
-          <form className={styles.form} onSubmit={handleCreate}>
+          <h2>{editingGoalId ? "Edit Goal" : "New Goal"}</h2>
+          <form className={styles.form} onSubmit={handleSubmit}>
             <label>
               Title
               <input
@@ -302,7 +489,7 @@ export default function GoalsPage() {
 
             <div className={styles.formActions}>
               <button type="submit" className={styles.primaryButton}>
-                Create Goal
+                {editingGoalId ? "Save Changes" : "Create Goal"}
               </button>
               <button
                 type="button"
@@ -334,6 +521,9 @@ export default function GoalsPage() {
             <span className={styles.tabBadge}>{completedGoals.length}</span>
           </button>
         </div>
+
+        {error && <p className={styles.feedbackError}>{error}</p>}
+        {isLoading && <p className={styles.feedbackMuted}>Loading goals...</p>}
 
         {displayList.length === 0 ? (
           <p className={styles.empty}>
@@ -401,6 +591,12 @@ export default function GoalsPage() {
                         Mark as Achieved
                       </button>
                     )}
+                    <button
+                      className={styles.editButton}
+                      onClick={() => startEditing(goal)}
+                    >
+                      Edit
+                    </button>
                     <button
                       className={styles.deleteButton}
                       onClick={() => deleteGoal(goal.id)}

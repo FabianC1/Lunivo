@@ -189,8 +189,10 @@ select.input option {
   color: var(--text-color, #f1f5f9);
 }
 
+
 .primaryButton,
-.secondaryButton {
+.secondaryButton,
+.logoutButton {
   border: none;
   border-radius: 0.72rem;
   padding: 0.7rem 1rem;
@@ -206,10 +208,31 @@ select.input option {
   background: linear-gradient(90deg, var(--button-gradient-start) 0%, var(--button-gradient-end) 100%);
 }
 
+
 .secondaryButton {
   background: color-mix(in srgb, var(--text-color) 11%, transparent);
   color: var(--text-color);
   border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+}
+
+.logoutButton {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.logoutButton:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #ef4444;
+}
+
+.logoutButton:active {
+  opacity: 0.9;
+}
+
+.logoutButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .primaryButton:hover,
