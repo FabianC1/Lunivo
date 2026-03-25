@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import DateInput from "../../components/DateInput";
 import styles from "./goals.module.css";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
@@ -47,8 +48,8 @@ function loadGoals(): GoalItem[] {
 
 function getInitialGoals(): GoalItem[] {
   const session = getSession();
-  // Only show sample goals for demo/admin accounts
-  const isDemo = session?.isDemo || session?.email === "galaselfabian@gmail.com";
+  // Only show sample goals for explicit demo/local sessions.
+  const isDemo = session?.isDemo;
   if (!isDemo) return [];
 
   return [
@@ -101,7 +102,6 @@ export default function GoalsPage() {
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const targetDateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const session = getSession();
@@ -192,21 +192,6 @@ export default function GoalsPage() {
       notes: goal.notes,
     });
     setShowForm(true);
-  }
-
-  function openTargetDatePicker() {
-    const input = targetDateInputRef.current;
-    if (!input) {
-      return;
-    }
-
-    if (typeof input.showPicker === "function") {
-      input.showPicker();
-      return;
-    }
-
-    input.focus();
-    input.click();
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -483,35 +468,11 @@ export default function GoalsPage() {
 
             <label>
               Target Date
-              <div className={styles.dateInputWrap}>
-                <input
-                  ref={targetDateInputRef}
-                  type="date"
-                  value={form.targetDate}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, targetDate: e.target.value }))
-                  }
-                  required
-                />
-                <button
-                  type="button"
-                  className={styles.dateInputButton}
-                  onClick={openTargetDatePicker}
-                  aria-label="Open calendar"
-                >
-                  <svg className={styles.dateInputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7 2V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    <path d="M17 2V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    <rect x="3" y="4" width="18" height="17" rx="3" stroke="currentColor" strokeWidth="1.8" />
-                    <path d="M3 9H21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    <path d="M8 13H8.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                    <path d="M12 13H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                    <path d="M16 13H16.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                    <path d="M8 17H8.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                    <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
+              <DateInput
+                value={form.targetDate}
+                onChange={(value) => setForm((f) => ({ ...f, targetDate: value }))}
+                required
+              />
             </label>
 
             <label className={styles.fullWidth}>

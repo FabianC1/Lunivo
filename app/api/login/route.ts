@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { bootstrapAdminData } from '../../../lib/bootstrapAdminData';
 import { connectToDatabase } from '../../../lib/mongodb';
 import User from '../../../models/User';
 
@@ -22,6 +23,8 @@ export async function POST(req: NextRequest) {
   if (!match) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
+
+  await bootstrapAdminData(String(user._id), user.email);
 
   return NextResponse.json({
     success: true,

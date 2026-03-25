@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { bootstrapAdminData } from "./bootstrapAdminData";
 import { connectToDatabase } from "./mongodb";
 import User from "../models/User";
 
@@ -57,7 +58,9 @@ export const nextAuthOptions: NextAuthOptions = {
       }
 
       try {
-        (user as { id?: string }).id = await ensureOAuthUser(email, user.name);
+        const userId = await ensureOAuthUser(email, user.name);
+        await bootstrapAdminData(userId, email);
+        (user as { id?: string }).id = userId;
       } catch {
         // Keep OAuth sign-in available even if DB is unavailable.
       }
@@ -71,7 +74,11 @@ export const nextAuthOptions: NextAuthOptions = {
 
       if (!token.userId && typeof token.email === "string") {
         try {
-          token.userId = await ensureOAuthUser(token.email.trim().toLowerCase(), token.name);
+          const email = token.email.trim().toLowerCase();
+          token.userId = await ensureOAuthUser(email, token.name);
+          if (typeof token.userId === "string") {
+            await bootstrapAdminData(token.userId, email);
+          }
         } catch {
           // Keep the token usable even if the database is temporarily unavailable.
         }

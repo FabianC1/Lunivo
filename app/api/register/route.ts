@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { bootstrapAdminData } from '../../../lib/bootstrapAdminData';
 import { connectToDatabase } from '../../../lib/mongodb';
 import Account from '../../../models/Account';
 import User from '../../../models/User';
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest) {
       currency: 'GBP',
     },
   ]);
+
+  await bootstrapAdminData(String(user._id), user.email);
 
   return NextResponse.json({
     success: true,
