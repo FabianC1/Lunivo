@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./transactions.module.css";
+import IconPopoverButton from "../../components/IconPopoverButton";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
@@ -58,12 +59,8 @@ export default function Transactions() {
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [monthFilter, setMonthFilter] = useState<string>("All months");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isSortOpen, setIsSortOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const filterRef = useRef<HTMLDivElement>(null);
-  const sortRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const session = getSession();
@@ -129,21 +126,6 @@ export default function Transactions() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as Node;
-      if (filterRef.current && !filterRef.current.contains(target)) {
-        setIsFilterOpen(false);
-      }
-      if (sortRef.current && !sortRef.current.contains(target)) {
-        setIsSortOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
   async function addTransaction(data: Omit<Transaction, "id">) {
@@ -300,90 +282,61 @@ export default function Transactions() {
             <p className={styles.tableSubtitle}>Add new spending entries and manage your existing ones in one place.</p>
           </div>
           <div className={styles.tableActions}>
-            <div className={styles.iconControl} ref={filterRef}>
-              <button
-                type="button"
-                className={`${styles.iconButton} ${isFilterOpen || categoryFilter !== "All" || monthFilter !== "All months" ? styles.iconButtonActive : ""}`}
-                onClick={() => {
-                  setIsFilterOpen((open) => !open);
-                  setIsSortOpen(false);
-                }}
-                aria-label="Open filters"
-                title="Filter"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M2.25 3.25H13.75L9.5 8.1V12.25L6.5 13.75V8.1L2.25 3.25Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-                </svg>
-              </button>
-              {isFilterOpen && (
-                <div className={styles.popoverMenu}>
-                  <div className={styles.popoverField}>
-                    <label htmlFor="cat-filter" className={styles.filterLabel}>Category</label>
-                    <select
-                      id="cat-filter"
-                      className={styles.filterSelect}
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                    >
-                      {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div className={styles.popoverField}>
-                    <label htmlFor="month-filter" className={styles.filterLabel}>Month</label>
-                    <select
-                      id="month-filter"
-                      className={styles.filterSelect}
-                      value={monthFilter}
-                      onChange={(e) => setMonthFilter(e.target.value)}
-                    >
-                      {monthOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option === "All months" ? option : new Date(`${option}-01T00:00:00`).toLocaleString("en-GB", { month: "long", year: "numeric" })}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
+            <IconPopoverButton
+              icon="filter"
+              label="Open filters"
+              title="Filter"
+              active={categoryFilter !== "All" || monthFilter !== "All months"}
+            >
+              <div className={styles.popoverField}>
+                <label htmlFor="cat-filter" className={styles.filterLabel}>Category</label>
+                <select
+                  id="cat-filter"
+                  className={styles.filterSelect}
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className={styles.popoverField}>
+                <label htmlFor="month-filter" className={styles.filterLabel}>Month</label>
+                <select
+                  id="month-filter"
+                  className={styles.filterSelect}
+                  value={monthFilter}
+                  onChange={(e) => setMonthFilter(e.target.value)}
+                >
+                  {monthOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option === "All months" ? option : new Date(`${option}-01T00:00:00`).toLocaleString("en-GB", { month: "long", year: "numeric" })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </IconPopoverButton>
 
-            <div className={styles.iconControl} ref={sortRef}>
-              <button
-                type="button"
-                className={`${styles.iconButton} ${sortOption !== "date-desc" ? styles.iconButtonActive : ""}`}
-                onClick={() => {
-                  setIsSortOpen((open) => !open);
-                  setIsFilterOpen(false);
-                }}
-                aria-label="Open sort options"
-                title="Sort"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M4 3.25V12.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <path d="M2.5 4.75L4 3.25L5.5 4.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 12.75V3.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  <path d="M10.5 11.25L12 12.75L13.5 11.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              {isSortOpen && (
-                <div className={styles.popoverMenu}>
-                  <div className={styles.popoverField}>
-                    <label htmlFor="spending-sort" className={styles.filterLabel}>Sort order</label>
-                    <select
-                      id="spending-sort"
-                      className={styles.filterSelect}
-                      value={sortOption}
-                      onChange={(e) => setSortOption(e.target.value as SortOption)}
-                    >
-                      <option value="date-desc">Newest first</option>
-                      <option value="date-asc">Oldest first</option>
-                      <option value="amount-desc">Highest amount</option>
-                      <option value="amount-asc">Lowest amount</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
+            <IconPopoverButton
+              icon="sort"
+              label="Open sort options"
+              title="Sort"
+              active={sortOption !== "date-desc"}
+            >
+              <div className={styles.popoverField}>
+                <label htmlFor="spending-sort" className={styles.filterLabel}>Sort order</label>
+                <select
+                  id="spending-sort"
+                  className={styles.filterSelect}
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as SortOption)}
+                >
+                  <option value="date-desc">Newest first</option>
+                  <option value="date-asc">Oldest first</option>
+                  <option value="amount-desc">Highest amount</option>
+                  <option value="amount-asc">Lowest amount</option>
+                </select>
+              </div>
+            </IconPopoverButton>
 
             <button className={styles.addButton} onClick={() => setShowForm(true)}>
               + Add Spending
