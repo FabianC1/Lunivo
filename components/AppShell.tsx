@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Navbar from "./Navbar";
 import PublicNavbar from "./PublicNavbar";
 import styles from "./AppShell.module.css";
-import { getSession, isLoggedIn, setSession } from "../lib/auth";
+import { clearLogoutPending, getSession, isLoggedIn, isLogoutPending, setSession } from "../lib/auth";
 
 const AUTH_ROUTES = new Set(["/login", "/register"]);
 const PUBLIC_ROUTES = new Set(["/", "/login", "/register", "/about", "/subscriptions", "/terms", "/privacy"]);
@@ -23,10 +23,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const logoutPending = isLogoutPending();
     const localSession = isLoggedIn() ? getSession() : null;
     let logged = Boolean(localSession);
 
-    if (oauthStatus === "authenticated" && oauthSession?.user?.email) {
+    if (oauthStatus === "unauthenticated") {
+      clearLogoutPending();
+    }
+
+    if (!logoutPending && oauthStatus === "authenticated" && oauthSession?.user?.email) {
       const syncedSession = {
         userId: (oauthSession.user as { id?: string }).id,
         email: oauthSession.user.email,
@@ -45,6 +50,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       }
 
       logged = true;
+    }
+
+    if (logoutPending) {
+      logged = false;
     }
 
     setAuthenticated(logged);

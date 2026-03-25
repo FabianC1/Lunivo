@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import styles from "./profile.module.css";
-import { AuthSession, clearSession, getSession, setSession } from "../../lib/auth";
+import { AuthSession, clearSession, getSession, markLogoutPending, setSession } from "../../lib/auth";
 
 type ProfilePayload = {
   user: {
@@ -184,9 +184,9 @@ export default function ProfilePage() {
   }
 
   async function handleLogout() {
+    markLogoutPending();
     clearSession();
-    await signOut({ redirect: false });
-    window.location.assign("/login");
+    await signOut({ callbackUrl: "/login" });
   }
 
   async function handleNameSave(e: FormEvent) {

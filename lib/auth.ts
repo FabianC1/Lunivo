@@ -4,6 +4,7 @@ export const DEMO_NAME = "Fabian Galasel";
 
 const SESSION_KEY = "lunivo-session";
 const SESSION_PREFERENCE_KEY = "lunivo-session-preference";
+const LOGOUT_PENDING_KEY = "lunivo-logout-pending";
 
 export interface AuthSession {
   userId?: string;
@@ -65,6 +66,8 @@ export function setSession(session: AuthSession, remember?: boolean) {
   const value = JSON.stringify(session);
   const shouldRemember = remember ?? getStoredSessionPreference() ?? true;
 
+  localStorage.removeItem(LOGOUT_PENDING_KEY);
+
   if (shouldRemember) {
     localStorage.setItem(SESSION_KEY, value);
     sessionStorage.removeItem(SESSION_KEY);
@@ -82,6 +85,38 @@ export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(SESSION_PREFERENCE_KEY);
+}
+
+export function markLogoutPending() {
+  if (!isBrowser()) return;
+  localStorage.setItem(LOGOUT_PENDING_KEY, String(Date.now()));
+}
+
+export function clearLogoutPending() {
+  if (!isBrowser()) return;
+  localStorage.removeItem(LOGOUT_PENDING_KEY);
+}
+
+export function isLogoutPending() {
+  if (!isBrowser()) return false;
+
+  const raw = localStorage.getItem(LOGOUT_PENDING_KEY);
+  if (!raw) {
+    return false;
+  }
+
+  const timestamp = Number(raw);
+  if (!Number.isFinite(timestamp)) {
+    localStorage.removeItem(LOGOUT_PENDING_KEY);
+    return false;
+  }
+
+  const isFresh = Date.now() - timestamp < 60_000;
+  if (!isFresh) {
+    localStorage.removeItem(LOGOUT_PENDING_KEY);
+  }
+
+  return isFresh;
 }
 
 export function isLoggedIn() {

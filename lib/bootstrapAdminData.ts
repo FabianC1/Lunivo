@@ -7,6 +7,124 @@ import User from "../models/User";
 export const ADMIN_EMAIL = "galaselfabian@gmail.com";
 export const ADMIN_NAME = "Fabian Galasel";
 
+const ADMIN_INCOME_SEED = [
+  {
+    date: "2026-01-05",
+    amount: 2980,
+    kind: "income" as const,
+    category: "Salary",
+    description: "Seed income: January salary",
+  },
+  {
+    date: "2026-01-22",
+    amount: 260,
+    kind: "income" as const,
+    category: "Freelance",
+    description: "Seed income: January design retainer",
+  },
+  {
+    date: "2026-02-05",
+    amount: 3040,
+    kind: "income" as const,
+    category: "Salary",
+    description: "Seed income: February salary",
+  },
+  {
+    date: "2026-02-17",
+    amount: 390,
+    kind: "income" as const,
+    category: "Freelance",
+    description: "Seed income: February landing page project",
+  },
+  {
+    date: "2026-03-01",
+    amount: 3120,
+    kind: "income" as const,
+    category: "Salary",
+    description: "Monthly salary",
+  },
+  {
+    date: "2026-03-07",
+    amount: 420,
+    kind: "income" as const,
+    category: "Freelance",
+    description: "Landing page project",
+  },
+  {
+    date: "2026-04-05",
+    amount: 3180,
+    kind: "income" as const,
+    category: "Salary",
+    description: "Seed income: April salary",
+  },
+  {
+    date: "2026-04-24",
+    amount: 340,
+    kind: "income" as const,
+    category: "Bonus",
+    description: "Seed income: April performance bonus",
+  },
+  {
+    date: "2026-05-05",
+    amount: 3250,
+    kind: "income" as const,
+    category: "Salary",
+    description: "Seed income: May salary",
+  },
+  {
+    date: "2026-05-19",
+    amount: 480,
+    kind: "income" as const,
+    category: "Freelance",
+    description: "Seed income: May product audit",
+  },
+  {
+    date: "2026-06-05",
+    amount: 3310,
+    kind: "income" as const,
+    category: "Salary",
+    description: "Seed income: June salary",
+  },
+];
+
+const ADMIN_EXPENSE_SEED = [
+  {
+    date: "2026-03-14",
+    amount: 88.45,
+    kind: "expense" as const,
+    category: "Food",
+    description: "Weekly groceries",
+  },
+  {
+    date: "2026-03-16",
+    amount: 54,
+    kind: "expense" as const,
+    category: "Transport",
+    description: "Train and tube top-up",
+  },
+  {
+    date: "2026-03-18",
+    amount: 129.99,
+    kind: "expense" as const,
+    category: "Utilities",
+    description: "Electricity and broadband",
+  },
+  {
+    date: "2026-03-21",
+    amount: 46.5,
+    kind: "expense" as const,
+    category: "Entertainment",
+    description: "Cinema and dinner",
+  },
+  {
+    date: "2026-03-24",
+    amount: 73.2,
+    kind: "expense" as const,
+    category: "Other",
+    description: "Workspace supplies",
+  },
+];
+
 function startOfDay(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
 }
@@ -26,11 +144,10 @@ export async function bootstrapAdminData(userId: string, email: string) {
     await user.save();
   }
 
-  const [accountCount, budgetCount, goalCount, transactionCount] = await Promise.all([
+  const [accountCount, budgetCount, goalCount] = await Promise.all([
     Account.countDocuments({ userId }),
     Budget.countDocuments({ userId }),
     Goal.countDocuments({ userId }),
-    Transaction.countDocuments({ userId }),
   ]);
 
   if (accountCount === 0) {
@@ -102,64 +219,27 @@ export async function bootstrapAdminData(userId: string, email: string) {
     ]);
   }
 
-  if (transactionCount === 0) {
-    await Transaction.insertMany([
-      {
-        userId,
-        date: startOfDay("2026-03-01"),
-        amount: 3120,
-        kind: "income",
-        category: "Salary",
-        description: "Monthly salary",
-      },
-      {
-        userId,
-        date: startOfDay("2026-03-07"),
-        amount: 420,
-        kind: "income",
-        category: "Freelance",
-        description: "Landing page project",
-      },
-      {
-        userId,
-        date: startOfDay("2026-03-14"),
-        amount: 88.45,
-        kind: "expense",
-        category: "Food",
-        description: "Weekly groceries",
-      },
-      {
-        userId,
-        date: startOfDay("2026-03-16"),
-        amount: 54,
-        kind: "expense",
-        category: "Transport",
-        description: "Train and tube top-up",
-      },
-      {
-        userId,
-        date: startOfDay("2026-03-18"),
-        amount: 129.99,
-        kind: "expense",
-        category: "Utilities",
-        description: "Electricity and broadband",
-      },
-      {
-        userId,
-        date: startOfDay("2026-03-21"),
-        amount: 46.5,
-        kind: "expense",
-        category: "Entertainment",
-        description: "Cinema and dinner",
-      },
-      {
-        userId,
-        date: startOfDay("2026-03-24"),
-        amount: 73.2,
-        kind: "expense",
-        category: "Other",
-        description: "Workspace supplies",
-      },
-    ]);
+  const seededDescriptions = new Set(
+    (
+      await Transaction.find(
+        { userId, description: { $in: [...ADMIN_INCOME_SEED, ...ADMIN_EXPENSE_SEED].map((entry) => entry.description) } },
+        { description: 1 }
+      ).lean()
+    ).map((entry) => entry.description)
+  );
+
+  const missingTransactions = [...ADMIN_INCOME_SEED, ...ADMIN_EXPENSE_SEED]
+    .filter((entry) => !seededDescriptions.has(entry.description))
+    .map((entry) => ({
+      userId,
+      date: startOfDay(entry.date),
+      amount: entry.amount,
+      kind: entry.kind,
+      category: entry.category,
+      description: entry.description,
+    }));
+
+  if (missingTransactions.length > 0) {
+    await Transaction.insertMany(missingTransactions);
   }
 }
