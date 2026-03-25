@@ -40,6 +40,49 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.dateInputWrap {
+  position: relative;
+  margin-top: 0.25rem;
+}
+
+.dateInputWrap input {
+  width: 100%;
+  margin-top: 0;
+  padding-right: 3rem;
+}
+
+.dateInputButton {
+  position: absolute;
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--text-color) 62%, transparent);
+  cursor: pointer;
+  border-radius: 0.45rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dateInputButton:hover {
+  background-color: color-mix(in srgb, var(--text-color) 8%, transparent);
+  color: var(--text-color);
+}
+
+.dateInputButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.dateInputIcon {
+  flex-shrink: 0;
+}
+
 /* custom dropdown */
 .dropdown {
   position: relative;

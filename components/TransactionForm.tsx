@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import styles from "./TransactionForm.module.css";
-import { formatDate } from "../lib/utils";
 
 interface TransactionFormProps {
   initial?: {
@@ -40,6 +39,7 @@ export default function TransactionForm({
   const [error, setError] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -61,17 +61,53 @@ export default function TransactionForm({
     onSubmit({ date, amount, category, description });
   }
 
+  function openDatePicker() {
+    const input = dateInputRef.current;
+    if (!input) {
+      return;
+    }
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
+  }
+
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       {error && <p className={styles.error}>{error}</p>}
       <label>
         Date
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+        <div className={styles.dateInputWrap}>
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            className={styles.dateInputButton}
+            onClick={openDatePicker}
+            aria-label="Open calendar"
+          >
+            <svg className={styles.dateInputIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 2V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M17 2V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <rect x="3" y="4" width="18" height="17" rx="3" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M3 9H21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M8 13H8.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M12 13H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M16 13H16.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M8 17H8.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </label>
       <label>
         Amount
