@@ -44,6 +44,147 @@
   border: 0;
 }
 
+.popover {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 0;
+  z-index: 40;
+  width: min(100%, 320px);
+  min-width: 280px;
+  padding: 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--text-color) 10%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--card-color) 98%, transparent), color-mix(in srgb, var(--bg-color) 96%, var(--card-color) 4%));
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.calendarHeader {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.monthLabel {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in srgb, var(--text-color) 12%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--card-color) 92%, transparent);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.navButton:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--text-color) 6%, var(--card-color) 94%);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 30%, transparent);
+}
+
+.navButton:focus-visible,
+.footerButton:focus-visible,
+.dayButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-gradient-start) 25%, transparent);
+}
+
+.weekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+  margin-bottom: 0.45rem;
+}
+
+.weekdayRow span {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-color) 66%, transparent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+}
+
+.dayButton {
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.dayButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--button-gradient-start) 10%, transparent);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+}
+
+.dayButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.dayOutside {
+  color: color-mix(in srgb, var(--text-color) 34%, transparent);
+}
+
+.daySelected {
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
+  color: #fff;
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--button-gradient-start) 24%, transparent);
+}
+
+.dayToday {
+  border-color: color-mix(in srgb, var(--button-gradient-start) 50%, transparent);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.footerButton {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--button-gradient-start) 80%, var(--text-color) 20%);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.5rem;
+}
+
+.footerButton:hover {
+  background: color-mix(in srgb, var(--button-gradient-start) 10%, transparent);
+}
+
 .root:hover .displayButton {
   border-color: rgba(148, 163, 184, 0.6);
 }
@@ -63,4 +204,11 @@
 .displayButton::-moz-focus-inner {
   border: 0;
   padding: 0;
+}
+
+@media (max-width: 640px) {
+  .popover {
+    width: 100%;
+    min-width: 0;
+  }
 }

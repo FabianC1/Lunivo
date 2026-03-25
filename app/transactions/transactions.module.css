@@ -161,6 +161,70 @@
   flex-wrap: wrap;
 }
 
+.controlsBar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.iconControl {
+  position: relative;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--card-color) 94%, transparent);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.iconButton:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 40%, transparent);
+  background: color-mix(in srgb, var(--button-gradient-start) 10%, var(--card-color) 90%);
+}
+
+.iconButtonActive {
+  border-color: color-mix(in srgb, var(--button-gradient-start) 60%, transparent);
+  background: color-mix(in srgb, var(--button-gradient-start) 14%, var(--card-color) 86%);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+}
+
+.iconButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.popoverMenu {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  padding: 0.8rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+}
+
+.popoverField {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.popoverField + .popoverField {
+  margin-top: 0.75rem;
+}
+
 .formWrapper {
   margin-bottom: 1rem;
 }
@@ -271,5 +335,5 @@
   .kpiGrid    { grid-template-columns: repeat(2, 1fr); }
   .pageHeader { flex-direction: column; }
   .tableHeader { flex-direction: column; align-items: flex-start; }
-  .tableActions { width: 100%; justify-content: space-between; }
+  .controlsBar { margin-top: 0.2rem; }
 }

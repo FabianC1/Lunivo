@@ -16,6 +16,8 @@ interface Transaction {
   amount: number;
 }
 
+type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
+
 const INCOME_SOURCES = ["Salary", "Side project", "Freelance", "Bonus", "Investment", "Gift", "Other"];
 
 // Full-year monthly income for the bar chart (2026 data matching dashboard)
@@ -38,6 +40,8 @@ export default function Income() {
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>(dummy);
   const [showForm, setShowForm] = useState(false);
+  const [monthFilter, setMonthFilter] = useState<string>("All months");
+  const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -176,6 +180,34 @@ export default function Income() {
       }, {} as Record<string, number>);
   }, [transactions, usesDatabase]);
 
+  const monthOptions = useMemo(
+    () => [
+      "All months",
+      ...Array.from(new Set(transactions.map((transaction) => transaction.date.slice(0, 7)))).sort((a, b) => b.localeCompare(a)),
+    ],
+    [transactions]
+  );
+
+  const visibleTransactions = useMemo(() => {
+    const filtered = monthFilter === "All months"
+      ? transactions
+      : transactions.filter((transaction) => transaction.date.startsWith(monthFilter));
+
+    return [...filtered].sort((left, right) => {
+      switch (sortOption) {
+        case "date-asc":
+          return left.date.localeCompare(right.date);
+        case "amount-asc":
+          return left.amount - right.amount;
+        case "amount-desc":
+          return right.amount - left.amount;
+        case "date-desc":
+        default:
+          return right.date.localeCompare(left.date);
+      }
+    });
+  }, [monthFilter, sortOption, transactions]);
+
   return (
     <div className={styles.container + " container"}>
       <div className={styles.pageHeader}>
@@ -214,9 +246,40 @@ export default function Income() {
             <h2 className={styles.tableTitle}>Income Entries</h2>
             <p className={styles.tableSubtitle}>Add new income records and review them right where you manage them.</p>
           </div>
-          <button className={styles.addButton} onClick={() => setShowForm(true)}>
-            + Add Income
-          </button>
+          <div className={styles.tableActions}>
+            <div className={styles.filterRow}>
+              <label htmlFor="income-month-filter" className={styles.filterLabel}>Filter</label>
+              <select
+                id="income-month-filter"
+                className={styles.filterSelect}
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+              >
+                {monthOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "All months" ? option : new Date(`${option}-01T00:00:00`).toLocaleString("en-GB", { month: "long", year: "numeric" })}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.filterRow}>
+              <label htmlFor="income-sort" className={styles.filterLabel}>Sort</label>
+              <select
+                id="income-sort"
+                className={styles.filterSelect}
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
+              >
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="amount-desc">Highest amount</option>
+                <option value="amount-asc">Lowest amount</option>
+              </select>
+            </div>
+            <button className={styles.addButton} onClick={() => setShowForm(true)}>
+              + Add Income
+            </button>
+          </div>
         </div>
 
         {error && <p className={styles.feedbackError}>{error}</p>}
@@ -248,7 +311,7 @@ export default function Income() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t) => (
+              {visibleTransactions.map((t) => (
                 <tr key={t.id}>
                   <td>{formatDate(t.date)}</td>
                   <td>{t.category}</td>
@@ -265,7 +328,7 @@ export default function Income() {
                   </td>
                 </tr>
               ))}
-              {transactions.length === 0 && (
+              {visibleTransactions.length === 0 && (
                 <tr><td colSpan={5} className={styles.emptyRow}>No income entries yet.</td></tr>
               )}
             </tbody>
