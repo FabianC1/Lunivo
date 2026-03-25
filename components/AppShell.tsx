@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Navbar from "./Navbar";
 import PublicNavbar from "./PublicNavbar";
 import styles from "./AppShell.module.css";
-import { isLoggedIn, setSession } from "../lib/auth";
+import { getSession, isLoggedIn, setSession } from "../lib/auth";
 
 const AUTH_ROUTES = new Set(["/login", "/register"]);
 const PUBLIC_ROUTES = new Set(["/", "/login", "/register", "/about", "/subscriptions", "/terms", "/privacy"]);
@@ -23,18 +23,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    let logged = isLoggedIn();
+    const localSession = isLoggedIn() ? getSession() : null;
+    let logged = Boolean(localSession);
 
-    if (!logged && oauthStatus === "authenticated" && oauthSession?.user?.email) {
-      setSession(
-        {
-          userId: (oauthSession.user as { id?: string }).id,
-          email: oauthSession.user.email,
-          name: oauthSession.user.name || oauthSession.user.email,
-          isDemo: false,
-        },
-        true
-      );
+    if (oauthStatus === "authenticated" && oauthSession?.user?.email) {
+      const syncedSession = {
+        userId: (oauthSession.user as { id?: string }).id,
+        email: oauthSession.user.email,
+        name: oauthSession.user.name || oauthSession.user.email,
+        isDemo: false,
+      };
+
+      if (
+        !localSession ||
+        localSession.isDemo ||
+        localSession.email !== syncedSession.email ||
+        localSession.userId !== syncedSession.userId ||
+        localSession.name !== syncedSession.name
+      ) {
+        setSession(syncedSession, true);
+      }
+
       logged = true;
     }
 
@@ -45,9 +54,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Redirect unauthenticated users to /about instead of /login
+    // Public entry stays on /about, but protected routes should go to login.
     if (!logged && !PUBLIC_ROUTES.has(pathname)) {
-      router.replace("/about");
+      router.replace("/login");
       return;
     }
 

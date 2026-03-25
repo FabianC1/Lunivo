@@ -8,6 +8,30 @@ function randomPassword() {
   return crypto.randomUUID() + crypto.randomUUID();
 }
 
+async function ensureOAuthUser(email: string, name?: string | null) {
+  const safeName = name?.trim() || email.split("@")[0] || "User";
+
+  await connectToDatabase();
+  const existing = await User.findOne({ email });
+
+  if (!existing) {
+    const hashed = await bcrypt.hash(randomPassword(), 10);
+    const created = await User.create({
+      name: safeName,
+      email,
+      password: hashed,
+    });
+    return String(created._id);
+  }
+
+  if (existing.name !== safeName) {
+    existing.name = safeName;
+    await existing.save();
+  }
+
+  return String(existing._id);
+}
+
 export const nextAuthOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -32,29 +56,8 @@ export const nextAuthOptions: NextAuthOptions = {
         return false;
       }
 
-      const safeName = user.name?.trim() || email.split("@")[0] || "User";
-
       try {
-        await connectToDatabase();
-        const existing = await User.findOne({ email });
-
-        if (!existing) {
-          const hashed = await bcrypt.hash(randomPassword(), 10);
-          const created = await User.create({
-            name: safeName,
-            email,
-            password: hashed,
-          });
-          (user as { id?: string }).id = String(created._id);
-          return true;
-        }
-
-        if (existing.name !== safeName) {
-          existing.name = safeName;
-          await existing.save();
-        }
-
-        (user as { id?: string }).id = String(existing._id);
+        (user as { id?: string }).id = await ensureOAuthUser(email, user.name);
       } catch {
         // Keep OAuth sign-in available even if DB is unavailable.
       }
@@ -65,6 +68,15 @@ export const nextAuthOptions: NextAuthOptions = {
       if (user) {
         token.userId = (user as { id?: string }).id;
       }
+
+      if (!token.userId && typeof token.email === "string") {
+        try {
+          token.userId = await ensureOAuthUser(token.email.trim().toLowerCase(), token.name);
+        } catch {
+          // Keep the token usable even if the database is temporarily unavailable.
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

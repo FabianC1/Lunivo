@@ -6,6 +6,26 @@ import { signOut } from "next-auth/react";
 import styles from "./profile.module.css";
 import { AuthSession, clearSession, getSession, setSession } from "../../lib/auth";
 
+type ProfilePayload = {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    backupEmail?: string;
+    phone?: string;
+    preferences?: {
+      language?: string;
+      currency?: string;
+      country?: string;
+    };
+    notifications?: {
+      emailNotifications?: boolean;
+      budgetAlerts?: boolean;
+      weeklyDigest?: boolean;
+    };
+  };
+};
+
 type SettingsTab = "account" | "appearance" | "preferences" | "notifications" | "billing" | "security" | "data" | "privacy" | "help" | "danger";
 
 const TAB_ITEMS: Array<{ id: SettingsTab; label: string }> = [
@@ -93,6 +113,61 @@ export default function ProfilePage() {
   }, [router]);
 
   useEffect(() => {
+    const currentSession = session;
+
+    if (!currentSession?.userId || currentSession.isDemo) {
+      return;
+    }
+
+    const userId = currentSession.userId;
+
+    let isMounted = true;
+
+    async function loadProfile() {
+      try {
+        const response = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as ProfilePayload;
+        if (!isMounted || !payload.user) {
+          return;
+        }
+
+        setName(payload.user.name);
+        setBackupEmail(payload.user.backupEmail ?? "");
+        setPhone(payload.user.phone ?? "");
+        setLanguage(payload.user.preferences?.language ?? "en");
+        setCurrency(payload.user.preferences?.currency ?? "GBP");
+        setCountry(payload.user.preferences?.country ?? "");
+        setEmailNotifications(payload.user.notifications?.emailNotifications ?? true);
+        setBudgetAlerts(payload.user.notifications?.budgetAlerts ?? true);
+        setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
+
+        const updatedSession = {
+          ...currentSession,
+          name: payload.user.name,
+          email: payload.user.email,
+        } as AuthSession;
+        setSession(updatedSession);
+        setSessionState(updatedSession);
+      } catch {
+        // Keep the page usable if the profile fetch fails.
+      }
+    }
+
+    void loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
     const tab = searchParams?.get("tab");
     if (tab && TAB_ITEMS.some((t) => t.id === tab)) {
       setActiveTab(tab as SettingsTab);
@@ -111,7 +186,7 @@ export default function ProfilePage() {
   async function handleLogout() {
     clearSession();
     await signOut({ redirect: false });
-    router.replace("/login");
+    window.location.assign("/login");
   }
 
   async function handleNameSave(e: FormEvent) {
@@ -144,9 +219,14 @@ export default function ProfilePage() {
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.userId, name: normalizedName }),
+        body: JSON.stringify({
+          userId: session.userId,
+          name: normalizedName,
+          backupEmail,
+          phone,
+        }),
       });
-      const payload = await response.json();
+      const payload = (await response.json()) as ProfilePayload & { error?: string };
 
       if (!response.ok || !payload?.user) {
         setNameError(payload?.error ?? "Unable to save your name.");
@@ -162,6 +242,8 @@ export default function ProfilePage() {
       setSession(updated);
       setSessionState(updated);
       setName(payload.user.name);
+      setBackupEmail(payload.user.backupEmail ?? "");
+      setPhone(payload.user.phone ?? "");
       setNameMessage("Account changes saved.");
       setIsSavingName(false);
     } catch {
@@ -229,14 +311,90 @@ export default function ProfilePage() {
     }
   }
 
-  function saveNotificationPrefs() {
-    setNotifMessage("Notification preferences saved locally.");
-    window.setTimeout(() => setNotifMessage(""), 2000);
+  async function saveNotificationPrefs() {
+    if (!session) {
+      return;
+    }
+
+    if (session.isDemo || !session.userId) {
+      setNotifMessage("Notification preferences saved for this local session.");
+      window.setTimeout(() => setNotifMessage(""), 2000);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session.userId,
+          notifications: {
+            emailNotifications,
+            budgetAlerts,
+            weeklyDigest,
+          },
+        }),
+      });
+
+      const payload = (await response.json()) as (ProfilePayload & { error?: string });
+      if (!response.ok || !payload.user) {
+        setNotifMessage(payload.error ?? "Unable to save notification settings.");
+      } else {
+        setEmailNotifications(payload.user.notifications?.emailNotifications ?? true);
+        setBudgetAlerts(payload.user.notifications?.budgetAlerts ?? true);
+        setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
+        setNotifMessage("Notification settings saved.");
+      }
+    } catch {
+      setNotifMessage("Unable to save notification settings right now.");
+    }
+
+    window.setTimeout(() => setNotifMessage(""), 2200);
   }
 
-  function savePreferences() {
+  async function savePreferences() {
+    if (!session) {
+      return;
+    }
+
     setIsSavingPrefs(true);
-    setPrefsMessage("Preferences saved. These apply across your account.");
+
+    if (session.isDemo || !session.userId) {
+      setPrefsMessage("Preferences saved for this local session.");
+      window.setTimeout(() => {
+        setPrefsMessage("");
+        setIsSavingPrefs(false);
+      }, 2500);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: session.userId,
+          preferences: {
+            language,
+            currency,
+            country,
+          },
+        }),
+      });
+
+      const payload = (await response.json()) as (ProfilePayload & { error?: string });
+      if (!response.ok || !payload.user) {
+        setPrefsMessage(payload.error ?? "Unable to save preferences.");
+      } else {
+        setLanguage(payload.user.preferences?.language ?? "en");
+        setCurrency(payload.user.preferences?.currency ?? "GBP");
+        setCountry(payload.user.preferences?.country ?? "");
+        setPrefsMessage("Preferences saved. These apply across your account.");
+      }
+    } catch {
+      setPrefsMessage("Unable to save preferences right now.");
+    }
+
     window.setTimeout(() => {
       setPrefsMessage("");
       setIsSavingPrefs(false);
@@ -250,7 +408,7 @@ export default function ProfilePage() {
       window.setTimeout(() => setContactMessage(""), 2200);
       return;
     }
-    setContactMessage("Backup email and phone saved locally.");
+    setContactMessage("Backup details will be saved with your account changes.");
     window.setTimeout(() => setContactMessage(""), 2200);
   }
 

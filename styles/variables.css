@@ -3,20 +3,20 @@
   --bg-color: #F8FAFC; /* soft off-white */
   --text-color: #1E293B; /* dark slate */
   --primary-color: #3B82F6; /* modern blue */
-  --accent-color: #40E0D0; /* turquoise for accents */
-  --highlight-color: #F59E0B; /* amber for highlights */
+  --accent-color: #8B5CF6; /* violet accent */
+  --highlight-color: #F97316; /* warm orange highlight */
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #db48ec 0%, #ff4d00 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #F97316 100%);
   --navbar-text-color: #1E293B;
-  --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
+  --bg-gradient: linear-gradient(135deg, #F3E8FF 0%, #FDF2F8 48%, #FFEDD5 100%);
 
   /* rgb helpers for the gradient used in globals.css */
   --foreground-rgb: 30, 41, 59;
-  --background-start-rgb: 224, 242, 254;
-  --background-end-rgb: 254, 226, 226;
-  --button-gradient-start: #ff4d00;
-  --button-gradient-end: #F59E0B;
+  --background-start-rgb: 243, 232, 255;
+  --background-end-rgb: 255, 237, 213;
+  --button-gradient-start: #8B5CF6;
+  --button-gradient-end: #F97316;
 }
 
 /* explicit light mode when data-theme="light" is set */
@@ -24,19 +24,19 @@
   --bg-color: #F8FAFC;
   --text-color: #1E293B;
   --primary-color: #3B82F6;
-  --accent-color: #40E0D0; /* turquoise */
-  --highlight-color: #8B5CF6;
+  --accent-color: #8B5CF6;
+  --highlight-color: #F97316;
   --card-color: #FFFFFF;
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #db48ec 0%, #ff4d00 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #F97316 100%);
   --navbar-text-color: #1E293B;
-  --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #DDD6FE 50%, #FEE2E2 100%);
+  --bg-gradient: linear-gradient(135deg, #F3E8FF 0%, #FDF2F8 48%, #FFEDD5 100%);
 
   --foreground-rgb: 30, 41, 59;
-  --background-start-rgb: 224, 242, 254;
-  --background-end-rgb: 254, 226, 226;
-  --button-gradient-start: #ff4d00;
-  --button-gradient-end: #F59E0B;
+  --background-start-rgb: 243, 232, 255;
+  --background-end-rgb: 255, 237, 213;
+  --button-gradient-start: #8B5CF6;
+  --button-gradient-end: #F97316;
 }
 
 /* dark mode variables triggered by data-theme attribute (takes precedence) */
