@@ -148,13 +148,18 @@ export default function ProfilePage() {
         setBudgetAlerts(payload.user.notifications?.budgetAlerts ?? true);
         setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
 
-        const updatedSession = {
-          ...currentSession,
-          name: payload.user.name,
-          email: payload.user.email,
-        } as AuthSession;
-        setSession(updatedSession);
-        setSessionState(updatedSession);
+        if (
+          currentSession.name !== payload.user.name ||
+          currentSession.email !== payload.user.email
+        ) {
+          const updatedSession = {
+            ...currentSession,
+            name: payload.user.name,
+            email: payload.user.email,
+          } as AuthSession;
+          setSession(updatedSession);
+          setSessionState(updatedSession);
+        }
       } catch {
         // Keep the page usable if the profile fetch fails.
       }
@@ -165,7 +170,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [session]);
+  }, [session?.userId, session?.isDemo]);
 
   useEffect(() => {
     const tab = searchParams?.get("tab");
@@ -186,7 +191,9 @@ export default function ProfilePage() {
   async function handleLogout() {
     markLogoutPending();
     clearSession();
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ redirect: false });
+    router.replace("/login");
+    router.refresh();
   }
 
   async function handleNameSave(e: FormEvent) {

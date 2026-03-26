@@ -99,24 +99,7 @@ export function clearLogoutPending() {
 
 export function isLogoutPending() {
   if (!isBrowser()) return false;
-
-  const raw = localStorage.getItem(LOGOUT_PENDING_KEY);
-  if (!raw) {
-    return false;
-  }
-
-  const timestamp = Number(raw);
-  if (!Number.isFinite(timestamp)) {
-    localStorage.removeItem(LOGOUT_PENDING_KEY);
-    return false;
-  }
-
-  const isFresh = Date.now() - timestamp < 60_000;
-  if (!isFresh) {
-    localStorage.removeItem(LOGOUT_PENDING_KEY);
-  }
-
-  return isFresh;
+  return localStorage.getItem(LOGOUT_PENDING_KEY) !== null;
 }
 
 export function isLoggedIn() {

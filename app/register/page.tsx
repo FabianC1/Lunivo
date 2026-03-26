@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import styles from "./register.module.css";
-import { getSession, setSession } from "../../lib/auth";
+import { clearLogoutPending, getSession, setSession } from "../../lib/auth";
 
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "" };
@@ -111,6 +111,7 @@ export default function Register() {
   async function handleOAuthRegister(provider: "google") {
     setErrors({});
     setOauthLoading(provider);
+    clearLogoutPending();
     await signIn(provider, { callbackUrl: "/dashboard" });
     setOauthLoading("");
   }
