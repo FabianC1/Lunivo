@@ -10,32 +10,66 @@ export const initialBudgets: BudgetMap = {
   Other: 100,
 };
 
+const DEFAULT_CATEGORY_ORDER = Object.keys(initialBudgets);
+
 const STORAGE_KEY = "lunivo-budgets";
 
-function sanitizeBudgets(value: unknown): BudgetMap {
-  const safeBudgets: BudgetMap = { ...initialBudgets };
+function sortBudgetEntries(entries: Array<[string, number]>): BudgetMap {
+  return Object.fromEntries(
+    entries.sort(([left], [right]) => {
+      const leftDefaultIndex = DEFAULT_CATEGORY_ORDER.indexOf(left);
+      const rightDefaultIndex = DEFAULT_CATEGORY_ORDER.indexOf(right);
 
-  if (!value || typeof value !== "object") {
-    return safeBudgets;
+      if (leftDefaultIndex !== -1 || rightDefaultIndex !== -1) {
+        if (leftDefaultIndex === -1) return 1;
+        if (rightDefaultIndex === -1) return -1;
+        return leftDefaultIndex - rightDefaultIndex;
+      }
+
+      return left.localeCompare(right);
+    })
+  );
+}
+
+export function normalizeBudgetCategoryName(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function normalizeBudgetMap(value: unknown, defaults: BudgetMap = initialBudgets): BudgetMap {
+  const safeBudgets = new Map<string, number>();
+
+  for (const [category, amount] of Object.entries(defaults)) {
+    safeBudgets.set(category, amount);
   }
 
-  for (const category of Object.keys(initialBudgets)) {
-    const rawValue = (value as Record<string, unknown>)[category];
+  if (!value || typeof value !== "object") {
+    return sortBudgetEntries(Array.from(safeBudgets.entries()));
+  }
+
+  for (const [rawCategory, rawValue] of Object.entries(value as Record<string, unknown>)) {
+    const category = normalizeBudgetCategoryName(rawCategory);
+    if (!category) {
+      continue;
+    }
 
     if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
-      safeBudgets[category] = rawValue;
+      safeBudgets.set(category, rawValue);
       continue;
     }
 
     if (typeof rawValue === "string" && rawValue.trim() !== "") {
       const parsedValue = Number(rawValue);
       if (Number.isFinite(parsedValue)) {
-        safeBudgets[category] = parsedValue;
+        safeBudgets.set(category, parsedValue);
       }
     }
   }
 
-  return safeBudgets;
+  return sortBudgetEntries(Array.from(safeBudgets.entries()));
+}
+
+export function sanitizeBudgets(value: unknown): BudgetMap {
+  return normalizeBudgetMap(value, initialBudgets);
 }
 
 export function loadBudgets(): BudgetMap {

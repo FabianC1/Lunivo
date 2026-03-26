@@ -5,13 +5,14 @@ import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
 import PageLoading from "../../components/PageLoading";
 import { DEMO_EMAIL, getSession } from "../../lib/auth";
+import { initialBudgets } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 type MonthKey = (typeof MONTHS)[number];
 type Metric = "spendings" | "income" | "net";
 type ChartKind = "line" | "bar";
-type CategoryName = "Food" | "Transport" | "Utilities" | "Entertainment" | "Other";
+type CategoryName = string;
 
 interface MonthReport {
   income: number;
@@ -85,38 +86,28 @@ const SAMPLE_REPORT_DATA: Record<string, YearReport> = {
   ),
 };
 
-const CATEGORY_NAMES: CategoryName[] = ["Food", "Transport", "Utilities", "Entertainment", "Other"];
+const DEFAULT_DASHBOARD_CATEGORIES = Object.keys(initialBudgets);
 
-function createEmptyYearReport(): YearReport {
+function createEmptyYearReport(categories: string[] = DEFAULT_DASHBOARD_CATEGORIES): YearReport {
   return MONTHS.reduce((report, month) => {
     report[month] = {
       income: 0,
       spendings: 0,
-      categories: {
-        Food: 0,
-        Transport: 0,
-        Utilities: 0,
-        Entertainment: 0,
-        Other: 0,
-      },
+      categories: Object.fromEntries(categories.map((category) => [category, 0])),
     };
     return report;
   }, {} as YearReport);
 }
 
-function createEmptyReportData(years: string[]) {
+function createEmptyReportData(years: string[], categories?: string[]) {
   return years.reduce((report, year) => {
-    report[year] = createEmptyYearReport();
+    report[year] = createEmptyYearReport(categories);
     return report;
   }, {} as Record<string, YearReport>);
 }
 
 function getCurrentMonthKey(): MonthKey {
   return MONTHS[new Date().getMonth()] ?? "Jan";
-}
-
-function normalizeCategory(value: string): CategoryName {
-  return CATEGORY_NAMES.includes(value as CategoryName) ? (value as CategoryName) : "Other";
 }
 
 function getTransactionYear(value: string) {
@@ -133,6 +124,15 @@ function buildReportDataFromTransactions(transactions: TransactionRecord[]) {
     return createEmptyReportData([String(new Date().getFullYear())]);
   }
 
+  const categories = Array.from(
+    new Set(
+      transactions
+        .filter((transaction) => transaction.kind === "expense")
+        .map((transaction) => transaction.category?.trim() || "Other")
+    )
+  );
+  const resolvedCategories = categories.length > 0 ? categories.sort((left, right) => left.localeCompare(right)) : DEFAULT_DASHBOARD_CATEGORIES;
+
   const years = Array.from(
     new Set(
       transactions
@@ -141,7 +141,7 @@ function buildReportDataFromTransactions(transactions: TransactionRecord[]) {
     )
   ).sort((left, right) => left.localeCompare(right));
 
-  const reportData = createEmptyReportData(years);
+  const reportData = createEmptyReportData(years, resolvedCategories);
 
   for (const transaction of transactions) {
     const year = getTransactionYear(transaction.date);
@@ -160,7 +160,7 @@ function buildReportDataFromTransactions(transactions: TransactionRecord[]) {
     }
 
     report.spendings += amount;
-    const category = normalizeCategory(transaction.category || "Other");
+    const category = transaction.category?.trim() || "Other";
     report.categories[category] += amount;
   }
 
@@ -191,7 +191,7 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<MonthKey>(getCurrentMonthKey());
   const [selectedMetric, setSelectedMetric] = useState<Metric>("spendings");
   const [mainChartType, setMainChartType] = useState<ChartKind>("line");
-  const [selectedCategory, setSelectedCategory] = useState<CategoryName>("Food");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryName>(DEFAULT_DASHBOARD_CATEGORIES[0]);
 
   useEffect(() => {
     const session = getSession();
@@ -270,6 +270,27 @@ export default function Dashboard() {
 
   const fallbackYear = years[years.length - 1] ?? String(new Date().getFullYear());
   const yearData = reportData[selectedYear] ?? reportData[fallbackYear] ?? createEmptyYearReport();
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+
+    for (const month of MONTHS) {
+      for (const category of Object.keys(yearData[month].categories)) {
+        categories.add(category);
+      }
+    }
+
+    return Array.from(categories).sort((left, right) => left.localeCompare(right));
+  }, [yearData]);
+
+  useEffect(() => {
+    if (availableCategories.length === 0) {
+      return;
+    }
+
+    if (!availableCategories.includes(selectedCategory)) {
+      setSelectedCategory(availableCategories[0]);
+    }
+  }, [availableCategories, selectedCategory]);
 
   const monthlyMetricData = MONTHS.reduce((result, month) => {
     const report = yearData[month];
@@ -287,7 +308,7 @@ export default function Dashboard() {
   const monthNet = monthDetails.income - monthDetails.spendings;
 
   const categoryTrend = MONTHS.reduce((result, month) => {
-    result[month] = yearData[month].categories[selectedCategory];
+    result[month] = yearData[month].categories[selectedCategory] ?? 0;
     return result;
   }, {} as Record<string, number>);
 

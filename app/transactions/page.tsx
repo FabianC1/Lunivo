@@ -8,7 +8,7 @@ import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
 import { formatCurrency, formatDate } from "../../lib/utils";
-import { initialBudgets, type BudgetMap } from "../../lib/budgets";
+import { initialBudgets, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
 import { getSession } from "../../lib/auth";
 
 interface Transaction {
@@ -20,8 +20,6 @@ interface Transaction {
 }
 
 type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
-
-const SPENDING_CATEGORIES = ["Food", "Transport", "Utilities", "Entertainment", "Other"];
 
 const dummy: Transaction[] = [
   { id:  "1", date: "2026-03-01", description: "Groceries",      category: "Food",          amount:  52.60 },
@@ -105,8 +103,14 @@ export default function Transactions() {
           return;
         }
 
-        setTransactions(transactionsPayload.transactions ?? []);
-        setBudgets(budgetsPayload.budget?.categories ?? initialBudgets);
+        const loadedTransactions = transactionsPayload.transactions ?? [];
+        setTransactions(loadedTransactions);
+        setBudgets(
+          sanitizeBudgets({
+            ...(budgetsPayload.budget?.categories ?? initialBudgets),
+            ...Object.fromEntries(loadedTransactions.map((transaction: Transaction) => [transaction.category, 0])),
+          })
+        );
       } catch (loadError) {
         if (!isMounted) {
           return;
@@ -114,7 +118,7 @@ export default function Transactions() {
 
         setError(loadError instanceof Error ? loadError.message : "Failed to load spending data.");
         setTransactions([]);
-        setBudgets(initialBudgets);
+        setBudgets(sanitizeBudgets(initialBudgets));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -220,6 +224,11 @@ export default function Transactions() {
 
     return totals;
   }, [transactions]);
+
+  const spendingCategories = useMemo(
+    () => Object.keys(sanitizeBudgets({ ...budgets, ...Object.fromEntries(transactions.map((transaction) => [transaction.category, 0])) })),
+    [budgets, transactions]
+  );
 
   // Filtered table rows
   const categories = ["All", ...Array.from(new Set(transactions.map((t) => t.category)))];
@@ -355,7 +364,7 @@ export default function Transactions() {
             <TransactionForm
               onSubmit={addTransaction}
               onCancel={() => setShowForm(false)}
-              categoryOptions={SPENDING_CATEGORIES}
+              categoryOptions={spendingCategories}
               categoryPlaceholder="Select a category"
             />
           </div>

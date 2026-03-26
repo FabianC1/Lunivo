@@ -5,7 +5,7 @@ import styles from "./budgets.module.css";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
 import PageLoading from "../../components/PageLoading";
-import { initialBudgets, type BudgetMap } from "../../lib/budgets";
+import { initialBudgets, normalizeBudgetCategoryName, normalizeBudgetMap, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
 
@@ -27,6 +27,8 @@ export default function Budgets() {
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [categoryError, setCategoryError] = useState("");
 
   useEffect(() => {
     const session = getSession();
@@ -37,7 +39,7 @@ export default function Budgets() {
 
     if (!userId) {
       setBudgets(initialBudgets);
-      setActualSpending(SAMPLE_SPENDING);
+      setActualSpending(normalizeBudgetMap(SAMPLE_SPENDING, Object.fromEntries(Object.keys(initialBudgets).map((category) => [category, 0]))));
       setHasLoadedBudgets(true);
       setIsLoading(false);
       return;
@@ -72,6 +74,8 @@ export default function Budgets() {
           return;
         }
 
+        const loadedBudgets = sanitizeBudgets(budgetsPayload.budget?.categories ?? initialBudgets);
+
         const expenseTransactions = Array.isArray(spendingPayload.transactions)
           ? spendingPayload.transactions
           : [];
@@ -87,12 +91,12 @@ export default function Budgets() {
           return totals;
         }, {} as BudgetMap);
 
-        for (const key of Object.keys(initialBudgets)) {
+        for (const key of new Set([...Object.keys(loadedBudgets), ...Object.keys(initialBudgets), ...Object.keys(monthlySpending)])) {
           monthlySpending[key] = monthlySpending[key] ?? 0;
         }
 
-        setBudgets(budgetsPayload.budget?.categories ?? initialBudgets);
-        setActualSpending(monthlySpending);
+        setBudgets(loadedBudgets);
+        setActualSpending(normalizeBudgetMap(monthlySpending, Object.fromEntries(Object.keys(monthlySpending).map((category) => [category, 0]))));
         setHasLoadedBudgets(true);
       } catch (loadError) {
         if (!isMounted) {
@@ -101,7 +105,7 @@ export default function Budgets() {
 
         setError(loadError instanceof Error ? loadError.message : "Failed to load budget data.");
         setBudgets(initialBudgets);
-        setActualSpending(SAMPLE_SPENDING);
+        setActualSpending(normalizeBudgetMap(SAMPLE_SPENDING, Object.fromEntries(Object.keys(initialBudgets).map((category) => [category, 0]))));
         setHasLoadedBudgets(true);
       } finally {
         if (isMounted) {
@@ -148,7 +152,30 @@ export default function Budgets() {
   function updateCategory(cat: string, amt: number) {
     const safe = isNaN(amt) ? 0 : amt;
     setFeedback("");
-    setBudgets((prev) => ({ ...prev, [cat]: safe }));
+    setBudgets((prev) => sanitizeBudgets({ ...prev, [cat]: safe }));
+  }
+
+  function addCategory() {
+    const normalized = normalizeBudgetCategoryName(newCategory);
+    if (!normalized) {
+      setCategoryError("Enter a category name.");
+      return;
+    }
+
+    const exists = Object.keys(budgets).some(
+      (category) => category.toLowerCase() === normalized.toLowerCase()
+    );
+
+    if (exists) {
+      setCategoryError("That category already exists.");
+      return;
+    }
+
+    setCategoryError("");
+    setFeedback("");
+    setBudgets((prev) => sanitizeBudgets({ ...prev, [normalized]: 0 }));
+    setActualSpending((prev) => normalizeBudgetMap({ ...prev, [normalized]: prev[normalized] ?? 0 }, Object.fromEntries(Object.keys({ ...prev, [normalized]: 0 }).map((category) => [category, 0]))));
+    setNewCategory("");
   }
 
   const totalBudget       = Object.values(budgets).reduce((s, v) => s + v, 0);
@@ -274,8 +301,24 @@ export default function Budgets() {
       <section className={styles.cardSection}>
         <div className={styles.sectionHeader}>
           <h2>Edit Monthly Limits</h2>
-          <p>Adjust your budget for any category below.</p>
+          <p>Adjust your budget for any category below, or create your own.</p>
         </div>
+        <div className={styles.categoryActions}>
+          <input
+            type="text"
+            className={styles.categoryInput}
+            value={newCategory}
+            onChange={(event) => {
+              setNewCategory(event.target.value);
+              setCategoryError("");
+            }}
+            placeholder="Add a category like Car"
+          />
+          <button type="button" className={styles.categoryButton} onClick={addCategory}>
+            Add Category
+          </button>
+        </div>
+        {categoryError ? <p className={styles.feedbackError}>{categoryError}</p> : null}
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
