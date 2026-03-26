@@ -111,6 +111,13 @@
   padding: 0.9rem 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   min-width: 0;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summaryCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 35%, rgba(148, 163, 184, 0.25));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
 .summaryCard p {
@@ -124,9 +131,49 @@
   margin: 0.25rem 0 0.3rem;
 }
 
-.summaryCard span {
+.summaryMeta {
   font-size: 0.8rem;
   opacity: 0.72;
+}
+
+.summaryValue,
+.summaryMeta {
+  display: grid;
+}
+
+.summaryValue {
+  min-height: 1.6em;
+}
+
+.summaryMeta {
+  min-height: 1.3em;
+}
+
+.summaryMeta .defaultValue,
+.summaryMeta .hoverValue {
+  font-size: inherit;
+}
+
+.defaultValue,
+.hoverValue {
+  grid-area: 1 / 1;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.hoverValue {
+  opacity: 0;
+  transform: translateY(0.2rem);
+  pointer-events: none;
+}
+
+.summaryCard:hover .defaultValue {
+  opacity: 0;
+  transform: translateY(-0.2rem);
+}
+
+.summaryCard:hover .hoverValue {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .chartGrid {

@@ -79,6 +79,14 @@ function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+function formatSignedPercentage(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) {
+    return "N/A";
+  }
+
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+}
+
 export default function Dashboard() {
   const years = Object.keys(REPORT_DATA);
   const [selectedYear, setSelectedYear] = useState(years[years.length - 1]);
@@ -119,6 +127,7 @@ export default function Dashboard() {
   const annualSpendings = MONTHS.reduce((sum, month) => sum + yearData[month].spendings, 0);
   const annualNet = annualIncome - annualSpendings;
   const savingsRate = annualIncome > 0 ? (annualNet / annualIncome) * 100 : 0;
+  const spendingsRate = annualIncome > 0 ? (annualSpendings / annualIncome) * 100 : 0;
   const averageMonthlySpendings = annualSpendings / MONTHS.length;
 
   const bestNetMonth = MONTHS.reduce((best, month) => {
@@ -130,10 +139,26 @@ export default function Dashboard() {
   }, null as { month: MonthKey; value: number } | null);
 
   const selectedMonthIndex = MONTHS.indexOf(selectedMonth);
+  const selectedYearIndex = years.indexOf(selectedYear);
+  const previousYear = selectedYearIndex > 0 ? years[selectedYearIndex - 1] : null;
+  const previousYearData = previousYear ? REPORT_DATA[previousYear] : null;
+  const previousAnnualIncome = previousYearData
+    ? MONTHS.reduce((sum, month) => sum + previousYearData[month].income, 0)
+    : null;
+  const previousAnnualSpendings = previousYearData
+    ? MONTHS.reduce((sum, month) => sum + previousYearData[month].spendings, 0)
+    : null;
+  const annualIncomeGrowth = previousAnnualIncome && previousAnnualIncome > 0
+    ? ((annualIncome - previousAnnualIncome) / previousAnnualIncome) * 100
+    : null;
+  const annualSpendingsGrowth = previousAnnualSpendings && previousAnnualSpendings > 0
+    ? ((annualSpendings - previousAnnualSpendings) / previousAnnualSpendings) * 100
+    : null;
   const previousMonth = selectedMonthIndex > 0 ? MONTHS[selectedMonthIndex - 1] : null;
   const currentMetricValue = monthlyMetricData[selectedMonth];
   const previousMetricValue = previousMonth ? monthlyMetricData[previousMonth] : null;
   const monthChange = previousMetricValue === null ? null : currentMetricValue - previousMetricValue;
+  const bestNetMonthShare = bestNetMonth && annualNet > 0 ? (bestNetMonth.value / annualNet) * 100 : null;
 
   const metricLabel =
     selectedMetric === "income"
@@ -229,26 +254,50 @@ export default function Dashboard() {
       <div className={styles.summaryGrid}>
         <article className={styles.summaryCard}>
           <p>Annual Income</p>
-          <h3>{formatCurrency(annualIncome)}</h3>
-          <span>Across {selectedYear}</span>
+          <h3 className={styles.summaryValue}>
+            <span className={styles.defaultValue}>{formatCurrency(annualIncome)}</span>
+            <span className={styles.hoverValue}>{formatSignedPercentage(annualIncomeGrowth)}</span>
+          </h3>
+          <span className={styles.summaryMeta}>
+            <span className={styles.defaultValue}>Across {selectedYear}</span>
+            <span className={styles.hoverValue}>{previousYear ? `vs ${previousYear}` : "No prior year"}</span>
+          </span>
         </article>
 
         <article className={styles.summaryCard}>
           <p>Annual Spendings</p>
-          <h3>{formatCurrency(annualSpendings)}</h3>
-          <span>Avg {formatCurrency(averageMonthlySpendings)} / month</span>
+          <h3 className={styles.summaryValue}>
+            <span className={styles.defaultValue}>{formatCurrency(annualSpendings)}</span>
+            <span className={styles.hoverValue}>{formatSignedPercentage(annualSpendingsGrowth)}</span>
+          </h3>
+          <span className={styles.summaryMeta}>
+            <span className={styles.defaultValue}>Avg {formatCurrency(averageMonthlySpendings)} / month</span>
+            <span className={styles.hoverValue}>{previousYear ? `vs ${previousYear}` : "No prior year"}</span>
+          </span>
         </article>
 
         <article className={styles.summaryCard}>
           <p>Savings Rate</p>
-          <h3>{formatPercentage(savingsRate)}</h3>
-          <span>{formatCurrency(annualNet)} net this year</span>
+          <h3 className={styles.summaryValue}>
+            <span className={styles.defaultValue}>{formatPercentage(savingsRate)}</span>
+            <span className={styles.hoverValue}>{formatPercentage(spendingsRate)}</span>
+          </h3>
+          <span className={styles.summaryMeta}>
+            <span className={styles.defaultValue}>{formatCurrency(annualNet)} net this year</span>
+            <span className={styles.hoverValue}>Spent {formatPercentage(spendingsRate)} of income</span>
+          </span>
         </article>
 
         <article className={styles.summaryCard}>
           <p>Best Net Month</p>
-          <h3>{bestNetMonth?.month ?? "-"}</h3>
-          <span>{bestNetMonth ? formatCurrency(bestNetMonth.value) : "No data"}</span>
+          <h3 className={styles.summaryValue}>
+            <span className={styles.defaultValue}>{bestNetMonth?.month ?? "-"}</span>
+            <span className={styles.hoverValue}>{bestNetMonth?.month ?? "-"}</span>
+          </h3>
+          <span className={styles.summaryMeta}>
+            <span className={styles.defaultValue}>{bestNetMonth ? formatCurrency(bestNetMonth.value) : "No data"}</span>
+            <span className={styles.hoverValue}>{bestNetMonthShare !== null ? `${formatPercentage(bestNetMonthShare)} of yearly net` : "No data"}</span>
+          </span>
         </article>
       </div>
 
