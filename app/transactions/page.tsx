@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./transactions.module.css";
 import IconPopoverButton from "../../components/IconPopoverButton";
+import PageLoading from "../../components/PageLoading";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
@@ -53,7 +54,7 @@ const WEEK_LABELS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"] as const;
 export default function Transactions() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>(dummy);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
@@ -243,6 +244,10 @@ export default function Transactions() {
       }
     });
 
+  if (isLoading) {
+    return <PageLoading message="Loading spendings..." />;
+  }
+
   return (
     <div className={styles.container + " container"}>
       <div className={styles.pageHeader}>
@@ -345,8 +350,6 @@ export default function Transactions() {
         </div>
 
         {error && <p className={styles.feedbackError}>{error}</p>}
-        {isLoading && <p className={styles.feedbackMuted}>Loading spending entries...</p>}
-
         {showForm && (
           <div className={styles.formWrapper}>
             <TransactionForm

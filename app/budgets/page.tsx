@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "./budgets.module.css";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
+import PageLoading from "../../components/PageLoading";
 import { initialBudgets, type BudgetMap } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
@@ -18,7 +19,7 @@ const SAMPLE_SPENDING: BudgetMap = {
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
-  const [actualSpending, setActualSpending] = useState<BudgetMap>(SAMPLE_SPENDING);
+  const [actualSpending, setActualSpending] = useState<BudgetMap>({});
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [hasLoadedBudgets, setHasLoadedBudgets] = useState(false);
@@ -162,6 +163,10 @@ export default function Budgets() {
     return result;
   }, {} as Record<string, number>);
 
+  if (isLoading) {
+    return <PageLoading message="Loading budgets..." />;
+  }
+
   return (
     <div className={styles.container + " container"}>
       <div className={styles.header}>
@@ -204,7 +209,6 @@ export default function Budgets() {
           </p>
         </div>
         {error && <p className={styles.feedbackError}>{error}</p>}
-        {isLoading && <p className={styles.feedbackMuted}>Loading budgets...</p>}
         {!isLoading && usesDatabase && (
           <p className={styles.feedbackMuted}>{isSaving ? "Saving changes..." : feedback || "Changes save automatically."}</p>
         )}

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import DateInput from "../../components/DateInput";
+import PageLoading from "../../components/PageLoading";
 import styles from "./goals.module.css";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
@@ -173,6 +174,10 @@ export default function GoalsPage() {
     const saved = activeGoals.reduce((s, g) => s + g.savedAmount, 0);
     return { target, saved, remaining: Math.max(0, target - saved) };
   }, [activeGoals]);
+
+  if (isLoading) {
+    return <PageLoading message="Loading goals..." />;
+  }
 
   function resetForm() {
     setForm(BLANK_FORM);

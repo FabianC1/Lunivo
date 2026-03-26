@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./income.module.css";
 import IconPopoverButton from "../../components/IconPopoverButton";
+import PageLoading from "../../components/PageLoading";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import IncomeTrendChart from "../../components/IncomeTrendChart";
@@ -39,7 +40,7 @@ const dummy: Transaction[] = [
 export default function Income() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
-  const [transactions, setTransactions] = useState<Transaction[]>(dummy);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [monthFilter, setMonthFilter] = useState<string>("All months");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
@@ -209,6 +210,10 @@ export default function Income() {
     });
   }, [monthFilter, sortOption, transactions]);
 
+  if (isLoading) {
+    return <PageLoading message="Loading income..." />;
+  }
+
   return (
     <div className={styles.container + " container"}>
       <div className={styles.pageHeader}>
@@ -298,8 +303,6 @@ export default function Income() {
         </div>
 
         {error && <p className={styles.feedbackError}>{error}</p>}
-        {isLoading && <p className={styles.feedbackMuted}>Loading income entries...</p>}
-
         {showForm && (
           <div className={styles.formWrapper}>
             <TransactionForm

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
+import PageLoading from "../../components/PageLoading";
 import { DEMO_EMAIL, getSession } from "../../lib/auth";
 import { formatCurrency } from "../../lib/utils";
 
@@ -179,7 +180,7 @@ function formatSignedPercentage(value: number | null): string {
 }
 
 export default function Dashboard() {
-  const [reportData, setReportData] = useState<Record<string, YearReport>>(SAMPLE_REPORT_DATA);
+  const [reportData, setReportData] = useState<Record<string, YearReport>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const years = useMemo(
@@ -345,13 +346,16 @@ export default function Dashboard() {
       ? "No prior month"
       : `${monthChange >= 0 ? "+" : ""}${formatCurrency(monthChange)} vs ${previousMonth}`;
 
+  if (isLoading) {
+    return <PageLoading message="Loading your dashboard..." />;
+  }
+
   return (
     <div className={styles.container + ' container'}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Dashboard</h1>
           <p className={styles.subtitle}>Monthly insights, trends, and reports in one place.</p>
-          {isLoading ? <p className={styles.subtitle}>Loading your latest totals...</p> : null}
           {!isLoading && error ? <p className={styles.subtitle}>{error}</p> : null}
         </div>
         <div className={styles.controls}>
