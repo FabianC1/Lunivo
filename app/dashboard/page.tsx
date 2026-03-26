@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
+import { DEMO_EMAIL, getSession } from "../../lib/auth";
 import { formatCurrency } from "../../lib/utils";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -18,6 +19,14 @@ interface MonthReport {
 }
 
 type YearReport = Record<MonthKey, MonthReport>;
+
+interface TransactionRecord {
+  id: string;
+  date: string;
+  amount: number;
+  kind: "income" | "expense";
+  category: string;
+}
 
 const CATEGORY_SPLITS: Record<CategoryName, number>[] = [
   { Food: 0.32, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Other: 0.16 },
@@ -64,7 +73,7 @@ function buildYearReport(incomes: number[], spendings: number[]): YearReport {
   return year;
 }
 
-const REPORT_DATA: Record<string, YearReport> = {
+const SAMPLE_REPORT_DATA: Record<string, YearReport> = {
   "2025": buildYearReport(
     [2850, 2900, 3000, 3050, 3150, 3200, 3100, 3180, 3220, 3300, 3350, 3500],
     [1960, 2020, 2140, 2080, 2230, 2310, 2260, 2210, 2190, 2340, 2400, 2480]
@@ -74,6 +83,88 @@ const REPORT_DATA: Record<string, YearReport> = {
     [2100, 2180, 2240, 2200, 2350, 2420, 2380, 2440, 2470, 2520, 2590, 2680]
   ),
 };
+
+const CATEGORY_NAMES: CategoryName[] = ["Food", "Transport", "Utilities", "Entertainment", "Other"];
+
+function createEmptyYearReport(): YearReport {
+  return MONTHS.reduce((report, month) => {
+    report[month] = {
+      income: 0,
+      spendings: 0,
+      categories: {
+        Food: 0,
+        Transport: 0,
+        Utilities: 0,
+        Entertainment: 0,
+        Other: 0,
+      },
+    };
+    return report;
+  }, {} as YearReport);
+}
+
+function createEmptyReportData(years: string[]) {
+  return years.reduce((report, year) => {
+    report[year] = createEmptyYearReport();
+    return report;
+  }, {} as Record<string, YearReport>);
+}
+
+function getCurrentMonthKey(): MonthKey {
+  return MONTHS[new Date().getMonth()] ?? "Jan";
+}
+
+function normalizeCategory(value: string): CategoryName {
+  return CATEGORY_NAMES.includes(value as CategoryName) ? (value as CategoryName) : "Other";
+}
+
+function getTransactionYear(value: string) {
+  return value.slice(0, 4);
+}
+
+function getTransactionMonth(value: string): MonthKey | null {
+  const monthIndex = Number(value.slice(5, 7)) - 1;
+  return MONTHS[monthIndex] ?? null;
+}
+
+function buildReportDataFromTransactions(transactions: TransactionRecord[]) {
+  if (transactions.length === 0) {
+    return createEmptyReportData([String(new Date().getFullYear())]);
+  }
+
+  const years = Array.from(
+    new Set(
+      transactions
+        .map((transaction) => getTransactionYear(transaction.date))
+        .filter((year) => year.length === 4)
+    )
+  ).sort((left, right) => left.localeCompare(right));
+
+  const reportData = createEmptyReportData(years);
+
+  for (const transaction of transactions) {
+    const year = getTransactionYear(transaction.date);
+    const month = getTransactionMonth(transaction.date);
+
+    if (!reportData[year] || !month) {
+      continue;
+    }
+
+    const report = reportData[year][month];
+    const amount = Number(transaction.amount) || 0;
+
+    if (transaction.kind === "income") {
+      report.income += amount;
+      continue;
+    }
+
+    report.spendings += amount;
+    const category = normalizeCategory(transaction.category || "Other");
+    report.categories[category] += amount;
+  }
+
+  return reportData;
+}
 
 function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`;
@@ -88,14 +179,96 @@ function formatSignedPercentage(value: number | null): string {
 }
 
 export default function Dashboard() {
-  const years = Object.keys(REPORT_DATA);
-  const [selectedYear, setSelectedYear] = useState(years[years.length - 1]);
-  const [selectedMonth, setSelectedMonth] = useState<MonthKey>("Mar");
+  const [reportData, setReportData] = useState<Record<string, YearReport>>(SAMPLE_REPORT_DATA);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const years = useMemo(
+    () => Object.keys(reportData).sort((left, right) => left.localeCompare(right)),
+    [reportData]
+  );
+  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
+  const [selectedMonth, setSelectedMonth] = useState<MonthKey>(getCurrentMonthKey());
   const [selectedMetric, setSelectedMetric] = useState<Metric>("spendings");
   const [mainChartType, setMainChartType] = useState<ChartKind>("line");
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>("Food");
 
-  const yearData = REPORT_DATA[selectedYear];
+  useEffect(() => {
+    const session = getSession();
+    const normalizedEmail = session?.email.trim().toLowerCase() ?? "";
+    const shouldUseSampleData = session?.isDemo || normalizedEmail === DEMO_EMAIL;
+
+    if (shouldUseSampleData) {
+      setReportData(SAMPLE_REPORT_DATA);
+      setError("");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!session?.userId) {
+      setReportData(createEmptyReportData([String(new Date().getFullYear())]));
+      setError("");
+      setIsLoading(false);
+      return;
+    }
+
+    const resolvedUserId = session.userId;
+    let isMounted = true;
+
+    async function loadDashboardData() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load dashboard data.");
+        }
+
+        const payload = await response.json();
+        if (!isMounted) {
+          return;
+        }
+
+        setReportData(buildReportDataFromTransactions(payload.transactions ?? []));
+      } catch (loadError) {
+        if (!isMounted) {
+          return;
+        }
+
+        setReportData(createEmptyReportData([String(new Date().getFullYear())]));
+        setError(loadError instanceof Error ? loadError.message : "Failed to load dashboard data.");
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (years.length === 0) {
+      return;
+    }
+
+    const currentYear = String(new Date().getFullYear());
+    const nextYear = years.includes(currentYear) ? currentYear : years[years.length - 1];
+
+    if (!years.includes(selectedYear)) {
+      setSelectedYear(nextYear);
+    }
+  }, [selectedYear, years]);
+
+  const fallbackYear = years[years.length - 1] ?? String(new Date().getFullYear());
+  const yearData = reportData[selectedYear] ?? reportData[fallbackYear] ?? createEmptyYearReport();
 
   const monthlyMetricData = MONTHS.reduce((result, month) => {
     const report = yearData[month];
@@ -141,7 +314,7 @@ export default function Dashboard() {
   const selectedMonthIndex = MONTHS.indexOf(selectedMonth);
   const selectedYearIndex = years.indexOf(selectedYear);
   const previousYear = selectedYearIndex > 0 ? years[selectedYearIndex - 1] : null;
-  const previousYearData = previousYear ? REPORT_DATA[previousYear] : null;
+  const previousYearData = previousYear ? reportData[previousYear] : null;
   const previousAnnualIncome = previousYearData
     ? MONTHS.reduce((sum, month) => sum + previousYearData[month].income, 0)
     : null;
@@ -178,6 +351,8 @@ export default function Dashboard() {
         <div>
           <h1 className={styles.title}>Dashboard</h1>
           <p className={styles.subtitle}>Monthly insights, trends, and reports in one place.</p>
+          {isLoading ? <p className={styles.subtitle}>Loading your latest totals...</p> : null}
+          {!isLoading && error ? <p className={styles.subtitle}>{error}</p> : null}
         </div>
         <div className={styles.controls}>
           <label className={styles.controlItem}>
