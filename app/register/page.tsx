@@ -112,7 +112,7 @@ export default function Register() {
     setErrors({});
     setOauthLoading(provider);
     clearLogoutPending();
-    await signIn(provider, { callbackUrl: "/dashboard" });
+    await signIn(provider, { callbackUrl: "/dashboard" }, { prompt: "select_account" });
     setOauthLoading("");
   }
 

@@ -81,7 +81,7 @@ export default function Login() {
     setError("");
     setOauthLoading(provider);
     clearLogoutPending();
-    await signIn(provider, { callbackUrl: "/dashboard" });
+    await signIn(provider, { callbackUrl: "/dashboard" }, { prompt: "select_account" });
     setOauthLoading("");
   }
 
