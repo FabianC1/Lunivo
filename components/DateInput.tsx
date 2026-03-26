@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   addDays,
   addMonths,
@@ -35,6 +35,10 @@ const formatter = new Intl.DateTimeFormat("en-GB", {
 });
 
 const WEEKDAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, monthIndex) => ({
+  value: monthIndex,
+  label: format(new Date(2026, monthIndex, 1), "MMMM"),
+}));
 
 function formatDisplayDate(value: string) {
   if (!value) {
@@ -108,9 +112,26 @@ export default function DateInput({
 
   const displayValue = value ? formatDisplayDate(value) : placeholder;
   const selectedDate = value ? parseISO(value) : null;
+  const minDate = min ? parseISO(min) : null;
+  const maxDate = max ? parseISO(max) : null;
   const monthStart = startOfMonth(visibleMonth);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calendarEnd = endOfWeek(endOfMonth(visibleMonth), { weekStartsOn: 1 });
+
+  const yearOptions = useMemo(() => {
+    const referenceYears = [
+      new Date().getFullYear(),
+      visibleMonth.getFullYear(),
+      selectedDate?.getFullYear(),
+      minDate?.getFullYear(),
+      maxDate?.getFullYear(),
+    ].filter((year): year is number => typeof year === "number");
+
+    const minYear = minDate ? minDate.getFullYear() : Math.min(...referenceYears) - 50;
+    const maxYear = maxDate ? maxDate.getFullYear() : Math.max(...referenceYears) + 50;
+
+    return Array.from({ length: maxYear - minYear + 1 }, (_, offset) => minYear + offset);
+  }, [maxDate, minDate, selectedDate, visibleMonth]);
 
   const days = useMemo(() => {
     const items: Date[] = [];
@@ -125,8 +146,15 @@ export default function DateInput({
     setIsOpen(false);
   }
 
-  const minDate = min ? parseISO(min) : null;
-  const maxDate = max ? parseISO(max) : null;
+  function handleMonthChange(event: ChangeEvent<HTMLSelectElement>) {
+    const month = Number(event.target.value);
+    setVisibleMonth((current) => new Date(current.getFullYear(), month, 1));
+  }
+
+  function handleYearChange(event: ChangeEvent<HTMLSelectElement>) {
+    const year = Number(event.target.value);
+    setVisibleMonth((current) => new Date(year, current.getMonth(), 1));
+  }
 
   function isDisabled(day: Date) {
     if (minDate && day < minDate) {
@@ -173,7 +201,28 @@ export default function DateInput({
                 <path d="M9.5 3.5L5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <div className={styles.monthLabel}>{format(visibleMonth, "MMMM yyyy")}</div>
+            <div className={styles.captionControls}>
+              <label className={styles.captionLabel}>
+                <span className={styles.srOnly}>Select month</span>
+                <select className={styles.captionSelect} value={visibleMonth.getMonth()} onChange={handleMonthChange} aria-label="Select month">
+                  {MONTH_OPTIONS.map((month) => (
+                    <option key={month.value} value={month.value}>
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className={styles.captionLabel}>
+                <span className={styles.srOnly}>Select year</span>
+                <select className={styles.captionSelect} value={visibleMonth.getFullYear()} onChange={handleYearChange} aria-label="Select year">
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             <button
               type="button"
               className={styles.navButton}
