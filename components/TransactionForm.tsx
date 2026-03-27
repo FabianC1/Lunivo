@@ -39,6 +39,7 @@ export default function TransactionForm({
   onCancel,
   onDelete,
 }: TransactionFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [date, setDate] = useState(initial?.date || new Date().toISOString().substr(0, 10));
   const [amount, setAmount] = useState(initial?.amount || 0);
   const [category, setCategory] = useState(initial?.category || "");
@@ -75,8 +76,24 @@ export default function TransactionForm({
     onSubmit({ date, amount, category, description });
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
+    if (event.key !== "Enter" || isDropdownOpen) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const tagName = target?.tagName;
+
+    if (tagName === "BUTTON" || tagName === "TEXTAREA") {
+      return;
+    }
+
+    event.preventDefault();
+    formRef.current?.requestSubmit();
+  }
+
   return (
-    <form onSubmit={handleSubmit} className={styles.form}>
+    <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} className={styles.form}>
       {error && <p className={styles.error}>{error}</p>}
       <label>
         Date

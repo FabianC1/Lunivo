@@ -10,7 +10,7 @@ export default function SubscriptionsPage() {
         <h1>Subscriptions</h1>
         <p>Choose a plan that fits your money goals. Start free, then move up when you want deeper planning and reporting.</p>
         <div className={styles.heroMeta}>
-          <span>All paid plans billed monthly in GBP</span>
+          <span>All paid plans billed monthly</span>
           <span>No hidden fees</span>
           <span>Upgrade whenever you want</span>
         </div>
@@ -21,6 +21,11 @@ export default function SubscriptionsPage() {
           <p className={styles.freePlanLabel}>Current entry point</p>
           <h2>{FREE_PLAN.name}</h2>
           <p>{FREE_PLAN.description}</p>
+          <div className={styles.planMetaGrid}>
+            <span>{FREE_PLAN.themeAccess}</span>
+            <span>{FREE_PLAN.reportsAccess}</span>
+            <span>{FREE_PLAN.supportLevel}</span>
+          </div>
         </div>
         <div className={styles.freePlanPrice}>{formatPlanPrice(FREE_PLAN.priceMonthly)}</div>
       </section>
@@ -38,6 +43,11 @@ export default function SubscriptionsPage() {
             <div className={styles.priceRow}>
               <span className={styles.price}>GBP {tier.priceMonthly}</span>
               <span className={styles.period}>/month</span>
+            </div>
+            <div className={styles.planMetaGrid}>
+              <span>{tier.themeAccess}</span>
+              <span>{tier.reportsAccess}</span>
+              <span>{tier.supportLevel}</span>
             </div>
             <ul className={styles.features}>
               {tier.features.map((feature) => (

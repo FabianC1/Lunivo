@@ -389,32 +389,34 @@ export default function Income() {
                 </select>
               </div>
             </IconPopoverButton>
-            <button
-              className={styles.secondaryActionButton}
-              onClick={() => {
-                const selected = visibleTransactions.find((transaction) => transaction.id === selectedTransactionId)
-                  ?? transactions.find((transaction) => transaction.id === selectedTransactionId);
+            <div className={styles.actionPair}>
+              <button
+                className={styles.secondaryActionButton}
+                onClick={() => {
+                  const selected = visibleTransactions.find((transaction) => transaction.id === selectedTransactionId)
+                    ?? transactions.find((transaction) => transaction.id === selectedTransactionId);
 
-                if (!selected) {
-                  return;
-                }
+                  if (!selected) {
+                    return;
+                  }
 
-                startEditing(selected);
-              }}
-              disabled={!selectedTransactionId}
-            >
-              Edit
-            </button>
-            <button
-              className={styles.addButton}
-              onClick={() => {
-                setSelectedTransactionId(null);
-                setEditingTransactionId(null);
-                setShowForm(true);
-              }}
-            >
-              + Add Income
-            </button>
+                  startEditing(selected);
+                }}
+                disabled={!selectedTransactionId}
+              >
+                Edit
+              </button>
+              <button
+                className={styles.addButton}
+                onClick={() => {
+                  setSelectedTransactionId(null);
+                  setEditingTransactionId(null);
+                  setShowForm(true);
+                }}
+              >
+                + Add Income
+              </button>
+            </div>
           </div>
         </div>
 
