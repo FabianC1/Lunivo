@@ -65,3 +65,19 @@ export async function POST(req: NextRequest) {
   await tx.save();
   return NextResponse.json({ transaction: toTransactionResponse(tx) }, { status: 201 });
 }
+
+export async function PATCH(req: NextRequest) {
+  const { userId, fromCategory, toCategory } = await req.json();
+
+  if (!userId || !fromCategory || !toCategory) {
+    return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+  }
+
+  await connectToDatabase();
+  const result = await Transaction.updateMany(
+    { userId, kind: 'expense', category: String(fromCategory).trim() },
+    { $set: { category: String(toCategory).trim() } }
+  );
+
+  return NextResponse.json({ modifiedCount: result.modifiedCount ?? 0 });
+}

@@ -31,18 +31,18 @@ interface TransactionRecord {
 }
 
 const CATEGORY_SPLITS: Record<CategoryName, number>[] = [
-  { Food: 0.32, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Other: 0.16 },
-  { Food: 0.31, Transport: 0.13, Utilities: 0.23, Entertainment: 0.17, Other: 0.16 },
-  { Food: 0.33, Transport: 0.14, Utilities: 0.21, Entertainment: 0.17, Other: 0.15 },
-  { Food: 0.3, Transport: 0.13, Utilities: 0.22, Entertainment: 0.19, Other: 0.16 },
-  { Food: 0.29, Transport: 0.13, Utilities: 0.22, Entertainment: 0.21, Other: 0.15 },
-  { Food: 0.31, Transport: 0.15, Utilities: 0.2, Entertainment: 0.2, Other: 0.14 },
-  { Food: 0.32, Transport: 0.14, Utilities: 0.2, Entertainment: 0.2, Other: 0.14 },
-  { Food: 0.3, Transport: 0.12, Utilities: 0.23, Entertainment: 0.2, Other: 0.15 },
-  { Food: 0.31, Transport: 0.13, Utilities: 0.22, Entertainment: 0.18, Other: 0.16 },
-  { Food: 0.33, Transport: 0.14, Utilities: 0.21, Entertainment: 0.16, Other: 0.16 },
-  { Food: 0.32, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Other: 0.16 },
-  { Food: 0.29, Transport: 0.12, Utilities: 0.24, Entertainment: 0.2, Other: 0.15 },
+  { Food: 0.3, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.29, Transport: 0.13, Utilities: 0.23, Entertainment: 0.17, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.31, Transport: 0.14, Utilities: 0.21, Entertainment: 0.17, Emergencies: 0.09, Other: 0.08 },
+  { Food: 0.28, Transport: 0.13, Utilities: 0.22, Entertainment: 0.19, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.27, Transport: 0.13, Utilities: 0.22, Entertainment: 0.2, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.29, Transport: 0.15, Utilities: 0.2, Entertainment: 0.19, Emergencies: 0.1, Other: 0.07 },
+  { Food: 0.3, Transport: 0.14, Utilities: 0.2, Entertainment: 0.19, Emergencies: 0.1, Other: 0.07 },
+  { Food: 0.28, Transport: 0.12, Utilities: 0.23, Entertainment: 0.19, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.29, Transport: 0.13, Utilities: 0.22, Entertainment: 0.18, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.31, Transport: 0.14, Utilities: 0.21, Entertainment: 0.16, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.3, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Emergencies: 0.1, Other: 0.08 },
+  { Food: 0.27, Transport: 0.12, Utilities: 0.24, Entertainment: 0.19, Emergencies: 0.1, Other: 0.08 },
 ];
 
 function splitSpendings(total: number, monthIndex: number): Record<CategoryName, number> {
@@ -52,10 +52,16 @@ function splitSpendings(total: number, monthIndex: number): Record<CategoryName,
     Transport: Math.round(total * split.Transport),
     Utilities: Math.round(total * split.Utilities),
     Entertainment: Math.round(total * split.Entertainment),
+    Emergencies: Math.round(total * split.Emergencies),
     Other: 0,
   };
 
-  const assigned = categories.Food + categories.Transport + categories.Utilities + categories.Entertainment;
+  const assigned =
+    categories.Food +
+    categories.Transport +
+    categories.Utilities +
+    categories.Entertainment +
+    categories.Emergencies;
   categories.Other = Math.max(0, total - assigned);
 
   return categories;
@@ -183,6 +189,7 @@ export default function Dashboard() {
   const [reportData, setReportData] = useState<Record<string, YearReport>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [usesSampleData, setUsesSampleData] = useState(false);
   const years = useMemo(
     () => Object.keys(reportData).sort((left, right) => left.localeCompare(right)),
     [reportData]
@@ -197,6 +204,7 @@ export default function Dashboard() {
     const session = getSession();
     const normalizedEmail = session?.email.trim().toLowerCase() ?? "";
     const shouldUseSampleData = session?.isDemo || normalizedEmail === DEMO_EMAIL;
+    setUsesSampleData(Boolean(shouldUseSampleData));
 
     if (shouldUseSampleData) {
       setReportData(SAMPLE_REPORT_DATA);
@@ -320,10 +328,14 @@ export default function Dashboard() {
 
   const annualIncome = MONTHS.reduce((sum, month) => sum + yearData[month].income, 0);
   const annualSpendings = MONTHS.reduce((sum, month) => sum + yearData[month].spendings, 0);
+  const incomeActiveMonths = MONTHS.filter((month) => yearData[month].income > 0).length;
+  const spendingActiveMonths = MONTHS.filter((month) => yearData[month].spendings > 0).length;
   const annualNet = annualIncome - annualSpendings;
   const savingsRate = annualIncome > 0 ? (annualNet / annualIncome) * 100 : 0;
   const spendingsRate = annualIncome > 0 ? (annualSpendings / annualIncome) * 100 : 0;
   const averageMonthlySpendings = annualSpendings / MONTHS.length;
+  const incomeRunRate = incomeActiveMonths > 0 ? (annualIncome / incomeActiveMonths) * 12 : 0;
+  const spendingRunRate = spendingActiveMonths > 0 ? (annualSpendings / spendingActiveMonths) * 12 : 0;
 
   const bestNetMonth = MONTHS.reduce((best, month) => {
     const value = yearData[month].income - yearData[month].spendings;
@@ -366,6 +378,10 @@ export default function Dashboard() {
     monthChange === null
       ? "No prior month"
       : `${monthChange >= 0 ? "+" : ""}${formatCurrency(monthChange)} vs ${previousMonth}`;
+
+  const incomeCardTitle = usesSampleData ? "Annual Income" : "Income Recorded";
+  const spendingCardTitle = usesSampleData ? "Annual Spendings" : "Spendings Recorded";
+  const savingsCardTitle = usesSampleData ? "Savings Rate" : "Recorded Savings Rate";
 
   if (isLoading) {
     return <PageLoading message="Loading your dashboard..." />;
@@ -453,38 +469,38 @@ export default function Dashboard() {
 
       <div className={styles.summaryGrid}>
         <article className={styles.summaryCard}>
-          <p>Annual Income</p>
+          <p>{incomeCardTitle}</p>
           <h3 className={styles.summaryValue}>
             <span className={styles.defaultValue}>{formatCurrency(annualIncome)}</span>
-            <span className={styles.hoverValue}>{formatSignedPercentage(annualIncomeGrowth)}</span>
+            <span className={styles.hoverValue}>{usesSampleData ? formatSignedPercentage(annualIncomeGrowth) : formatCurrency(incomeRunRate)}</span>
           </h3>
           <span className={styles.summaryMeta}>
-            <span className={styles.defaultValue}>Across {selectedYear}</span>
-            <span className={styles.hoverValue}>{previousYear ? `vs ${previousYear}` : "No prior year"}</span>
+            <span className={styles.defaultValue}>{usesSampleData ? `Across ${selectedYear}` : `Across ${incomeActiveMonths} active month${incomeActiveMonths === 1 ? "" : "s"}`}</span>
+            <span className={styles.hoverValue}>{usesSampleData ? (previousYear ? `vs ${previousYear}` : "No prior year") : "Annualised from recorded months"}</span>
           </span>
         </article>
 
         <article className={styles.summaryCard}>
-          <p>Annual Spendings</p>
+          <p>{spendingCardTitle}</p>
           <h3 className={styles.summaryValue}>
             <span className={styles.defaultValue}>{formatCurrency(annualSpendings)}</span>
-            <span className={styles.hoverValue}>{formatSignedPercentage(annualSpendingsGrowth)}</span>
+            <span className={styles.hoverValue}>{usesSampleData ? formatSignedPercentage(annualSpendingsGrowth) : formatCurrency(spendingRunRate)}</span>
           </h3>
           <span className={styles.summaryMeta}>
-            <span className={styles.defaultValue}>Avg {formatCurrency(averageMonthlySpendings)} / month</span>
-            <span className={styles.hoverValue}>{previousYear ? `vs ${previousYear}` : "No prior year"}</span>
+            <span className={styles.defaultValue}>{usesSampleData ? `Avg ${formatCurrency(averageMonthlySpendings)} / month` : `Across ${spendingActiveMonths} active month${spendingActiveMonths === 1 ? "" : "s"}`}</span>
+            <span className={styles.hoverValue}>{usesSampleData ? (previousYear ? `vs ${previousYear}` : "No prior year") : "Annualised from recorded months"}</span>
           </span>
         </article>
 
         <article className={styles.summaryCard}>
-          <p>Savings Rate</p>
+          <p>{savingsCardTitle}</p>
           <h3 className={styles.summaryValue}>
             <span className={styles.defaultValue}>{formatPercentage(savingsRate)}</span>
             <span className={styles.hoverValue}>{formatPercentage(spendingsRate)}</span>
           </h3>
           <span className={styles.summaryMeta}>
-            <span className={styles.defaultValue}>{formatCurrency(annualNet)} net this year</span>
-            <span className={styles.hoverValue}>Spent {formatPercentage(spendingsRate)} of income</span>
+            <span className={styles.defaultValue}>{usesSampleData ? `${formatCurrency(annualNet)} net this year` : `${formatCurrency(annualNet)} net recorded`}</span>
+            <span className={styles.hoverValue}>{usesSampleData ? `Spent ${formatPercentage(spendingsRate)} of income` : `Based on recorded months only`}</span>
           </span>
         </article>
 

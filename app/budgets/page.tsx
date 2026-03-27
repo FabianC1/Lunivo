@@ -5,7 +5,7 @@ import styles from "./budgets.module.css";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
 import PageLoading from "../../components/PageLoading";
-import { initialBudgets, normalizeBudgetCategoryName, normalizeBudgetMap, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
+import { initialBudgets, normalizeBudgetMap, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
 
@@ -14,6 +14,7 @@ const SAMPLE_SPENDING: BudgetMap = {
   Transport: 142,
   Utilities: 278,
   Entertainment: 180,
+  Emergencies: 64,
   Other: 112,
 };
 
@@ -27,8 +28,6 @@ export default function Budgets() {
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [error, setError] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [categoryError, setCategoryError] = useState("");
 
   useEffect(() => {
     const session = getSession();
@@ -155,29 +154,6 @@ export default function Budgets() {
     setBudgets((prev) => sanitizeBudgets({ ...prev, [cat]: safe }));
   }
 
-  function addCategory() {
-    const normalized = normalizeBudgetCategoryName(newCategory);
-    if (!normalized) {
-      setCategoryError("Enter a category name.");
-      return;
-    }
-
-    const exists = Object.keys(budgets).some(
-      (category) => category.toLowerCase() === normalized.toLowerCase()
-    );
-
-    if (exists) {
-      setCategoryError("That category already exists.");
-      return;
-    }
-
-    setCategoryError("");
-    setFeedback("");
-    setBudgets((prev) => sanitizeBudgets({ ...prev, [normalized]: 0 }));
-    setActualSpending((prev) => normalizeBudgetMap({ ...prev, [normalized]: prev[normalized] ?? 0 }, Object.fromEntries(Object.keys({ ...prev, [normalized]: 0 }).map((category) => [category, 0]))));
-    setNewCategory("");
-  }
-
   const totalBudget       = Object.values(budgets).reduce((s, v) => s + v, 0);
   const totalSpent        = Object.values(actualSpending).reduce((s, v) => s + v, 0);
   const remaining         = totalBudget - totalSpent;
@@ -189,7 +165,6 @@ export default function Budgets() {
     result[cat] = Math.max(0, (budgets[cat] ?? 0) - (actualSpending[cat] ?? 0));
     return result;
   }, {} as Record<string, number>);
-
   if (isLoading) {
     return <PageLoading message="Loading budgets..." />;
   }
@@ -301,24 +276,8 @@ export default function Budgets() {
       <section className={styles.cardSection}>
         <div className={styles.sectionHeader}>
           <h2>Edit Monthly Limits</h2>
-          <p>Adjust your budget for any category below, or create your own.</p>
+          <p>Adjust your monthly limit for each built-in category below.</p>
         </div>
-        <div className={styles.categoryActions}>
-          <input
-            type="text"
-            className={styles.categoryInput}
-            value={newCategory}
-            onChange={(event) => {
-              setNewCategory(event.target.value);
-              setCategoryError("");
-            }}
-            placeholder="Add a category like Car"
-          />
-          <button type="button" className={styles.categoryButton} onClick={addCategory}>
-            Add Category
-          </button>
-        </div>
-        {categoryError ? <p className={styles.feedbackError}>{categoryError}</p> : null}
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>

@@ -44,6 +44,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Transport:     "#10B981",
   Utilities:     "#FBBF24",
   Entertainment: "#EF4444",
+  Emergencies:   "#F97316",
   Other:         "#8B5CF6",
 };
 
@@ -54,6 +55,8 @@ export default function Transactions() {
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [monthFilter, setMonthFilter] = useState<string>("All months");
@@ -105,12 +108,7 @@ export default function Transactions() {
 
         const loadedTransactions = transactionsPayload.transactions ?? [];
         setTransactions(loadedTransactions);
-        setBudgets(
-          sanitizeBudgets({
-            ...(budgetsPayload.budget?.categories ?? initialBudgets),
-            ...Object.fromEntries(loadedTransactions.map((transaction: Transaction) => [transaction.category, 0])),
-          })
-        );
+        setBudgets(sanitizeBudgets(budgetsPayload.budget?.categories ?? initialBudgets));
       } catch (loadError) {
         if (!isMounted) {
           return;
@@ -133,7 +131,39 @@ export default function Transactions() {
     };
   }, []);
 
-  async function addTransaction(data: Omit<Transaction, "id">) {
+  async function saveTransaction(data: Omit<Transaction, "id">) {
+    if (editingTransactionId) {
+      if (!sessionUserId) {
+        setTransactions((prev) => prev.map((entry) => (entry.id === editingTransactionId ? { ...entry, ...data } : entry)));
+        setSelectedTransactionId(editingTransactionId);
+        setEditingTransactionId(null);
+        setShowForm(false);
+        return;
+      }
+
+      try {
+        setError("");
+        const response = await fetch(`/api/transactions/${editingTransactionId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, kind: "expense" }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to update spending entry.");
+        }
+
+        const payload = await response.json();
+        setTransactions((prev) => prev.map((entry) => (entry.id === editingTransactionId ? payload.transaction : entry)));
+        setSelectedTransactionId(editingTransactionId);
+        setEditingTransactionId(null);
+        setShowForm(false);
+        return;
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : "Failed to update spending entry.");
+        return;
+      }
+    }
+
     if (!sessionUserId) {
       setTransactions((prev) => [...prev, { id: String(Date.now()), ...data }]);
       setShowForm(false);
@@ -154,15 +184,35 @@ export default function Transactions() {
 
       const payload = await response.json();
       setTransactions((prev) => [payload.transaction, ...prev]);
+      setSelectedTransactionId(payload.transaction.id);
       setShowForm(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Failed to save spending entry.");
     }
   }
 
+  function startEditing(transaction: Transaction) {
+    setSelectedTransactionId(transaction.id);
+    setEditingTransactionId(transaction.id);
+    setShowForm(true);
+    setError("");
+  }
+
+  function cancelForm() {
+    setEditingTransactionId(null);
+    setShowForm(false);
+  }
+
   async function deleteTransaction(id: string) {
     if (!sessionUserId) {
       setTransactions((prev) => prev.filter((entry) => entry.id !== id));
+      if (editingTransactionId === id) {
+        setEditingTransactionId(null);
+        setShowForm(false);
+      }
+      if (selectedTransactionId === id) {
+        setSelectedTransactionId(null);
+      }
       return;
     }
 
@@ -174,6 +224,13 @@ export default function Transactions() {
       }
 
       setTransactions((prev) => prev.filter((entry) => entry.id !== id));
+      if (editingTransactionId === id) {
+        setEditingTransactionId(null);
+        setShowForm(false);
+      }
+      if (selectedTransactionId === id) {
+        setSelectedTransactionId(null);
+      }
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Failed to delete spending entry.");
     }
@@ -226,8 +283,8 @@ export default function Transactions() {
   }, [transactions]);
 
   const spendingCategories = useMemo(
-    () => Object.keys(sanitizeBudgets({ ...budgets, ...Object.fromEntries(transactions.map((transaction) => [transaction.category, 0])) })),
-    [budgets, transactions]
+    () => Object.keys(sanitizeBudgets(budgets)),
+    [budgets]
   );
 
   // Filtered table rows
@@ -252,6 +309,10 @@ export default function Transactions() {
           return right.date.localeCompare(left.date);
       }
     });
+
+  const editingTransaction = editingTransactionId
+    ? transactions.find((transaction) => transaction.id === editingTransactionId) ?? null
+    : null;
 
   if (isLoading) {
     return <PageLoading message="Loading spendings..." />;
@@ -352,7 +413,31 @@ export default function Transactions() {
               </div>
             </IconPopoverButton>
 
-            <button className={styles.addButton} onClick={() => setShowForm(true)}>
+            <button
+              className={styles.secondaryActionButton}
+              onClick={() => {
+                const selected = filtered.find((transaction) => transaction.id === selectedTransactionId)
+                  ?? transactions.find((transaction) => transaction.id === selectedTransactionId);
+
+                if (!selected) {
+                  return;
+                }
+
+                startEditing(selected);
+              }}
+              disabled={!selectedTransactionId}
+            >
+              Edit
+            </button>
+
+            <button
+              className={styles.addButton}
+              onClick={() => {
+                setSelectedTransactionId(null);
+                setEditingTransactionId(null);
+                setShowForm(true);
+              }}
+            >
               + Add Spending
             </button>
           </div>
@@ -362,10 +447,14 @@ export default function Transactions() {
         {showForm && (
           <div className={styles.formWrapper}>
             <TransactionForm
-              onSubmit={addTransaction}
-              onCancel={() => setShowForm(false)}
+              onSubmit={saveTransaction}
+              onCancel={cancelForm}
               categoryOptions={spendingCategories}
               categoryPlaceholder="Select a category"
+              submitLabel={editingTransaction ? "Save Changes" : "Save"}
+              deleteLabel="Delete Spending"
+              initial={editingTransaction ?? { category: "", date: "", amount: 0, description: "" }}
+              onDelete={editingTransaction ? () => void deleteTransaction(editingTransaction.id) : undefined}
             />
           </div>
         )}
@@ -378,12 +467,15 @@ export default function Transactions() {
                 <th>Description</th>
                 <th>Category</th>
                 <th>Amount</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((t) => (
-                <tr key={t.id}>
+                <tr
+                  key={t.id}
+                  className={selectedTransactionId === t.id ? styles.selectedRow : undefined}
+                  onClick={() => setSelectedTransactionId(t.id)}
+                >
                   <td>{formatDate(t.date)}</td>
                   <td>{t.description}</td>
                   <td>
@@ -398,19 +490,10 @@ export default function Transactions() {
                     </span>
                   </td>
                   <td>{formatCurrency(t.amount)}</td>
-                  <td>
-                    <button
-                      className={styles.deleteButton}
-                      onClick={() => deleteTransaction(t.id)}
-                      aria-label="Delete"
-                    >
-                      ×
-                    </button>
-                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={5} className={styles.emptyRow}>No transactions found.</td></tr>
+                <tr><td colSpan={4} className={styles.emptyRow}>No transactions found.</td></tr>
               )}
             </tbody>
           </table>

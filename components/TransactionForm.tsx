@@ -15,6 +15,8 @@ interface TransactionFormProps {
   categoryLabel?: string;
   categoryPlaceholder?: string;
   descriptionLabel?: string;
+  submitLabel?: string;
+  deleteLabel?: string;
   onSubmit: (data: {
     date: string;
     amount: number;
@@ -22,6 +24,7 @@ interface TransactionFormProps {
     description: string;
   }) => void;
   onCancel?: () => void;
+  onDelete?: () => void;
 }
 
 export default function TransactionForm({
@@ -30,8 +33,11 @@ export default function TransactionForm({
   categoryLabel = "Category",
   categoryPlaceholder = "Select",
   descriptionLabel = "Description",
+  submitLabel = "Save",
+  deleteLabel = "Delete",
   onSubmit,
   onCancel,
+  onDelete,
 }: TransactionFormProps) {
   const [date, setDate] = useState(initial?.date || new Date().toISOString().substr(0, 10));
   const [amount, setAmount] = useState(initial?.amount || 0);
@@ -50,6 +56,14 @@ export default function TransactionForm({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    setDate(initial?.date || new Date().toISOString().slice(0, 10));
+    setAmount(initial?.amount || 0);
+    setCategory(initial?.category || "");
+    setDescription(initial?.description || "");
+    setError("");
+  }, [initial]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -119,13 +133,18 @@ export default function TransactionForm({
         />
       </label>
       <div className={styles.actions}>
+        {onDelete && (
+          <button type="button" className={styles.delete} onClick={onDelete}>
+            {deleteLabel}
+          </button>
+        )}
         {onCancel && (
           <button type="button" className={styles.cancel} onClick={onCancel}>
             Cancel
           </button>
         )}
         <button type="submit" className={styles.submit}>
-          Save
+          {submitLabel}
         </button>
       </div>
     </form>

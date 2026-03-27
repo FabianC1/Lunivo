@@ -161,6 +161,27 @@
   flex-wrap: wrap;
 }
 
+.secondaryActionButton {
+  padding: 0.6rem 1rem;
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 0.55rem;
+  font-weight: 600;
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+.secondaryActionButton:hover {
+  background: rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+}
+
+.secondaryActionButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .popoverField {
   display: grid;
   gap: 0.35rem;
@@ -243,6 +264,15 @@
 .table tbody tr:nth-child(even) td { background-color: rgba(148, 163, 184, 0.04); }
 .table tbody tr:hover td       { background-color: rgba(148, 163, 184, 0.1); }
 
+.table tbody tr {
+  cursor: pointer;
+}
+
+.selectedRow td,
+.table tbody tr.selectedRow:hover td {
+  background-color: rgba(59, 130, 246, 0.14);
+}
+
 .categoryBadge {
   display: inline-block;
   padding: 0.2rem 0.65rem;
@@ -253,19 +283,6 @@
 }
 
 .emptyRow { text-align: center; opacity: 0.5; padding: 2rem !important; }
-
-.deleteButton {
-  background: transparent;
-  border: none;
-  color: #EF4444;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  transition: background 0.15s;
-}
-
-.deleteButton:hover { background-color: rgba(239, 68, 68, 0.1); }
 
 @media (max-width: 1024px) {
   .compactChartGrid { grid-template-columns: 1fr; }

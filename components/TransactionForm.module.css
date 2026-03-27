@@ -134,7 +134,8 @@
 }
 
 .submit,
-.cancel {
+.cancel,
+.delete {
   flex: 1;
   padding: 0.65rem 1rem;
   border-radius: 0.55rem;
@@ -167,17 +168,33 @@
   border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
+.delete {
+  background-color: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
 .cancel:hover {
   background-color: rgba(239, 68, 68, 0.08);
   border-color: #ef4444;
+}
+
+.delete:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .cancel:active {
   opacity: 0.9;
 }
 
+.delete:active {
+  opacity: 0.9;
+}
+
 .submit:focus-visible,
-.cancel:focus-visible {
+.cancel:focus-visible,
+.delete:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }

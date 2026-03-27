@@ -7,6 +7,7 @@ export const initialBudgets: BudgetMap = {
   Transport: 150,
   Utilities: 200,
   Entertainment: 180,
+  Emergencies: 120,
   Other: 100,
 };
 
@@ -37,6 +38,7 @@ export function normalizeBudgetCategoryName(value: string) {
 
 export function normalizeBudgetMap(value: unknown, defaults: BudgetMap = initialBudgets): BudgetMap {
   const safeBudgets = new Map<string, number>();
+  const allowedCategories = new Set(Object.keys(defaults).map((category) => normalizeBudgetCategoryName(category).toLowerCase()));
 
   for (const [category, amount] of Object.entries(defaults)) {
     safeBudgets.set(category, amount);
@@ -49,6 +51,10 @@ export function normalizeBudgetMap(value: unknown, defaults: BudgetMap = initial
   for (const [rawCategory, rawValue] of Object.entries(value as Record<string, unknown>)) {
     const category = normalizeBudgetCategoryName(rawCategory);
     if (!category) {
+      continue;
+    }
+
+    if (!allowedCategories.has(category.toLowerCase())) {
       continue;
     }
 

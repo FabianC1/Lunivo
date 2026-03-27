@@ -42,6 +42,8 @@ export default function Income() {
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>("All months");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +101,40 @@ export default function Income() {
     };
   }, []);
 
-  async function addTransaction(data: Omit<Transaction, "id">) {
+  async function saveTransaction(data: Omit<Transaction, "id">) {
+    if (editingTransactionId) {
+      if (!sessionUserId) {
+        setTransactions((prev) => prev.map((entry) => (entry.id === editingTransactionId ? { ...entry, ...data } : entry)));
+        setSelectedTransactionId(editingTransactionId);
+        setEditingTransactionId(null);
+        setShowForm(false);
+        return;
+      }
+
+      try {
+        setError("");
+        const response = await fetch(`/api/transactions/${editingTransactionId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, kind: "income" }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update income entry.");
+        }
+
+        const payload = await response.json();
+        setTransactions((prev) => prev.map((entry) => (entry.id === editingTransactionId ? payload.transaction : entry)));
+        setSelectedTransactionId(editingTransactionId);
+        setEditingTransactionId(null);
+        setShowForm(false);
+        return;
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : "Failed to update income entry.");
+        return;
+      }
+    }
+
     if (!sessionUserId) {
       const next: Transaction = { id: String(Date.now()), ...data };
       setTransactions((prev) => [...prev, next]);
@@ -121,15 +156,35 @@ export default function Income() {
 
       const payload = await response.json();
       setTransactions((prev) => [payload.transaction, ...prev]);
+      setSelectedTransactionId(payload.transaction.id);
       setShowForm(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Failed to save income entry.");
     }
   }
 
+  function startEditing(transaction: Transaction) {
+    setSelectedTransactionId(transaction.id);
+    setEditingTransactionId(transaction.id);
+    setShowForm(true);
+    setError("");
+  }
+
+  function cancelForm() {
+    setEditingTransactionId(null);
+    setShowForm(false);
+  }
+
   async function deleteTransaction(id: string) {
     if (!sessionUserId) {
       setTransactions((prev) => prev.filter((entry) => entry.id !== id));
+      if (editingTransactionId === id) {
+        setEditingTransactionId(null);
+        setShowForm(false);
+      }
+      if (selectedTransactionId === id) {
+        setSelectedTransactionId(null);
+      }
       return;
     }
 
@@ -141,6 +196,13 @@ export default function Income() {
       }
 
       setTransactions((prev) => prev.filter((entry) => entry.id !== id));
+      if (editingTransactionId === id) {
+        setEditingTransactionId(null);
+        setShowForm(false);
+      }
+      if (selectedTransactionId === id) {
+        setSelectedTransactionId(null);
+      }
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Failed to delete income entry.");
     }
@@ -209,6 +271,10 @@ export default function Income() {
       }
     });
   }, [monthFilter, sortOption, transactions]);
+
+  const editingTransaction = editingTransactionId
+    ? transactions.find((transaction) => transaction.id === editingTransactionId) ?? null
+    : null;
 
   if (isLoading) {
     return <PageLoading message="Loading income..." />;
@@ -296,7 +362,30 @@ export default function Income() {
                 </select>
               </div>
             </IconPopoverButton>
-            <button className={styles.addButton} onClick={() => setShowForm(true)}>
+            <button
+              className={styles.secondaryActionButton}
+              onClick={() => {
+                const selected = visibleTransactions.find((transaction) => transaction.id === selectedTransactionId)
+                  ?? transactions.find((transaction) => transaction.id === selectedTransactionId);
+
+                if (!selected) {
+                  return;
+                }
+
+                startEditing(selected);
+              }}
+              disabled={!selectedTransactionId}
+            >
+              Edit
+            </button>
+            <button
+              className={styles.addButton}
+              onClick={() => {
+                setSelectedTransactionId(null);
+                setEditingTransactionId(null);
+                setShowForm(true);
+              }}
+            >
               + Add Income
             </button>
           </div>
@@ -306,13 +395,16 @@ export default function Income() {
         {showForm && (
           <div className={styles.formWrapper}>
             <TransactionForm
-              onSubmit={(data) => addTransaction(data)}
-              onCancel={() => setShowForm(false)}
+              onSubmit={(data) => saveTransaction(data)}
+              onCancel={cancelForm}
               categoryOptions={INCOME_SOURCES}
               categoryLabel="Income Source"
               categoryPlaceholder="Select a source"
               descriptionLabel="Description / note"
-              initial={{ category: "", date: "", amount: 0, description: "" }}
+              submitLabel={editingTransaction ? "Save Changes" : "Save"}
+              deleteLabel="Delete Income"
+              initial={editingTransaction ?? { category: "", date: "", amount: 0, description: "" }}
+              onDelete={editingTransaction ? () => void deleteTransaction(editingTransaction.id) : undefined}
             />
           </div>
         )}
@@ -325,29 +417,23 @@ export default function Income() {
                 <th>Source</th>
                 <th>Description</th>
                 <th>Amount</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               {visibleTransactions.map((t) => (
-                <tr key={t.id}>
+                <tr
+                  key={t.id}
+                  className={selectedTransactionId === t.id ? styles.selectedRow : undefined}
+                  onClick={() => setSelectedTransactionId(t.id)}
+                >
                   <td>{formatDate(t.date)}</td>
                   <td>{t.category}</td>
                   <td>{t.description}</td>
                   <td className={styles.amountCell}>{formatCurrency(t.amount)}</td>
-                  <td>
-                    <button
-                      className={styles.deleteButton}
-                      onClick={() => deleteTransaction(t.id)}
-                      aria-label="Delete"
-                    >
-                      ×
-                    </button>
-                  </td>
                 </tr>
               ))}
               {visibleTransactions.length === 0 && (
-                <tr><td colSpan={5} className={styles.emptyRow}>No income entries yet.</td></tr>
+                <tr><td colSpan={4} className={styles.emptyRow}>No income entries yet.</td></tr>
               )}
             </tbody>
           </table>

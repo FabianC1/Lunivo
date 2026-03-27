@@ -106,11 +106,12 @@
   color: #ef4444;
 }
 
-.categoryActions {
+.categoryToolbar {
   display: flex;
   gap: 0.75rem;
   margin: 0 0 1rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .categoryInput {
@@ -298,6 +299,32 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.categoryNameCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.deleteCategoryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.deleteCategoryButton:hover {
+  opacity: 0.8;
+}
+
 .statusBadge {
   display: inline-block;
   padding: 0.2rem 0.65rem;
@@ -334,7 +361,8 @@
 @media (max-width: 768px) {
   .kpiGrid   { grid-template-columns: repeat(2, 1fr); }
 
-  .categoryActions {
+  .categoryToolbar {
     flex-direction: column;
+    align-items: stretch;
   }
 }
