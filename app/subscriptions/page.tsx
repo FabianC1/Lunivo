@@ -1,6 +1,16 @@
 import Link from "next/link";
 import styles from "./subscriptions.module.css";
-import { FREE_PLAN, PAID_SUBSCRIPTION_TIERS, formatPlanPrice } from "../../lib/subscriptions";
+import { PAID_SUBSCRIPTION_TIERS, SUBSCRIPTION_COMPARISON_SECTIONS, formatPlanPrice } from "../../lib/subscriptions";
+
+function renderValue(value: boolean | string) {
+  if (typeof value === "boolean") {
+    return value
+      ? <span className={`${styles.featureValue} ${styles.featureValueYes}`}>✓</span>
+      : <span className={`${styles.featureValue} ${styles.featureValueNo}`}>×</span>;
+  }
+
+  return <span className={styles.featureText}>{value}</span>;
+}
 
 export default function SubscriptionsPage() {
   return (
@@ -8,7 +18,7 @@ export default function SubscriptionsPage() {
       <section className={styles.hero}>
         <span className={styles.eyebrow}>Pricing</span>
         <h1>Subscriptions</h1>
-        <p>Choose a plan that fits your money goals. Start free, then move up when you want deeper planning and reporting.</p>
+        <p>Choose the tier that matches how deeply you want to plan, review, and personalize your finance workflow.</p>
         <div className={styles.heroMeta}>
           <span>All paid plans billed monthly</span>
           <span>No hidden fees</span>
@@ -16,60 +26,75 @@ export default function SubscriptionsPage() {
         </div>
       </section>
 
-      <section className={styles.freePlan}>
-        <div>
-          <p className={styles.freePlanLabel}>Current entry point</p>
-          <h2>{FREE_PLAN.name}</h2>
-          <p>{FREE_PLAN.description}</p>
-          <div className={styles.planMetaGrid}>
-            <span>{FREE_PLAN.themeAccess}</span>
-            <span>{FREE_PLAN.reportsAccess}</span>
-            <span>{FREE_PLAN.supportLevel}</span>
-          </div>
+      <section className={styles.matrixSection}>
+        <div className={styles.sectionIntro}>
+          <h2>Plan comparison</h2>
+          <p>Each row below is written to be enforceable later, so the tiers describe specific access rather than vague marketing copy.</p>
         </div>
-        <div className={styles.freePlanPrice}>{formatPlanPrice(FREE_PLAN.priceMonthly)}</div>
-      </section>
 
-      <section className={styles.grid}>
-        {PAID_SUBSCRIPTION_TIERS.map((tier) => (
-          <article
-            key={tier.slug}
-            className={`${styles.card} ${tier.featured ? styles.cardFeatured : ""}`}
-          >
-            {tier.featured && <span className={styles.badge}>Most Popular</span>}
-            <h2>{tier.name}</h2>
-            <p className={styles.audience}>{tier.audience}</p>
-            <p className={styles.description}>{tier.description}</p>
-            <div className={styles.priceRow}>
-              <span className={styles.price}>GBP {tier.priceMonthly}</span>
-              <span className={styles.period}>/month</span>
+        <div className={styles.matrixBoard}>
+          <div className={styles.matrixHeaderRow}>
+            <div className={styles.matrixFeatureHeader}>
+              <span className={styles.matrixFeatureHeaderTitle}>Feature Matrix</span>
+              <span className={styles.matrixFeatureHeaderSubtitle}>Everything unlocked by each paid tier</span>
             </div>
-            <div className={styles.planMetaGrid}>
-              <span>{tier.themeAccess}</span>
-              <span>{tier.reportsAccess}</span>
-              <span>{tier.supportLevel}</span>
-            </div>
-            <ul className={styles.features}>
-              {tier.features.map((feature) => (
-                <li key={feature}>{feature}</li>
+            {PAID_SUBSCRIPTION_TIERS.map((plan) => (
+              <div
+                key={plan.slug}
+                className={`${styles.planHeaderCard} ${plan.featured ? styles.planHeaderFeatured : ""}`}
+              >
+                {plan.featured ? <span className={styles.badge}>Most Popular</span> : null}
+                <h3>{plan.name}</h3>
+                <div className={styles.priceRow}>
+                  <span className={styles.price}>{formatPlanPrice(plan.priceMonthly).replace('/month', '')}</span>
+                  <span className={styles.period}>/month</span>
+                </div>
+                <p className={styles.audience}>{plan.audience}</p>
+                <Link href={`/register?plan=${plan.slug}`} className={styles.cta}>
+                  Choose {plan.name}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {SUBSCRIPTION_COMPARISON_SECTIONS.map((section) => (
+            <div key={section.title} className={styles.matrixGroup}>
+              <div className={styles.matrixGroupTitleRow}>
+                <div className={styles.matrixGroupTitle}>{section.title}</div>
+                {PAID_SUBSCRIPTION_TIERS.map((plan) => (
+                  <div
+                    key={`${section.title}-${plan.slug}-title`}
+                    className={`${styles.matrixGroupTitleSpacer} ${plan.featured ? styles.matrixGroupTitleSpacerFeatured : ""}`}
+                  />
+                ))}
+              </div>
+              {section.rows.map((row) => (
+                <div key={`${section.title}-${row.label}`} className={styles.matrixDataRow}>
+                  <div className={styles.featureCell}>
+                    <strong>{row.label}</strong>
+                    <p>{row.description}</p>
+                  </div>
+                  {PAID_SUBSCRIPTION_TIERS.map((plan) => (
+                    <div
+                      key={`${row.label}-${plan.slug}`}
+                      className={`${styles.valueCell} ${plan.featured ? styles.valueCellFeatured : ""}`}
+                    >
+                      {renderValue(row.values[plan.slug])}
+                    </div>
+                  ))}
+                </div>
               ))}
-            </ul>
-            <Link
-              href={`/register?plan=${tier.slug}`}
-              className={styles.cta}
-            >
-              Choose {tier.name}
-            </Link>
-          </article>
-        ))}
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className={styles.notes}>
         <h3>What happens next?</h3>
         <ul>
           <li>You can start on Free and upgrade later.</li>
-          <li>Plan selection is captured during signup so the billing flow can be connected later.</li>
-          <li>Profile billing shows the current placeholder plan state until paid billing is wired up.</li>
+          <li>The table is intentionally specific so the app can later gate features by tier without rewriting the pricing structure.</li>
+          <li>Plan selection is already passed into signup, and the next step would be persisting it on the user record.</li>
         </ul>
       </section>
     </div>

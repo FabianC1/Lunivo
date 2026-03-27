@@ -11,6 +11,19 @@ export type SubscriptionPlan = {
   features: string[];
 };
 
+export type SubscriptionComparisonValue = boolean | string;
+
+export type SubscriptionComparisonRow = {
+  label: string;
+  description: string;
+  values: Record<string, SubscriptionComparisonValue>;
+};
+
+export type SubscriptionComparisonSection = {
+  title: string;
+  rows: SubscriptionComparisonRow[];
+};
+
 export const FREE_PLAN: SubscriptionPlan = {
   slug: "free",
   name: "Free",
@@ -99,6 +112,134 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
 ];
 
 export const ALL_SUBSCRIPTION_PLANS = [FREE_PLAN, ...PAID_SUBSCRIPTION_TIERS];
+
+export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] = [
+  {
+    title: "Core Money Tools",
+    rows: [
+      {
+        label: "Income tracking",
+        description: "Log income entries and review source history.",
+        values: { free: true, starter: true, growth: true, scale: true },
+      },
+      {
+        label: "Spending tracking",
+        description: "Log, edit, and review spending entries.",
+        values: { free: true, starter: true, growth: true, scale: true },
+      },
+      {
+        label: "Budget management",
+        description: "Set and maintain category spending limits.",
+        values: { free: true, starter: true, growth: true, scale: true },
+      },
+      {
+        label: "Goals tracking",
+        description: "Track savings goals and completion progress.",
+        values: { free: true, starter: true, growth: true, scale: true },
+      },
+      {
+        label: "Dashboard insights",
+        description: "See the main dashboard with current income and spending summaries.",
+        values: { free: "Basic", starter: "Enhanced", growth: "Advanced", scale: "Advanced" },
+      },
+    ],
+  },
+  {
+    title: "Reports & Analysis",
+    rows: [
+      {
+        label: "Monthly summaries",
+        description: "Review month-level totals and visual summaries.",
+        values: { free: true, starter: true, growth: true, scale: true },
+      },
+      {
+        label: "Detailed reports",
+        description: "Use deeper category and performance reporting views.",
+        values: { free: false, starter: false, growth: true, scale: true },
+      },
+      {
+        label: "Forecasting tools",
+        description: "See projected savings, cash-flow, and longer-range planning estimates.",
+        values: { free: false, starter: false, growth: true, scale: true },
+      },
+      {
+        label: "Long-range planning views",
+        description: "Plan further ahead with deeper timeline views and comparisons.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+      {
+        label: "Export-ready summaries",
+        description: "Use cleaner summaries prepared for sharing or export workflows.",
+        values: { free: false, starter: true, growth: true, scale: true },
+      },
+    ],
+  },
+  {
+    title: "Themes & Personalization",
+    rows: [
+      {
+        label: "Theme selection",
+        description: "Choose from the available built-in theme options.",
+        values: { free: "1 theme", starter: "4 built-in themes", growth: "12 built-in themes", scale: "Full library" },
+      },
+      {
+        label: "Custom theme creation",
+        description: "Create your own theme presets and save them for reuse.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+      {
+        label: "Saved theme presets",
+        description: "Store and switch between personal visual presets.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+      {
+        label: "Expanded dashboard layout options",
+        description: "Access more ways to surface information in the dashboard.",
+        values: { free: false, starter: true, growth: true, scale: true },
+      },
+    ],
+  },
+  {
+    title: "Household & Data Access",
+    rows: [
+      {
+        label: "Multi-profile support",
+        description: "Manage shared or separate finance profiles inside one workspace.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+      {
+        label: "CSV and data exports",
+        description: "Export account and planning data for external use.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+      {
+        label: "Shared household workflows",
+        description: "Coordinate planning for family or shared-finance use cases.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+      {
+        label: "Priority feature previews",
+        description: "Get access to selected upcoming product features before general release.",
+        values: { free: false, starter: false, growth: false, scale: true },
+      },
+    ],
+  },
+  {
+    title: "Support",
+    rows: [
+      {
+        label: "Support level",
+        description: "How quickly and directly support is provided.",
+        values: {
+          free: "Community",
+          starter: "Priority email",
+          growth: "Priority with faster turnaround",
+          scale: "White-glove priority",
+        },
+      },
+    ],
+  },
+];
 
 export function getSubscriptionPlanBySlug(slug: string | null | undefined) {
   if (!slug) {
