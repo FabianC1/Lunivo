@@ -203,27 +203,39 @@
 }
 
 .matrixGroupTitle {
-  padding: 0.8rem 1.25rem;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--button-gradient-start) 10%, transparent), transparent 48%),
-    color-mix(in srgb, var(--card-color) 88%, transparent);
+  padding: 0.6rem 1.25rem;
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--text-color) 68%, transparent);
+  color: color-mix(in srgb, var(--button-gradient-end) 80%, var(--text-color));
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.matrixGroupTitle::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.85em;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--button-gradient-start), var(--button-gradient-end));
+  flex-shrink: 0;
 }
 
 .matrixGroupTitleSpacer {
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--button-gradient-start) 10%, transparent), transparent 48%),
-    color-mix(in srgb, var(--card-color) 88%, transparent);
-  border-left: 1px solid rgba(148, 163, 184, 0.08);
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .matrixGroupTitleSpacerFeatured {
+  background: rgba(0, 0, 0, 0.45);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
   box-shadow:
     inset 2px 0 0 color-mix(in srgb, var(--button-gradient-start) 58%, var(--button-gradient-end) 42%),
