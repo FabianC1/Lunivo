@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./transactions.module.css";
 import IconPopoverButton from "../../components/IconPopoverButton";
 import PageLoading from "../../components/PageLoading";
@@ -51,6 +51,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 const WEEK_LABELS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"] as const;
 
 export default function Transactions() {
+  const tableSectionRef = useRef<HTMLElement | null>(null);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -314,6 +315,24 @@ export default function Transactions() {
     ? transactions.find((transaction) => transaction.id === editingTransactionId) ?? null
     : null;
 
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!selectedTransactionId || showForm) {
+        return;
+      }
+
+      const target = event.target as Node;
+      if (tableSectionRef.current?.contains(target)) {
+        return;
+      }
+
+      setSelectedTransactionId(null);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [selectedTransactionId, showForm]);
+
   if (isLoading) {
     return <PageLoading message="Loading spendings..." />;
   }
@@ -350,7 +369,15 @@ export default function Transactions() {
         </article>
       </div>
 
-      <section className={styles.entriesSection}>
+      <section
+        ref={tableSectionRef}
+        className={styles.entriesSection}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            setSelectedTransactionId(null);
+          }
+        }}
+      >
         <div className={styles.tableHeader}>
           <div>
             <h2 className={styles.tableTitle}>All Transactions</h2>

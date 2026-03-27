@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./income.module.css";
 import IconPopoverButton from "../../components/IconPopoverButton";
 import PageLoading from "../../components/PageLoading";
@@ -20,7 +20,7 @@ interface Transaction {
 
 type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
 
-const INCOME_SOURCES = ["Salary", "Side project", "Freelance", "Bonus", "Investment", "Gift", "Other"];
+const INCOME_SOURCES = ["Salary", "Side project", "Freelance", "Bonus", "Investment", "Gift", "Reimbursement", "Other"];
 
 // Full-year monthly income for the bar chart (2026 data matching dashboard)
 const MONTHLY_INCOME: Record<string, number> = {
@@ -38,6 +38,7 @@ const dummy: Transaction[] = [
 ];
 
 export default function Income() {
+  const tableSectionRef = useRef<HTMLElement | null>(null);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -276,6 +277,24 @@ export default function Income() {
     ? transactions.find((transaction) => transaction.id === editingTransactionId) ?? null
     : null;
 
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!selectedTransactionId || showForm) {
+        return;
+      }
+
+      const target = event.target as Node;
+      if (tableSectionRef.current?.contains(target)) {
+        return;
+      }
+
+      setSelectedTransactionId(null);
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [selectedTransactionId, showForm]);
+
   if (isLoading) {
     return <PageLoading message="Loading income..." />;
   }
@@ -312,7 +331,15 @@ export default function Income() {
         </article>
       </div>
 
-      <section className={styles.entriesSection}>
+      <section
+        ref={tableSectionRef}
+        className={styles.entriesSection}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            setSelectedTransactionId(null);
+          }
+        }}
+      >
         <div className={styles.tableHeader}>
           <div>
             <h2 className={styles.tableTitle}>Income Entries</h2>
