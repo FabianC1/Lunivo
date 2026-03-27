@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import styles from "./profile.module.css";
 import { AuthSession, clearSession, getSession, markLogoutPending, setSession } from "../../lib/auth";
+import { FREE_PLAN, PAID_SUBSCRIPTION_TIERS, formatPlanPrice } from "../../lib/subscriptions";
 
 type ProfilePayload = {
   user: {
@@ -703,12 +705,29 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Billing</h1>
             <p className={styles.subheading}>Subscription and payment settings.</p>
             <div className={styles.inlineCard}>
-              <span className={styles.planBadge}>Current plan: Free</span>
+              <span className={styles.planBadge}>Current plan: {FREE_PLAN.name}</span>
               <p>Usage cycle resets on the 1st of every month.</p>
-              <p>Payment management can be added when you introduce paid plans.</p>
-              <button type="button" className={styles.secondaryButton} disabled>
-                Manage billing (coming soon)
-              </button>
+              <p>{FREE_PLAN.description}</p>
+              <div className={styles.actionRow}>
+                <Link href="/subscriptions" className={styles.link}>Compare plans</Link>
+                <button type="button" className={styles.secondaryButton} disabled>
+                  Manage billing (coming soon)
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Available Plans</h3>
+              {PAID_SUBSCRIPTION_TIERS.map((plan) => (
+                <div key={plan.slug} className={styles.optionRow}>
+                  <div>
+                    <strong>{plan.name}</strong>
+                    <p>{plan.description}</p>
+                  </div>
+                  <span className={styles.planBadge}>{formatPlanPrice(plan.priceMonthly)}</span>
+                </div>
+              ))}
             </div>
 
             <div className={styles.divider} />

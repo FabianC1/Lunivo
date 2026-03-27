@@ -23,7 +23,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   await connectToDatabase();
 
   const account = await Account.findOneAndUpdate({ _id: id, userId }, safeUpdates, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
 

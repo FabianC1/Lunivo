@@ -36,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   await connectToDatabase();
-  const goal = await Goal.findByIdAndUpdate(id, update, { new: true, runValidators: true });
+  const goal = await Goal.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true });
   if (!goal) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

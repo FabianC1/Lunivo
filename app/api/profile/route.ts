@@ -90,7 +90,7 @@ export async function PUT(req: NextRequest) {
   const user = await User.findByIdAndUpdate(
     userId,
     updates,
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true }
   ).select("name email backupEmail phone preferences notifications");
 
   if (!user) {

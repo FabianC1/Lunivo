@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest) {
   const budget = await Budget.findOneAndUpdate(
     { userId },
     { userId, categories: safeCategories, period: period || 'monthly' },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: 'after', upsert: true, runValidators: true }
   );
 
   return NextResponse.json({

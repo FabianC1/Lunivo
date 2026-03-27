@@ -19,6 +19,16 @@
   background: var(--card-color);
 }
 
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .hero h1 {
   color: var(--text-color);
   font-size: 2rem;
@@ -29,6 +39,54 @@
   color: var(--text-color);
   opacity: 0.82;
   max-width: 700px;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.heroMeta span {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-color);
+  font-size: 0.82rem;
+}
+
+.freePlan {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--card-color) 92%, transparent), color-mix(in srgb, var(--bg-color) 92%, transparent));
+}
+
+.freePlan h2,
+.freePlan p {
+  margin: 0;
+  color: var(--text-color);
+}
+
+.freePlanLabel {
+  margin-bottom: 0.35rem !important;
+  opacity: 0.65;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.freePlanPrice {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-color);
+  white-space: nowrap;
 }
 
 .grid {
@@ -69,6 +127,13 @@
 .card h2 {
   color: var(--text-color);
   font-size: 1.25rem;
+}
+
+.audience {
+  margin: -0.2rem 0 0;
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .description {
@@ -131,9 +196,32 @@
   opacity: 0.9;
 }
 
+.notes {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: var(--card-color);
+  border-radius: 1rem;
+  padding: 1.2rem;
+}
+
+.notes h3 {
+  margin: 0 0 0.75rem;
+}
+
+.notes ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
 @media (max-width: 1024px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .freePlan {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

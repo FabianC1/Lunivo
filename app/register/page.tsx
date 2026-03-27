@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import styles from "./register.module.css";
 import { clearLogoutPending, getSession, setSession } from "../../lib/auth";
+import { getSubscriptionPlanBySlug } from "../../lib/subscriptions";
 
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "" };
@@ -28,6 +29,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
 
 export default function Register() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +42,7 @@ export default function Register() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const strength = getStrength(password);
+  const selectedPlan = getSubscriptionPlanBySlug(searchParams?.get("plan"));
 
   useEffect(() => {
     if (getSession()) {
@@ -125,7 +128,10 @@ export default function Register() {
         </div>
 
         <h1 className={styles.title}>Create your account</h1>
-        <p className={styles.subtitle}>Start managing your finances for free</p>
+        <p className={styles.subtitle}>
+          {selectedPlan && selectedPlan.slug !== "free"
+            ? `Starting with the ${selectedPlan.name} plan` : "Start managing your finances for free"}
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.form} noValidate>
           {/* Full name */}

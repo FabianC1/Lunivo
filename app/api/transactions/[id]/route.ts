@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 
   await connectToDatabase();
-  const tx = await Transaction.findByIdAndUpdate(id, data, { new: true });
+  const tx = await Transaction.findByIdAndUpdate(id, data, { returnDocument: 'after' });
   if (!tx) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
