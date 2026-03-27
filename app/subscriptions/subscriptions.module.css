@@ -1,3 +1,11 @@
+.matrixGroupTitle,
+.matrixGroupTitleSpacer,
+.matrixGroupTitleSpacerFeatured {
+  background: #111;
+  color: #fff;
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+}
 .page {
   max-width: 1400px;
   width: 100%;
