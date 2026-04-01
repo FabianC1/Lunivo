@@ -5,6 +5,7 @@ import styles from "./budgets.module.css";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
 import PageLoading from "../../components/PageLoading";
+import { readApiError } from "../../lib/apiClient";
 import { initialBudgets, normalizeBudgetMap, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
@@ -44,8 +45,6 @@ export default function Budgets() {
       return;
     }
 
-    const resolvedUserId = userId;
-
     let isMounted = true;
 
     async function loadData() {
@@ -54,16 +53,16 @@ export default function Budgets() {
         setError("");
 
         const [budgetsResponse, spendingResponse] = await Promise.all([
-          fetch(`/api/budgets?userId=${encodeURIComponent(resolvedUserId)}`, { cache: "no-store" }),
-          fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}&kind=expense`, { cache: "no-store" }),
+          fetch("/api/budgets", { cache: "no-store" }),
+          fetch("/api/transactions?kind=expense", { cache: "no-store" }),
         ]);
 
         if (!budgetsResponse.ok) {
-          throw new Error("Failed to load budgets.");
+          throw new Error(await readApiError(budgetsResponse, "Failed to load budgets."));
         }
 
         if (!spendingResponse.ok) {
-          throw new Error("Failed to load expenses.");
+          throw new Error(await readApiError(spendingResponse, "Failed to load expenses."));
         }
 
         const budgetsPayload = await budgetsResponse.json();
@@ -130,11 +129,11 @@ export default function Budgets() {
         const response = await fetch("/api/budgets", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: sessionUserId, categories: budgets, period: "monthly" }),
+          body: JSON.stringify({ categories: budgets, period: "monthly" }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to save budgets.");
+          throw new Error(await readApiError(response, "Failed to save budgets."));
         }
 
         setFeedback("Budgets saved.");

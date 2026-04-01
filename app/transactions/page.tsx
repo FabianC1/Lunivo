@@ -7,6 +7,7 @@ import PageLoading from "../../components/PageLoading";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import BudgetComparisonChart from "../../components/BudgetComparisonChart";
+import { readApiError } from "../../lib/apiClient";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import { initialBudgets, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
 import { getSession } from "../../lib/auth";
@@ -78,8 +79,6 @@ export default function Transactions() {
       return;
     }
 
-    const resolvedUserId = userId;
-
     let isMounted = true;
 
     async function loadData() {
@@ -88,16 +87,16 @@ export default function Transactions() {
         setError("");
 
         const [transactionsResponse, budgetsResponse] = await Promise.all([
-          fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}&kind=expense`, { cache: "no-store" }),
-          fetch(`/api/budgets?userId=${encodeURIComponent(resolvedUserId)}`, { cache: "no-store" }),
+          fetch("/api/transactions?kind=expense", { cache: "no-store" }),
+          fetch("/api/budgets", { cache: "no-store" }),
         ]);
 
         if (!transactionsResponse.ok) {
-          throw new Error("Failed to load spending entries.");
+          throw new Error(await readApiError(transactionsResponse, "Failed to load spending entries."));
         }
 
         if (!budgetsResponse.ok) {
-          throw new Error("Failed to load budgets.");
+          throw new Error(await readApiError(budgetsResponse, "Failed to load budgets."));
         }
 
         const transactionsPayload = await transactionsResponse.json();
@@ -150,7 +149,7 @@ export default function Transactions() {
           body: JSON.stringify({ ...data, kind: "expense" }),
         });
         if (!response.ok) {
-          throw new Error("Failed to update spending entry.");
+          throw new Error(await readApiError(response, "Failed to update spending entry."));
         }
 
         const payload = await response.json();
@@ -176,11 +175,11 @@ export default function Transactions() {
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, userId: sessionUserId, kind: "expense" }),
+        body: JSON.stringify({ ...data, kind: "expense" }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save spending entry.");
+        throw new Error(await readApiError(response, "Failed to save spending entry."));
       }
 
       const payload = await response.json();
@@ -221,7 +220,7 @@ export default function Transactions() {
       setError("");
       const response = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
       if (!response.ok) {
-        throw new Error("Failed to delete spending entry.");
+        throw new Error(await readApiError(response, "Failed to delete spending entry."));
       }
 
       setTransactions((prev) => prev.filter((entry) => entry.id !== id));

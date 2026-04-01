@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
 import PageLoading from "../../components/PageLoading";
+import { readApiError } from "../../lib/apiClient";
 import { DEMO_EMAIL, getSession } from "../../lib/auth";
 import { initialBudgets } from "../../lib/budgets";
 import { formatCurrency } from "../../lib/utils";
@@ -21,14 +22,6 @@ interface MonthReport {
 }
 
 type YearReport = Record<MonthKey, MonthReport>;
-
-interface TransactionRecord {
-  id: string;
-  date: string;
-  amount: number;
-  kind: "income" | "expense";
-  category: string;
-}
 
 const CATEGORY_SPLITS: Record<CategoryName, number>[] = [
   { Food: 0.3, Transport: 0.14, Utilities: 0.22, Entertainment: 0.16, Emergencies: 0.1, Other: 0.08 },
@@ -125,54 +118,6 @@ function getTransactionMonth(value: string): MonthKey | null {
   return MONTHS[monthIndex] ?? null;
 }
 
-function buildReportDataFromTransactions(transactions: TransactionRecord[]) {
-  if (transactions.length === 0) {
-    return createEmptyReportData([String(new Date().getFullYear())]);
-  }
-
-  const categories = Array.from(
-    new Set(
-      transactions
-        .filter((transaction) => transaction.kind === "expense")
-        .map((transaction) => transaction.category?.trim() || "Other")
-    )
-  );
-  const resolvedCategories = categories.length > 0 ? categories.sort((left, right) => left.localeCompare(right)) : DEFAULT_DASHBOARD_CATEGORIES;
-
-  const years = Array.from(
-    new Set(
-      transactions
-        .map((transaction) => getTransactionYear(transaction.date))
-        .filter((year) => year.length === 4)
-    )
-  ).sort((left, right) => left.localeCompare(right));
-
-  const reportData = createEmptyReportData(years, resolvedCategories);
-
-  for (const transaction of transactions) {
-    const year = getTransactionYear(transaction.date);
-    const month = getTransactionMonth(transaction.date);
-
-    if (!reportData[year] || !month) {
-      continue;
-    }
-
-    const report = reportData[year][month];
-    const amount = Number(transaction.amount) || 0;
-
-    if (transaction.kind === "income") {
-      report.income += amount;
-      continue;
-    }
-
-    report.spendings += amount;
-    const category = transaction.category?.trim() || "Other";
-    report.categories[category] += amount;
-  }
-
-  return reportData;
-}
-
 function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`;
 }
@@ -220,7 +165,6 @@ export default function Dashboard() {
       return;
     }
 
-    const resolvedUserId = session.userId;
     let isMounted = true;
 
     async function loadDashboardData() {
@@ -228,12 +172,12 @@ export default function Dashboard() {
         setIsLoading(true);
         setError("");
 
-        const response = await fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}`, {
+        const response = await fetch("/api/reports/summary?scope=dashboard", {
           cache: "no-store",
         });
 
         if (!response.ok) {
-          throw new Error("Failed to load dashboard data.");
+          throw new Error(await readApiError(response, "Failed to load dashboard data."));
         }
 
         const payload = await response.json();
@@ -241,7 +185,7 @@ export default function Dashboard() {
           return;
         }
 
-        setReportData(buildReportDataFromTransactions(payload.transactions ?? []));
+        setReportData(payload.reportData ?? createEmptyReportData([String(new Date().getFullYear())]));
       } catch (loadError) {
         if (!isMounted) {
           return;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import styles from "./login.module.css";
+import { readApiError } from "../../lib/apiClient";
 import { clearLogoutPending, getSession, setSession, DEMO_EMAIL, DEMO_PASSWORD, DEMO_NAME } from "../../lib/auth";
 
 export default function Login() {

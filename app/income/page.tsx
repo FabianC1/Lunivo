@@ -7,6 +7,7 @@ import PageLoading from "../../components/PageLoading";
 import TransactionForm from "../../components/TransactionForm";
 import Chart from "../../components/Chart";
 import IncomeTrendChart from "../../components/IncomeTrendChart";
+import { readApiError } from "../../lib/apiClient";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
 
@@ -63,20 +64,18 @@ export default function Income() {
       return;
     }
 
-    const resolvedUserId = userId;
-
     let isMounted = true;
 
     async function loadTransactions() {
       try {
         setIsLoading(true);
         setError("");
-        const response = await fetch(`/api/transactions?userId=${encodeURIComponent(resolvedUserId)}&kind=income`, {
+        const response = await fetch("/api/transactions?kind=income", {
           cache: "no-store",
         });
 
         if (!response.ok) {
-          throw new Error("Failed to load income entries.");
+          throw new Error(await readApiError(response, "Failed to load income entries."));
         }
 
         const payload = await response.json();
@@ -121,7 +120,7 @@ export default function Income() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update income entry.");
+          throw new Error(await readApiError(response, "Failed to update income entry."));
         }
 
         const payload = await response.json();
@@ -148,11 +147,11 @@ export default function Income() {
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, userId: sessionUserId, kind: "income" }),
+        body: JSON.stringify({ ...data, kind: "income" }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save income entry.");
+        throw new Error(await readApiError(response, "Failed to save income entry."));
       }
 
       const payload = await response.json();
@@ -193,7 +192,7 @@ export default function Income() {
       setError("");
       const response = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
       if (!response.ok) {
-        throw new Error("Failed to delete income entry.");
+        throw new Error(await readApiError(response, "Failed to delete income entry."));
       }
 
       setTransactions((prev) => prev.filter((entry) => entry.id !== id));

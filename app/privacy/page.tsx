@@ -24,9 +24,9 @@ export default function PrivacyPage() {
           explains what information we collect, how we use it, and your rights regarding it.
         </p>
         <p>
-          This is a placeholder document that will be updated comprehensively before Lunivo
-          launches publicly. By using Lunivo you acknowledge this and agree to the policy as
-          written.
+          This is a concise pre-launch policy for the current product. It reflects the core way
+          Lunivo stores account and finance data today and will be expanded as billing and support
+          operations are finalized.
         </p>
       </section>
 
@@ -39,11 +39,13 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Financial data</strong> — income and spending entries, budgets, and categories
-            that you enter manually. This is stored locally in your browser.
+            that you enter manually. This data is stored in Lunivo&apos;s database for signed-in
+            accounts and may remain in local storage for demo-mode experiences.
           </li>
           <li>
             <strong>Preference data</strong> — theme (light/dark) and similar UI settings stored
-            in your browser&apos;s local storage
+            in your browser&apos;s local storage, plus account-level profile preferences stored on
+            our servers when you are signed in
           </li>
           <li>
             <strong>Usage data</strong> — basic anonymous analytics (page views, feature usage)
@@ -71,23 +73,24 @@ export default function PrivacyPage() {
       <section className={styles.section}>
         <h2>4. Data Storage &amp; Security</h2>
         <p>
-          At present, all financial data is stored locally in your browser using
-          <code> localStorage</code>. It does not leave your device unless you explicitly use
-          a sync or export feature.
+          For registered accounts, Lunivo stores account records, profile settings, budgets,
+          goals, and transaction history in its application database so that your information
+          can persist across devices and sessions.
         </p>
         <p>
-          Account credentials are hashed before storage. We apply reasonable technical measures
-          to protect any data held on our servers, though no method of transmission over the
-          internet is 100% secure.
+          Account credentials are hashed before storage, and authenticated sessions use signed
+          session cookies and provider-backed session tokens where applicable. We apply reasonable
+          technical measures to protect data in transit and at rest, though no internet-based
+          service can guarantee absolute security.
         </p>
       </section>
 
       <section className={styles.section}>
         <h2>5. Cookies &amp; Local Storage</h2>
         <p>
-          Lunivo uses browser local storage (not cookies) to persist your session, preferences,
-          and financial data. No tracking cookies are set. If you clear your browser storage,
-          locally stored data will be lost.
+          Lunivo uses signed cookies for authenticated sessions and may use local storage for UI
+          preferences, demo data, and device-side experience settings. We do not currently use
+          advertising or cross-site tracking cookies.
         </p>
       </section>
 

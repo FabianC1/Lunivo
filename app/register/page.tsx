@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import styles from "./register.module.css";
+import { readApiError } from "../../lib/apiClient";
 import { clearLogoutPending, getSession, setSession } from "../../lib/auth";
 import { getSubscriptionPlanBySlug } from "../../lib/subscriptions";
 
@@ -86,6 +87,7 @@ export default function Register() {
           name: name.trim(),
           email: email.trim().toLowerCase(),
           password,
+          plan: selectedPlan?.slug ?? "free",
         }),
       });
 

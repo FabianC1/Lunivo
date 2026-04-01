@@ -11,6 +11,59 @@ export type SubscriptionPlan = {
   features: string[];
 };
 
+export type SubscriptionPlanSlug = "free" | "starter" | "growth" | "scale";
+
+type PlanCapabilities = {
+  maxTransactionsPerMonth: number | null;
+  maxGoals: number | null;
+  maxAccounts: number | null;
+  reportsLevel: "basic" | "advanced" | "full";
+  canUseForecasting: boolean;
+  canUseExports: boolean;
+  canCreateThemes: boolean;
+};
+
+const PLAN_ORDER: SubscriptionPlanSlug[] = ["free", "starter", "growth", "scale"];
+
+const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
+  free: {
+    maxTransactionsPerMonth: 150,
+    maxGoals: 5,
+    maxAccounts: 2,
+    reportsLevel: "basic",
+    canUseForecasting: false,
+    canUseExports: false,
+    canCreateThemes: false,
+  },
+  starter: {
+    maxTransactionsPerMonth: 600,
+    maxGoals: 20,
+    maxAccounts: 3,
+    reportsLevel: "basic",
+    canUseForecasting: false,
+    canUseExports: true,
+    canCreateThemes: false,
+  },
+  growth: {
+    maxTransactionsPerMonth: 3000,
+    maxGoals: 75,
+    maxAccounts: 5,
+    reportsLevel: "advanced",
+    canUseForecasting: true,
+    canUseExports: true,
+    canCreateThemes: false,
+  },
+  scale: {
+    maxTransactionsPerMonth: null,
+    maxGoals: null,
+    maxAccounts: 12,
+    reportsLevel: "full",
+    canUseForecasting: true,
+    canUseExports: true,
+    canCreateThemes: true,
+  },
+};
+
 export type SubscriptionComparisonValue = boolean | string;
 
 export type SubscriptionComparisonRow = {
@@ -248,6 +301,19 @@ export function getSubscriptionPlanBySlug(slug: string | null | undefined) {
 
   const normalizedSlug = slug.trim().toLowerCase();
   return ALL_SUBSCRIPTION_PLANS.find((plan) => plan.slug === normalizedSlug) ?? null;
+}
+
+export function normalizePlanSlug(slug: string | null | undefined): SubscriptionPlanSlug {
+  const plan = getSubscriptionPlanBySlug(slug);
+  return (plan?.slug as SubscriptionPlanSlug | undefined) ?? "free";
+}
+
+export function hasPlanAccess(currentPlan: string | null | undefined, minimumPlan: SubscriptionPlanSlug) {
+  return PLAN_ORDER.indexOf(normalizePlanSlug(currentPlan)) >= PLAN_ORDER.indexOf(minimumPlan);
+}
+
+export function getPlanCapabilities(plan: string | null | undefined) {
+  return PLAN_CAPABILITIES[normalizePlanSlug(plan)];
 }
 
 export function formatPlanPrice(priceMonthly: number) {

@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedApiUser, unauthorizedResponse } from '../../../../lib/apiAuth';
 import { connectToDatabase } from '../../../../lib/mongodb';
 import Account from '../../../../models/Account';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
+  }
+
   const { id } = await params;
   const data = await req.json();
-  const { userId, ...updates } = data;
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-  }
+  const { ...updates } = data;
 
   const allowedUpdates = ['name', 'type', 'balance', 'currency', 'isArchived'];
   const safeUpdates: Record<string, unknown> = {};
@@ -22,7 +24,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   await connectToDatabase();
 
-  const account = await Account.findOneAndUpdate({ _id: id, userId }, safeUpdates, {
+  const account = await Account.findOneAndUpdate({ _id: id, userId: authenticatedUser.userId }, safeUpdates, {
     returnDocument: 'after',
     runValidators: true,
   });
@@ -35,17 +37,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get('userId');
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
   }
+
+  const { id } = await params;
 
   await connectToDatabase();
 
-  const account = await Account.findOneAndDelete({ _id: id, userId });
+  const account = await Account.findOneAndDelete({ _id: id, userId: authenticatedUser.userId });
   if (!account) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

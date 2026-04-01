@@ -68,12 +68,28 @@ export default function TransactionForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!date || amount <= 0 || !category) {
-      setError("Please fill in all required fields and use a positive amount.");
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      setError("Choose a valid date.");
       return;
     }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Enter a positive amount.");
+      return;
+    }
+
+    if (!category) {
+      setError("Choose a category before saving.");
+      return;
+    }
+
+    if (description.trim().length > 240) {
+      setError("Description is too long. Keep it under 240 characters.");
+      return;
+    }
+
     setError("");
-    onSubmit({ date, amount, category, description });
+    onSubmit({ date, amount, category, description: description.trim() });
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
@@ -105,7 +121,7 @@ export default function TransactionForm({
           type="number"
           step="0.01"
           value={amount}
-          onChange={(e) => setAmount(parseFloat(e.target.value))}
+          onChange={(e) => setAmount(Number(e.target.value))}
           required
         />
       </label>

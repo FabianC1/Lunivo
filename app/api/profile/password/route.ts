@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { getAuthenticatedApiUser, unauthorizedResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
 import User from "../../../../models/User";
 
 export async function PATCH(req: NextRequest) {
-  const { userId, currentPassword, newPassword } = await req.json();
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
+  }
 
-  if (!userId || !currentPassword || !newPassword) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  const { currentPassword, newPassword } = await req.json();
+
+  if (!currentPassword || !newPassword) {
+    return NextResponse.json({ error: "Current and new password are required." }, { status: 400 });
   }
 
   const normalizedNewPassword = String(newPassword);
@@ -15,8 +21,12 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "New password must be at least 8 characters" }, { status: 400 });
   }
 
+  if (String(currentPassword) === normalizedNewPassword) {
+    return NextResponse.json({ error: "Choose a different password from your current one." }, { status: 400 });
+  }
+
   await connectToDatabase();
-  const user = await User.findById(userId);
+  const user = await User.findById(authenticatedUser.userId);
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }

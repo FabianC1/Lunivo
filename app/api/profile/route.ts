@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedApiUser, unauthorizedResponse } from "../../../lib/apiAuth";
 import { connectToDatabase } from "../../../lib/mongodb";
 import User from "../../../models/User";
 
 export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) {
-    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
   }
 
   await connectToDatabase();
-  const user = await User.findById(userId).select("name email backupEmail phone preferences notifications");
+  const user = await User.findById(authenticatedUser.userId).select("name email planSlug backupEmail phone preferences notifications");
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
       id: String(user._id),
       name: user.name,
       email: user.email,
+      planSlug: user.planSlug ?? "free",
       backupEmail: user.backupEmail ?? "",
       phone: user.phone ?? "",
       preferences: {
@@ -36,11 +38,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { userId, name, backupEmail, phone, preferences, notifications } = await req.json();
-
-  if (!userId) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
   }
+
+  const { name, backupEmail, phone, preferences, notifications } = await req.json();
 
   const updates: Record<string, unknown> = {};
 
@@ -61,7 +64,11 @@ export async function PUT(req: NextRequest) {
   }
 
   if (phone !== undefined) {
-    updates.phone = String(phone).trim();
+    const normalizedPhone = String(phone).trim();
+    if (normalizedPhone.length > 30) {
+      return NextResponse.json({ error: "Phone number is too long" }, { status: 400 });
+    }
+    updates.phone = normalizedPhone;
   }
 
   if (preferences && typeof preferences === "object") {
@@ -88,10 +95,10 @@ export async function PUT(req: NextRequest) {
 
   await connectToDatabase();
   const user = await User.findByIdAndUpdate(
-    userId,
+    authenticatedUser.userId,
     updates,
     { returnDocument: "after", runValidators: true }
-  ).select("name email backupEmail phone preferences notifications");
+  ).select("name email planSlug backupEmail phone preferences notifications");
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -103,6 +110,7 @@ export async function PUT(req: NextRequest) {
       id: String(user._id),
       name: user.name,
       email: user.email,
+      planSlug: user.planSlug ?? "free",
       backupEmail: user.backupEmail ?? "",
       phone: user.phone ?? "",
       preferences: {

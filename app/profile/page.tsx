@@ -4,15 +4,18 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
+import PageLoading from "../../components/PageLoading";
+import { readApiError } from "../../lib/apiClient";
 import styles from "./profile.module.css";
 import { AuthSession, clearSession, getSession, markLogoutPending, setSession } from "../../lib/auth";
-import { FREE_PLAN, PAID_SUBSCRIPTION_TIERS, formatPlanPrice } from "../../lib/subscriptions";
+import { FREE_PLAN, PAID_SUBSCRIPTION_TIERS, formatPlanPrice, getSubscriptionPlanBySlug } from "../../lib/subscriptions";
 
 type ProfilePayload = {
   user: {
     id: string;
     name: string;
     email: string;
+    planSlug?: string;
     backupEmail?: string;
     phone?: string;
     preferences?: {
@@ -66,6 +69,8 @@ export default function ProfilePage() {
   );
 
   const [session, setSessionState] = useState<AuthSession | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [currentPlanSlug, setCurrentPlanSlug] = useState("free");
   const [name, setName] = useState("");
   const [backupEmail, setBackupEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -112,26 +117,31 @@ export default function ProfilePage() {
     }
     setSessionState(current);
     setName(current.name);
+    setIsProfileLoading(false);
   }, [router]);
 
   useEffect(() => {
     const currentSession = session;
 
     if (!currentSession?.userId || currentSession.isDemo) {
+      setCurrentPlanSlug("free");
+      setIsProfileLoading(false);
       return;
     }
-
-    const userId = currentSession.userId;
 
     let isMounted = true;
 
     async function loadProfile() {
       try {
-        const response = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`, {
+        setIsProfileLoading(true);
+        const response = await fetch("/api/profile", {
           cache: "no-store",
         });
 
         if (!response.ok) {
+          if (isMounted) {
+            setNameError(await readApiError(response, "Unable to load your profile."));
+          }
           return;
         }
 
@@ -141,6 +151,7 @@ export default function ProfilePage() {
         }
 
         setName(payload.user.name);
+        setCurrentPlanSlug(payload.user.planSlug ?? "free");
         setBackupEmail(payload.user.backupEmail ?? "");
         setPhone(payload.user.phone ?? "");
         setLanguage(payload.user.preferences?.language ?? "en");
@@ -151,8 +162,10 @@ export default function ProfilePage() {
         setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
 
         if (
-          currentSession.name !== payload.user.name ||
-          currentSession.email !== payload.user.email
+          currentSession && (
+            currentSession.name !== payload.user.name ||
+            currentSession.email !== payload.user.email
+          )
         ) {
           const updatedSession = {
             ...currentSession,
@@ -163,7 +176,13 @@ export default function ProfilePage() {
           setSessionState(updatedSession);
         }
       } catch {
-        // Keep the page usable if the profile fetch fails.
+        if (isMounted) {
+          setNameError("Unable to load your profile right now.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsProfileLoading(false);
+        }
       }
     }
 
@@ -193,6 +212,11 @@ export default function ProfilePage() {
   async function handleLogout() {
     markLogoutPending();
     clearSession();
+    try {
+      await fetch("/api/session/logout", { method: "POST" });
+    } catch {
+      // Continue clearing the client session even if cookie cleanup fails.
+    }
     await signOut({ redirect: false });
     router.replace("/login");
     router.refresh();
@@ -229,7 +253,6 @@ export default function ProfilePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.userId,
           name: normalizedName,
           backupEmail,
           phone,
@@ -296,7 +319,6 @@ export default function ProfilePage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.userId,
           currentPassword,
           newPassword,
         }),
@@ -336,7 +358,6 @@ export default function ProfilePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.userId,
           notifications: {
             emailNotifications,
             budgetAlerts,
@@ -382,7 +403,6 @@ export default function ProfilePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: session.userId,
           preferences: {
             language,
             currency,
@@ -453,6 +473,12 @@ export default function ProfilePage() {
   if (!session) {
     return null;
   }
+
+  if (isProfileLoading) {
+    return <PageLoading message="Loading profile..." />;
+  }
+
+  const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
 
   return (
     <main className={styles.page}>
@@ -705,9 +731,9 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Billing</h1>
             <p className={styles.subheading}>Subscription and payment settings.</p>
             <div className={styles.inlineCard}>
-              <span className={styles.planBadge}>Current plan: {FREE_PLAN.name}</span>
+              <span className={styles.planBadge}>Current plan: {currentPlan.name}</span>
               <p>Usage cycle resets on the 1st of every month.</p>
-              <p>{FREE_PLAN.description}</p>
+              <p>{currentPlan.description}</p>
               <div className={styles.actionRow}>
                 <Link href="/subscriptions" className={styles.link}>Compare plans</Link>
                 <button type="button" className={styles.secondaryButton} disabled>

@@ -1,19 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { setAuthSessionCookie } from '../../../lib/authCookie';
 import { bootstrapAdminData } from '../../../lib/bootstrapAdminData';
 import { connectToDatabase } from '../../../lib/mongodb';
+import { normalizePlanSlug } from '../../../lib/subscriptions';
 import Account from '../../../models/Account';
 import User from '../../../models/User';
 
 export async function POST(req: NextRequest) {
-  const { name, email, password } = await req.json();
+  const { name, email, password, plan } = await req.json();
 
-  if (!name || !email || !password) {
-    return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+  const normalizedName = String(name ?? '').trim();
+  const normalizedEmail = String(email ?? '').trim().toLowerCase();
+  const normalizedPassword = String(password ?? '');
+  const planSlug = normalizePlanSlug(typeof plan === 'string' ? plan : undefined);
+
+  if (!normalizedName || !normalizedEmail || !normalizedPassword) {
+    return NextResponse.json({ error: 'Name, email, and password are required.' }, { status: 400 });
   }
 
-  const normalizedEmail = String(email).trim().toLowerCase();
-  const normalizedName = String(name).trim();
+  if (normalizedName.length < 2) {
+    return NextResponse.json({ error: 'Full name must be at least 2 characters.' }, { status: 400 });
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+  }
+
+  if (normalizedPassword.length < 8) {
+    return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
+  }
 
   await connectToDatabase();
   const existing = await User.findOne({ email: normalizedEmail });
@@ -22,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const hashed = await bcrypt.hash(password, 10);
-  const user = new User({ name: normalizedName, email: normalizedEmail, password: hashed });
+  const user = new User({ name: normalizedName, email: normalizedEmail, password: hashed, planSlug });
   await user.save();
 
   // Create starter accounts so account-based flows work immediately after signup.
@@ -45,12 +61,21 @@ export async function POST(req: NextRequest) {
 
   await bootstrapAdminData(String(user._id), user.email);
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     success: true,
     user: {
       id: String(user._id),
       name: user.name,
       email: user.email,
+      planSlug: user.planSlug ?? 'free',
     },
   });
+
+  setAuthSessionCookie(response, {
+    userId: String(user._id),
+    email: user.email,
+    name: user.name,
+  });
+
+  return response;
 }

@@ -21,6 +21,7 @@ async function ensureOAuthUser(email: string, name?: string | null) {
       name: safeName,
       email,
       password: hashed,
+      planSlug: "free",
     });
     return String(created._id);
   }

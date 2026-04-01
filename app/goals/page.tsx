@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import DateInput from "../../components/DateInput";
 import PageLoading from "../../components/PageLoading";
+import { readApiError } from "../../lib/apiClient";
 import styles from "./goals.module.css";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
@@ -117,20 +118,18 @@ export default function GoalsPage() {
       return;
     }
 
-    const resolvedUserId = userId;
-
     let isMounted = true;
 
     async function loadUserGoals() {
       try {
         setIsLoading(true);
         setError("");
-        const response = await fetch(`/api/goals?userId=${encodeURIComponent(resolvedUserId)}`, {
+        const response = await fetch("/api/goals", {
           cache: "no-store",
         });
 
         if (!response.ok) {
-          throw new Error("Failed to load goals.");
+          throw new Error(await readApiError(response, "Failed to load goals."));
         }
 
         const payload = await response.json();
@@ -229,7 +228,7 @@ export default function GoalsPage() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update goal.");
+          throw new Error(await readApiError(response, "Failed to update goal."));
         }
 
         const payload = await response.json();
@@ -270,7 +269,6 @@ export default function GoalsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: sessionUserId,
             title: form.title.trim(),
             kind: form.kind,
             targetAmount: parsedTarget,
@@ -281,7 +279,7 @@ export default function GoalsPage() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to create goal.");
+          throw new Error(await readApiError(response, "Failed to create goal."));
         }
 
         const payload = await response.json();
@@ -324,7 +322,7 @@ export default function GoalsPage() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update goal.");
+          throw new Error(await readApiError(response, "Failed to update goal."));
         }
 
         const payload = await response.json();
@@ -352,7 +350,7 @@ export default function GoalsPage() {
         setError("");
         const response = await fetch(`/api/goals/${id}`, { method: "DELETE" });
         if (!response.ok) {
-          throw new Error("Failed to delete goal.");
+          throw new Error(await readApiError(response, "Failed to delete goal."));
         }
 
         setGoals((prev) => prev.filter((goal) => goal.id !== id));

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedApiUser, unauthorizedResponse } from '../../../../lib/apiAuth';
 import { connectToDatabase } from '../../../../lib/mongodb';
 import Goal from '../../../../models/Goal';
 
@@ -20,6 +21,11 @@ function toGoalResponse(goal: any) {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
+  }
+
   const { id } = await params;
   const payload = await req.json();
 
@@ -35,8 +41,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     update.completedAt = payload.completed ? new Date() : undefined;
   }
 
+  if (update.targetAmount !== undefined && (!Number.isFinite(Number(update.targetAmount)) || Number(update.targetAmount) <= 0)) {
+    return NextResponse.json({ error: 'Target amount must be a positive number.' }, { status: 400 });
+  }
+
+  if (update.savedAmount !== undefined && (!Number.isFinite(Number(update.savedAmount)) || Number(update.savedAmount) < 0)) {
+    return NextResponse.json({ error: 'Saved amount must be zero or greater.' }, { status: 400 });
+  }
+
   await connectToDatabase();
-  const goal = await Goal.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true });
+  const goal = await Goal.findOneAndUpdate(
+    { _id: id, userId: authenticatedUser.userId },
+    update,
+    { returnDocument: 'after', runValidators: true },
+  );
   if (!goal) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -45,10 +63,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authenticatedUser = await getAuthenticatedApiUser();
+  if (!authenticatedUser) {
+    return unauthorizedResponse();
+  }
+
   const { id } = await params;
 
   await connectToDatabase();
-  const goal = await Goal.findByIdAndDelete(id);
+  const goal = await Goal.findOneAndDelete({ _id: id, userId: authenticatedUser.userId });
   if (!goal) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }

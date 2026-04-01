@@ -46,9 +46,9 @@ export default function TermsPage() {
       <section className={styles.section}>
         <h2>3. Your Financial Data</h2>
         <p>
-          All financial data you enter — transactions, budgets, income — is stored locally in your
-          browser by default. Lunivo does not automatically transmit this data to external servers
-          unless you explicitly enable cloud sync features (when available).
+          Financial data you enter into a signed-in Lunivo account may be stored on Lunivo&apos;s
+          servers so it can persist across sessions and devices. Demo-mode or local-only flows may
+          still use browser storage for temporary product experiences.
         </p>
         <p>
           You retain full ownership of the data you enter. We do not sell, share, or use your
