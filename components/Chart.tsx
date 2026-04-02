@@ -43,6 +43,7 @@ export default function Chart({
   const [visibleLabels, setVisibleLabels] = useState<Record<string, boolean>>({});
   const labels = Object.keys(data);
   const values = Object.values(data);
+  const hasAnyData = values.some((v) => typeof v === 'number' && v !== 0);
   const labelSignature = labels.join('::');
   const resolvedLegendSpacing = legendSpacing ?? (type === 'doughnut' ? 'relaxed' : 'default');
 
@@ -229,7 +230,13 @@ export default function Chart({
   return (
     <div className={[styles.chartContainer, showLegend ? styles.chartContainerWithLegend : ''].join(' ').trim()}>
       <div className={[styles.chartWrapper, showLegend ? styles.chartWrapperWithLegend : ''].join(' ').trim()}>
-        {visibleChartLabels.length > 0 ? (
+        {labels.length === 0 || !hasAnyData ? (
+          <div className={styles.emptyState}>
+            {type === 'doughnut' && 'No data for this category.'}
+            {type === 'bar' && 'No data for this month.'}
+            {type === 'line' && 'No data for this month.'}
+          </div>
+        ) : visibleChartLabels.length > 0 ? (
           <>
             {type === 'doughnut' && <Doughnut data={chartData} options={options} />}
             {type === 'line' && <Line data={chartData} options={options} />}
