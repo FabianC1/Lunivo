@@ -105,7 +105,7 @@ export default function SubscriptionsPage() {
         <h3>What happens next?</h3>
         <ul>
           <li>You can start on Starter and upgrade later.</li>
-          <li>Starter is built for manual entry, Smart adds automatic bank-connected tracking, and Pro adds advanced controls and exports.</li>
+          <li>Starter is built for manual entry, Smart adds synced tracking with forecasting and breakdown views, and Pro adds CSV exports plus category and tagging controls.</li>
           <li>Plan selection is already passed into signup, and the next step would be persisting it on the user record.</li>
         </ul>
       </section>
