@@ -11,7 +11,6 @@ import { AuthSession, clearSession, getSession, markLogoutPending, setSession } 
 import { useTheme } from "../../components/ThemeProvider";
 import {
   FREE_PLAN,
-  PAID_SUBSCRIPTION_TIERS,
   formatPlanPrice,
   getAvailableBuiltInThemeCount,
   getSubscriptionPlanBySlug,
@@ -164,6 +163,7 @@ export default function ProfilePage() {
   const [themeBackground, setThemeBackground] = useState("#F8FAFC");
   const [themeText, setThemeText] = useState("#1E293B");
   const [contactMessage, setContactMessage] = useState("");
+  const [billingMessage, setBillingMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleteMessage, setDeleteMessage] = useState("");
@@ -644,6 +644,16 @@ export default function ProfilePage() {
     window.setTimeout(() => setDataMessage(""), 2600);
   }
 
+  function manageBilling(action: "portal" | "cancel" | "resume") {
+    const label = action === "portal"
+      ? "Stripe customer portal will open here once connected."
+      : action === "cancel"
+        ? "Cancellation flow will be connected here."
+        : "Subscription resume flow will be connected here.";
+    setBillingMessage(label);
+    window.setTimeout(() => setBillingMessage(""), 2800);
+  }
+
   function handleDeleteAccount(e: FormEvent) {
     e.preventDefault();
     setDeleteError("");
@@ -1010,37 +1020,108 @@ export default function ProfilePage() {
         {activeTab === "billing" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Billing</h1>
-            <p className={styles.subheading}>Subscription and payment settings.</p>
-            <div className={styles.inlineCard}>
-              <span className={styles.planBadge}>Current plan: {currentPlan.name}</span>
-              <p>Usage cycle resets on the 1st of every month.</p>
-              <p>{currentPlan.description}</p>
-              <div className={styles.actionRow}>
-                <Link href="/subscriptions" className={styles.link}>Compare plans</Link>
-                <button type="button" className={styles.secondaryButton} disabled>
-                  Manage billing (coming soon)
-                </button>
+            <p className={styles.subheading}>Manage your subscription status, payment details, invoices, and plan changes from one place.</p>
+
+            <section className={styles.billingHero}>
+              <div className={styles.billingHeroContent}>
+                <span className={styles.planBadge}>Current plan: {currentPlan.name}</span>
+                <h2 className={styles.billingTitle}>Manage your subscription from Lunivo</h2>
+                <p className={styles.billingText}>
+                  Use this billing page to cancel or resume your subscription, review renewal status, and check invoice history. Stripe handles the payment processing in the background.
+                </p>
+                <div className={styles.billingActionRow}>
+                  <button
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={() => manageBilling(currentPlan.priceMonthly === 0 ? "resume" : "cancel")}
+                    disabled={currentPlan.priceMonthly === 0}
+                  >
+                    Cancel subscription
+                  </button>
+                  <Link href="/subscriptions" className={styles.secondaryButton}>Change plan</Link>
+                  <span className={styles.billingMeta}>Current rate: {formatPlanPrice(currentPlan.priceMonthly)}</span>
+                </div>
+              </div>
+              <div className={styles.billingInfoGrid}>
+                <article className={styles.billingInfoCard}>
+                  <strong>Subscription</strong>
+                  <span>{currentPlan.name}</span>
+                  <p>{currentPlan.priceMonthly === 0 ? "Starter is active with no recurring charge." : `${formatPlanPrice(currentPlan.priceMonthly)} billed monthly.`}</p>
+                </article>
+                <article className={styles.billingInfoCard}>
+                  <strong>Billing status</strong>
+                  <span>{currentPlan.priceMonthly === 0 ? "No payment method required" : "Auto-renew is on"}</span>
+                  <p>{currentPlan.priceMonthly === 0 ? "Add a card before switching to a paid subscription." : "Update cards, invoices, and cancellation settings below."}</p>
+                </article>
+              </div>
+            </section>
+
+            <div className={styles.divider} />
+
+            <div className={styles.billingSectionGrid}>
+              <div className={`${styles.inlineCard} ${styles.billingCard}`}>
+                <h3 className={styles.sectionSubtitle}>Payment Method</h3>
+                <p className={styles.billingText}>Payment details are processed securely by Stripe, but your billing settings still live here in Lunivo.</p>
+                <div className={styles.billingInfoGrid}>
+                  <article className={styles.billingInfoCard}>
+                    <strong>Provider</strong>
+                    <span>Stripe</span>
+                    <p>Stripe handles the secure payment processing for cards, renewals, and invoice generation.</p>
+                  </article>
+                  <article className={styles.billingInfoCard}>
+                    <strong>Payment method</strong>
+                    <span>{currentPlan.priceMonthly === 0 ? "Not required yet" : "Managed in Stripe"}</span>
+                    <p>{currentPlan.priceMonthly === 0 ? "You will only need a payment method when moving to a paid subscription." : "Saved cards stay tokenized and handled by Stripe for security."}</p>
+                  </article>
+                </div>
+                <div className={styles.actionRow}>
+                  <button type="button" className={styles.secondaryButton} onClick={() => manageBilling("portal")}>Update payment method</button>
+                </div>
+              </div>
+
+              <div className={`${styles.inlineCard} ${styles.billingCard}`}>
+                <h3 className={styles.sectionSubtitle}>Subscription Controls</h3>
+                <p className={styles.billingText}>Cancel or resume from Lunivo here, then use subscriptions only when you want to switch to a different tier.</p>
+                <div className={styles.billingInfoGrid}>
+                  <article className={styles.billingInfoCard}>
+                    <strong>Next renewal</strong>
+                    <span>{currentPlan.priceMonthly === 0 ? "No renewal scheduled" : "1 May 2026"}</span>
+                    <p>{currentPlan.priceMonthly === 0 ? "Starter does not renew because it has no monthly charge." : `${formatPlanPrice(currentPlan.priceMonthly)} will renew automatically unless you cancel.`}</p>
+                  </article>
+                  <article className={styles.billingInfoCard}>
+                    <strong>Plan changes</strong>
+                    <span>Handled from subscriptions</span>
+                    <p>Use the subscriptions page to upgrade or downgrade tiers. Billing stays here for cancellation, renewals, and invoices.</p>
+                  </article>
+                </div>
+                <div className={styles.actionRow}>
+                  <button type="button" className={styles.secondaryButton} onClick={() => manageBilling("cancel")} disabled={currentPlan.priceMonthly === 0}>
+                    Cancel subscription
+                  </button>
+                  <button type="button" className={styles.secondaryButton} onClick={() => manageBilling("resume")}>
+                    Resume subscription
+                  </button>
+                  <Link href="/subscriptions" className={styles.link}>Open subscriptions</Link>
+                </div>
               </div>
             </div>
 
-            <div className={styles.divider} />
-            <div className={styles.inlineCard}>
-              <h3 className={styles.sectionSubtitle}>Available Plans</h3>
-              {PAID_SUBSCRIPTION_TIERS.map((plan) => (
-                <div key={plan.slug} className={styles.optionRow}>
-                  <div>
-                    <strong>{plan.name}</strong>
-                    <p>{plan.description}</p>
-                  </div>
-                  <span className={styles.planBadge}>{formatPlanPrice(plan.priceMonthly)}</span>
-                </div>
-              ))}
-            </div>
+            {billingMessage ? <p className={styles.successText}>{billingMessage}</p> : null}
 
             <div className={styles.divider} />
-            <div className={styles.inlineCard}>
-              <h3 className={styles.sectionSubtitle}>Billing History</h3>
-              <p>No invoices yet. Once paid plans are enabled, invoices will appear here.</p>
+
+            <div className={`${styles.inlineCard} ${styles.billingCard}`}>
+              <h3 className={styles.sectionSubtitle}>Invoices</h3>
+              <p className={styles.billingText}>Stripe receipts and billing history will appear here once the billing integration is connected.</p>
+              <div className={styles.billingInvoiceList}>
+                <div className={styles.billingInvoiceRow}>
+                  <div>
+                    <strong>No invoices yet</strong>
+                    <p>{currentPlan.priceMonthly === 0 ? "Starter has no monthly invoice history." : "Your first paid invoice will appear here after the next successful renewal."}</p>
+                  </div>
+                  <span className={styles.billingInvoiceStatus}>Pending setup</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

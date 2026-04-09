@@ -451,7 +451,6 @@ export default function Dashboard() {
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
             <h2>Overview</h2>
-            <span>{dashboardSettings.defaultWidget === "charts" ? "Default widget" : ""}</span>
           </div>
           <div className={styles.summaryGrid}>
             <article className={styles.summaryCard}>
@@ -516,7 +515,6 @@ export default function Dashboard() {
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
             <h2>Category Focus</h2>
-            <span>{dashboardSettings.defaultWidget === "goals" ? "Default widget" : ""}</span>
           </div>
           <section className={styles.chartSection}>
             <div className={styles.sectionHeader}>
@@ -546,7 +544,6 @@ export default function Dashboard() {
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
             <h2>Monthly Breakdowns</h2>
-            <span>{dashboardSettings.defaultWidget === "transactions" ? "Default widget" : ""}</span>
           </div>
           <div className={styles.chartGrid}>
             <section className={styles.chartSection}>
