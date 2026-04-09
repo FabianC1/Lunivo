@@ -8,7 +8,25 @@ import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
 import styles from "./profile.module.css";
 import { AuthSession, clearSession, getSession, markLogoutPending, setSession } from "../../lib/auth";
-import { FREE_PLAN, PAID_SUBSCRIPTION_TIERS, formatPlanPrice, getSubscriptionPlanBySlug } from "../../lib/subscriptions";
+import { useTheme } from "../../components/ThemeProvider";
+import {
+  FREE_PLAN,
+  PAID_SUBSCRIPTION_TIERS,
+  formatPlanPrice,
+  getAvailableBuiltInThemeCount,
+  getSubscriptionPlanBySlug,
+  hasFeatureAccess,
+} from "../../lib/subscriptions";
+import {
+  BUILT_IN_THEME_PRESETS,
+  DEFAULT_CUSTOM_CATEGORIES,
+  DEFAULT_DASHBOARD_SETTINGS,
+  sanitizeCustomCategories,
+  type AppearanceSettings,
+  type DashboardSettings,
+  type ThemeMode,
+  type ThemePreset,
+} from "../../lib/userSettings";
 
 type ProfilePayload = {
   user: {
@@ -28,8 +46,39 @@ type ProfilePayload = {
       budgetAlerts?: boolean;
       weeklyDigest?: boolean;
     };
+    appearance?: AppearanceSettings;
+    dashboard?: DashboardSettings;
+    customCategories?: string[];
   };
 };
+
+function createThemeDraft(name: string, mode: ThemeMode, primaryColor: string, accentColor: string, backgroundColor: string, textColor: string): ThemePreset {
+  const id = `custom-${Date.now()}`;
+  const cardColor = mode === "dark" ? "#1E293B" : "#FFFFFF";
+  return {
+    id,
+    name,
+    mode,
+    isCustom: true,
+    colors: {
+      bgColor: backgroundColor,
+      textColor,
+      primaryColor,
+      accentColor,
+      highlightColor: accentColor,
+      cardColor,
+      navbarColor: `linear-gradient(135deg, ${backgroundColor} 0%, ${cardColor} 100%)`,
+      navbarBorderGradient: `linear-gradient(90deg, ${primaryColor} 0%, ${accentColor} 100%)`,
+      navbarTextColor: textColor,
+      bgGradient: `linear-gradient(135deg, ${backgroundColor} 0%, ${cardColor} 55%, ${accentColor}22 100%)`,
+      buttonGradientStart: primaryColor,
+      buttonGradientEnd: accentColor,
+      foregroundRgb: mode === "dark" ? "241, 245, 249" : "30, 41, 59",
+      backgroundStartRgb: mode === "dark" ? "15, 23, 42" : "248, 250, 252",
+      backgroundEndRgb: mode === "dark" ? "30, 41, 59" : "255, 255, 255",
+    },
+  };
+}
 
 type SettingsTab = "account" | "appearance" | "preferences" | "notifications" | "billing" | "security" | "data" | "privacy" | "help" | "danger";
 
@@ -62,6 +111,14 @@ export default function ProfilePage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const {
+    selectedThemeId,
+    customThemes,
+    availableThemes,
+    applyAppearanceSettings,
+    setSelectedThemeId,
+    setCustomThemes,
+  } = useTheme();
 
   const tabFromUrl = searchParams?.get("tab");
   const [activeTab, setActiveTab] = useState<SettingsTab>(
@@ -95,6 +152,17 @@ export default function ProfilePage() {
   const [country, setCountry] = useState("");
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState("");
+  const [dashboardSettings, setDashboardSettings] = useState<DashboardSettings>(DEFAULT_DASHBOARD_SETTINGS);
+  const [customCategories, setCustomCategories] = useState<string[]>(DEFAULT_CUSTOM_CATEGORIES);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [themeMessage, setThemeMessage] = useState("");
+  const [themeError, setThemeError] = useState("");
+  const [themeName, setThemeName] = useState("My Theme");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
+  const [themePrimary, setThemePrimary] = useState("#2563EB");
+  const [themeAccent, setThemeAccent] = useState("#F97316");
+  const [themeBackground, setThemeBackground] = useState("#F8FAFC");
+  const [themeText, setThemeText] = useState("#1E293B");
   const [contactMessage, setContactMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -160,6 +228,9 @@ export default function ProfilePage() {
         setEmailNotifications(payload.user.notifications?.emailNotifications ?? true);
         setBudgetAlerts(payload.user.notifications?.budgetAlerts ?? true);
         setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
+        setDashboardSettings(payload.user.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
+        setCustomCategories(sanitizeCustomCategories(payload.user.customCategories ?? DEFAULT_CUSTOM_CATEGORIES));
+        applyAppearanceSettings(payload.user.appearance ?? { selectedThemeId, customThemes });
 
         if (
           currentSession && (
@@ -191,7 +262,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [session?.userId, session?.isDemo]);
+  }, [applyAppearanceSettings, customThemes, selectedThemeId, session?.userId, session?.isDemo]);
 
   useEffect(() => {
     const tab = searchParams?.get("tab");
@@ -430,6 +501,121 @@ export default function ProfilePage() {
     }, 2500);
   }
 
+  async function persistAppearanceSettings(nextAppearance: AppearanceSettings) {
+    applyAppearanceSettings(nextAppearance);
+
+    if (!session || session.isDemo || !session.userId) {
+      setThemeMessage("Theme settings saved for this local session.");
+      window.setTimeout(() => setThemeMessage(""), 2200);
+      return true;
+    }
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appearance: nextAppearance }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Unable to save theme settings."));
+      }
+
+      const payload = (await response.json()) as ProfilePayload;
+      applyAppearanceSettings(payload.user.appearance ?? nextAppearance);
+      setThemeMessage("Theme settings saved.");
+      window.setTimeout(() => setThemeMessage(""), 2200);
+      return true;
+    } catch (saveError) {
+      setThemeError(saveError instanceof Error ? saveError.message : "Unable to save theme settings.");
+      window.setTimeout(() => setThemeError(""), 2500);
+      return false;
+    }
+  }
+
+  async function handleThemeSelection(themeId: string) {
+    setThemeError("");
+    await persistAppearanceSettings({
+      selectedThemeId: themeId,
+      customThemes,
+    });
+  }
+
+  async function handleCreateCustomTheme() {
+    setThemeError("");
+    if (!themeName.trim()) {
+      setThemeError("Theme name cannot be empty.");
+      return;
+    }
+
+    const nextTheme = createThemeDraft(
+      themeName.trim(),
+      themeMode,
+      themePrimary,
+      themeAccent,
+      themeBackground,
+      themeText,
+    );
+    const nextCustomThemes = [...customThemes, nextTheme];
+    setCustomThemes(nextCustomThemes);
+    await persistAppearanceSettings({
+      selectedThemeId: nextTheme.id,
+      customThemes: nextCustomThemes,
+    });
+  }
+
+  async function handleDeleteCustomTheme(themeId: string) {
+    const nextCustomThemes = customThemes.filter((theme) => theme.id !== themeId);
+    setCustomThemes(nextCustomThemes);
+    await persistAppearanceSettings({
+      selectedThemeId: selectedThemeId === themeId ? "light" : selectedThemeId,
+      customThemes: nextCustomThemes,
+    });
+  }
+
+  async function persistCustomCategories(nextCategories: string[]) {
+    const sanitized = sanitizeCustomCategories(nextCategories);
+    setCustomCategories(sanitized);
+
+    if (!session || session.isDemo || !session.userId) {
+      setDataMessage("Category settings saved for this local session.");
+      window.setTimeout(() => setDataMessage(""), 2200);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customCategories: sanitized }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Unable to save custom categories."));
+      }
+
+      setDataMessage("Custom categories saved.");
+      window.setTimeout(() => setDataMessage(""), 2200);
+    } catch (saveError) {
+      setDataMessage(saveError instanceof Error ? saveError.message : "Unable to save custom categories.");
+      window.setTimeout(() => setDataMessage(""), 2600);
+    }
+  }
+
+  async function addCustomCategory() {
+    const normalized = newCategoryName.trim();
+    if (!normalized) {
+      return;
+    }
+
+    setNewCategoryName("");
+    await persistCustomCategories([...customCategories, normalized]);
+  }
+
+  async function removeCustomCategory(category: string) {
+    await persistCustomCategories(customCategories.filter((entry) => entry !== category));
+  }
+
   function saveContactDetails(e: FormEvent) {
     e.preventDefault();
     if (backupEmail && !backupEmail.includes("@")) {
@@ -448,6 +634,11 @@ export default function ProfilePage() {
   }
 
   function requestExport(type: "csv" | "json" | "backup") {
+    if (type === "csv" && canExportCsv) {
+      router.push("/reports");
+      return;
+    }
+
     const label = type === "backup" ? "Secure backup requested" : `${type.toUpperCase()} export requested`;
     setDataMessage(`${label}. We'll notify you when it's ready.`);
     window.setTimeout(() => setDataMessage(""), 2600);
@@ -479,6 +670,10 @@ export default function ProfilePage() {
   }
 
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
+  const visibleBuiltInThemes = BUILT_IN_THEME_PRESETS.slice(0, getAvailableBuiltInThemeCount(currentPlan.slug));
+  const canCreateCustomThemes = hasFeatureAccess(currentPlan.slug, "customThemeCreation");
+  const canManageDataControls = hasFeatureAccess(currentPlan.slug, "customCategories");
+  const canExportCsv = hasFeatureAccess(currentPlan.slug, "csvExport");
 
   return (
     <main className={styles.page}>
@@ -588,8 +783,94 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Appearance</h1>
             <p className={styles.subheading}>Theme controls for this account.</p>
             <div className={styles.inlineCard}>
-              <p>Use the theme toggle in the navbar to switch between light and dark modes.</p>
-              <p>Accent colors, gradients, and chart tones automatically adapt to your selected theme.</p>
+              <h3 className={styles.sectionSubtitle}>Built-in Themes</h3>
+              <p>Starter includes Lunivo Light and Lunivo Night. Smart unlocks the full built-in theme library. Pro adds custom theme creation and saved presets.</p>
+              <div className={styles.themeGrid}>
+                {BUILT_IN_THEME_PRESETS.map((theme) => {
+                  const isAccessible = visibleBuiltInThemes.some((item) => item.id === theme.id);
+                  const isSelected = selectedThemeId === theme.id;
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      className={`${styles.themeCard} ${isSelected ? styles.themeCardActive : ""}`}
+                      onClick={() => isAccessible ? void handleThemeSelection(theme.id) : undefined}
+                      disabled={!isAccessible}
+                    >
+                      <span
+                        className={styles.themePreview}
+                        style={{
+                          background: theme.colors.bgGradient,
+                          borderColor: theme.colors.primaryColor,
+                        }}
+                      />
+                      <strong>{theme.name}</strong>
+                      <span>{isAccessible ? (isSelected ? "Selected" : theme.mode) : "Upgrade to Smart"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {themeError && <p className={styles.errorText}>{themeError}</p>}
+              {themeMessage && <p className={styles.successText}>{themeMessage}</p>}
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
+              <p>Pro can create and save personal theme presets. Other plans can preview the controls here, but saving is locked.</p>
+              <div className={styles.themeBuilderGrid}>
+                <label className={styles.fieldLabel} htmlFor="themeName">Theme name</label>
+                <input id="themeName" className={styles.input} value={themeName} onChange={(event) => setThemeName(event.target.value)} />
+
+                <label className={styles.fieldLabel} htmlFor="themeMode">Base mode</label>
+                <select id="themeMode" className={styles.input} value={themeMode} onChange={(event) => setThemeMode(event.target.value as ThemeMode)}>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+
+                <label className={styles.fieldLabel} htmlFor="themePrimary">Primary color</label>
+                <input id="themePrimary" className={styles.input} type="color" value={themePrimary} onChange={(event) => setThemePrimary(event.target.value)} />
+
+                <label className={styles.fieldLabel} htmlFor="themeAccent">Accent color</label>
+                <input id="themeAccent" className={styles.input} type="color" value={themeAccent} onChange={(event) => setThemeAccent(event.target.value)} />
+
+                <label className={styles.fieldLabel} htmlFor="themeBackground">Background color</label>
+                <input id="themeBackground" className={styles.input} type="color" value={themeBackground} onChange={(event) => setThemeBackground(event.target.value)} />
+
+                <label className={styles.fieldLabel} htmlFor="themeText">Text color</label>
+                <input id="themeText" className={styles.input} type="color" value={themeText} onChange={(event) => setThemeText(event.target.value)} />
+              </div>
+              <div className={styles.actionRow}>
+                <button type="button" className={styles.primaryButton} onClick={() => void handleCreateCustomTheme()} disabled={!canCreateCustomThemes}>
+                  Create theme preset
+                </button>
+                {!canCreateCustomThemes ? <span className={styles.hintText}>Available on Pro.</span> : null}
+              </div>
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Saved Theme Presets</h3>
+              {customThemes.length === 0 ? (
+                <p>No saved custom presets yet.</p>
+              ) : (
+                <div className={styles.themeGrid}>
+                  {customThemes.map((theme) => (
+                    <div key={theme.id} className={styles.themeCardStatic}>
+                      <span className={styles.themePreview} style={{ background: theme.colors.bgGradient, borderColor: theme.colors.primaryColor }} />
+                      <strong>{theme.name}</strong>
+                      <div className={styles.actionRow}>
+                        <button type="button" className={styles.secondaryButton} onClick={() => void handleThemeSelection(theme.id)}>
+                          Apply
+                        </button>
+                        <button type="button" className={styles.secondaryButton} onClick={() => void handleDeleteCustomTheme(theme.id)} disabled={!canCreateCustomThemes}>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -769,49 +1050,77 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Security</h1>
             <p className={styles.subheading}>Update your password and secure your account.</p>
 
-            <form className={styles.form} onSubmit={handlePasswordSave}>
-              <label className={styles.fieldLabel} htmlFor="currentPassword">
-                Current password
-              </label>
-              <input
-                id="currentPassword"
-                className={styles.input}
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
-              />
+            <div className={styles.securityHeroCard}>
+              <div>
+                <h3 className={styles.sectionSubtitle}>Change your password</h3>
+                <p className={styles.securityDescription}>Use a strong password with at least 8 characters. A mix of words, numbers, and symbols is easiest to remember and harder to guess.</p>
+              </div>
+              <div className={styles.securityPillRow}>
+                <span className={styles.securityPill}>Minimum 8 characters</span>
+                <span className={styles.securityPill}>Stored securely</span>
+              </div>
+            </div>
 
-              <label className={styles.fieldLabel} htmlFor="newPassword">
-                New password
-              </label>
-              <input
-                id="newPassword"
-                className={styles.input}
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-              />
+            <form className={styles.securityForm} onSubmit={handlePasswordSave}>
+              <div className={styles.securityFieldCard}>
+                <label className={styles.fieldLabel} htmlFor="currentPassword">
+                  Current password
+                </label>
+                <input
+                  id="currentPassword"
+                  className={`${styles.input} ${styles.securityInput}`}
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Enter your current password"
+                />
+                <p className={styles.securityHint}>Required to confirm it is really you.</p>
+              </div>
 
-              <label className={styles.fieldLabel} htmlFor="confirmPassword">
-                Confirm new password
-              </label>
-              <input
-                id="confirmPassword"
-                className={styles.input}
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-              />
+              <div className={styles.securityGrid}>
+                <div className={styles.securityFieldCard}>
+                  <label className={styles.fieldLabel} htmlFor="newPassword">
+                    New password
+                  </label>
+                  <input
+                    id="newPassword"
+                    className={`${styles.input} ${styles.securityInput}`}
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
+                    placeholder="Create a new password"
+                  />
+                  <p className={styles.securityHint}>Example: a longer phrase with a number and symbol.</p>
+                </div>
+
+                <div className={styles.securityFieldCard}>
+                  <label className={styles.fieldLabel} htmlFor="confirmPassword">
+                    Confirm new password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    className={`${styles.input} ${styles.securityInput}`}
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    placeholder="Re-enter the new password"
+                  />
+                  <p className={styles.securityHint}>Repeat the new password exactly once more.</p>
+                </div>
+              </div>
 
               {passwordError && <p className={styles.errorText}>{passwordError}</p>}
               {passwordMessage && <p className={styles.successText}>{passwordMessage}</p>}
 
-              <button type="submit" className={styles.primaryButton} disabled={isSavingPassword}>
-                {isSavingPassword ? "Updating..." : "Update password"}
-              </button>
+              <div className={styles.securityActionRow}>
+                <button type="submit" className={styles.primaryButton} disabled={isSavingPassword}>
+                  {isSavingPassword ? "Updating..." : "Update password"}
+                </button>
+                <span className={styles.securityHint}>You will stay signed in after a successful password update.</span>
+              </div>
             </form>
 
             <div className={styles.divider} />
@@ -845,9 +1154,9 @@ export default function ProfilePage() {
 
             <div className={styles.inlineCard}>
               <h3 className={styles.sectionSubtitle}>Quick Export</h3>
-              <p>Download a copy of your financial records in your preferred format.</p>
+              <p>Pro can export monthly summary and category breakdown CSV files. Other plans can see the controls here, but export stays locked.</p>
               <div className={styles.actionRow}>
-                <button type="button" className={styles.secondaryButton} onClick={() => requestExport("csv")}>
+                <button type="button" className={styles.secondaryButton} onClick={() => requestExport("csv")} disabled={!canExportCsv}>
                   Export CSV
                 </button>
                 <button type="button" className={styles.secondaryButton} onClick={() => requestExport("json")}>
@@ -858,6 +1167,35 @@ export default function ProfilePage() {
                 </button>
               </div>
               {dataMessage && <p className={styles.successText}>{dataMessage}</p>}
+            </div>
+
+            <div className={styles.divider} />
+            <div className={styles.inlineCard}>
+              <h3 className={styles.sectionSubtitle}>Custom Categories</h3>
+              <p>Pro can create, remove, and reuse custom transaction categories.</p>
+              <div className={styles.actionRow}>
+                <input
+                  className={styles.input}
+                  value={newCategoryName}
+                  onChange={(event) => setNewCategoryName(event.target.value)}
+                  placeholder="Add a category"
+                  disabled={!canManageDataControls}
+                />
+                <button type="button" className={styles.primaryButton} onClick={() => void addCustomCategory()} disabled={!canManageDataControls}>
+                  Add category
+                </button>
+              </div>
+              <div className={styles.tagList}>
+                {customCategories.map((category) => (
+                  <span key={category} className={styles.tagPill}>
+                    {category}
+                    <button type="button" className={styles.inlineRemoveButton} onClick={() => void removeCustomCategory(category)} disabled={!canManageDataControls || DEFAULT_CUSTOM_CATEGORIES.includes(category)}>
+                      Remove
+                    </button>
+                  </span>
+                ))}
+              </div>
+              {!canManageDataControls ? <p className={styles.hintText}>Custom categories, transaction tags, bulk edits, and category merging are available on Pro.</p> : null}
             </div>
 
             <div className={styles.divider} />

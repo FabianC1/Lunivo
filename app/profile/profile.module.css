@@ -258,6 +258,85 @@ select.input option {
   line-height: 1.45;
 }
 
+.securityHeroCard {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.15rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-gradient-start) 13%, transparent), color-mix(in srgb, var(--button-gradient-end) 14%, transparent));
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 25%, transparent);
+  margin-bottom: 1rem;
+}
+
+.securityDescription {
+  margin: 0.25rem 0 0;
+  color: color-mix(in srgb, var(--text-color) 72%, transparent);
+  line-height: 1.55;
+}
+
+.securityPillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.securityPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.42rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--surface-color) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 22%, transparent);
+}
+
+.securityForm {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.securityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.securityFieldCard {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+}
+
+.securityInput {
+  min-height: 3rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-color) 97%, transparent), color-mix(in srgb, var(--surface-color) 90%, transparent));
+  padding: 0.82rem 0.9rem;
+  border-color: color-mix(in srgb, var(--text-color) 14%, transparent);
+}
+
+.securityInput::placeholder {
+  color: color-mix(in srgb, var(--text-color) 48%, transparent);
+}
+
+.securityHint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--text-color) 62%, transparent);
+  line-height: 1.45;
+}
+
+.securityActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .errorText {
   margin: 0.2rem 0 0;
   color: #d14343;
@@ -479,6 +558,81 @@ select.input option {
   align-items: center;
 }
 
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.themeCard,
+.themeCardStatic {
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.45rem;
+  text-align: left;
+}
+
+.themeCard {
+  cursor: pointer;
+}
+
+.themeCard:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.themeCardActive {
+  border-color: color-mix(in srgb, var(--button-gradient-start) 52%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--button-gradient-start) 20%, transparent);
+}
+
+.themePreview {
+  width: 100%;
+  height: 4.5rem;
+  border-radius: 0.7rem;
+  border: 2px solid transparent;
+}
+
+.themeBuilderGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.tagPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  background: color-mix(in srgb, var(--button-gradient-start) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 24%, transparent);
+}
+
+.inlineRemoveButton {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0.82;
+}
+
+.inlineRemoveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .link:hover {
   color: var(--button-gradient-end);
   border-color: color-mix(in srgb, var(--button-gradient-end) 55%, transparent);
@@ -527,6 +681,14 @@ select.input option {
 
   .actionRow {
     width: 100%;
+  }
+
+  .themeBuilderGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .securityGrid {
+    grid-template-columns: 1fr;
   }
 
   .menuButton:hover {

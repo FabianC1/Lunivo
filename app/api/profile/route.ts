@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedApiUser, unauthorizedResponse } from "../../../lib/apiAuth";
 import { connectToDatabase } from "../../../lib/mongodb";
 import User from "../../../models/User";
+import {
+  DEFAULT_APPEARANCE_SETTINGS,
+  DEFAULT_CUSTOM_CATEGORIES,
+  DEFAULT_DASHBOARD_SETTINGS,
+  sanitizeAppearanceSettings,
+  sanitizeCustomCategories,
+  sanitizeDashboardSettings,
+} from "../../../lib/userSettings";
 
 export async function GET(req: NextRequest) {
   const authenticatedUser = await getAuthenticatedApiUser();
@@ -10,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   await connectToDatabase();
-  const user = await User.findById(authenticatedUser.userId).select("name email planSlug backupEmail phone preferences notifications");
+  const user = await User.findById(authenticatedUser.userId).select("name email planSlug backupEmail phone preferences notifications appearance dashboard customCategories");
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
@@ -33,6 +41,9 @@ export async function GET(req: NextRequest) {
         budgetAlerts: user.notifications?.budgetAlerts ?? true,
         weeklyDigest: user.notifications?.weeklyDigest ?? false,
       },
+      appearance: sanitizeAppearanceSettings(user.appearance ?? DEFAULT_APPEARANCE_SETTINGS),
+      dashboard: sanitizeDashboardSettings(user.dashboard ?? DEFAULT_DASHBOARD_SETTINGS),
+      customCategories: sanitizeCustomCategories(user.customCategories ?? DEFAULT_CUSTOM_CATEGORIES),
     },
   });
 }
@@ -43,7 +54,7 @@ export async function PUT(req: NextRequest) {
     return unauthorizedResponse();
   }
 
-  const { name, backupEmail, phone, preferences, notifications } = await req.json();
+  const { name, backupEmail, phone, preferences, notifications, appearance, dashboard, customCategories } = await req.json();
 
   const updates: Record<string, unknown> = {};
 
@@ -89,6 +100,18 @@ export async function PUT(req: NextRequest) {
     };
   }
 
+  if (appearance !== undefined) {
+    updates.appearance = sanitizeAppearanceSettings(appearance);
+  }
+
+  if (dashboard !== undefined) {
+    updates.dashboard = sanitizeDashboardSettings(dashboard);
+  }
+
+  if (customCategories !== undefined) {
+    updates.customCategories = sanitizeCustomCategories(customCategories);
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No changes provided" }, { status: 400 });
   }
@@ -98,7 +121,7 @@ export async function PUT(req: NextRequest) {
     authenticatedUser.userId,
     updates,
     { returnDocument: "after", runValidators: true }
-  ).select("name email planSlug backupEmail phone preferences notifications");
+  ).select("name email planSlug backupEmail phone preferences notifications appearance dashboard customCategories");
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -123,6 +146,9 @@ export async function PUT(req: NextRequest) {
         budgetAlerts: user.notifications?.budgetAlerts ?? true,
         weeklyDigest: user.notifications?.weeklyDigest ?? false,
       },
+      appearance: sanitizeAppearanceSettings(user.appearance ?? DEFAULT_APPEARANCE_SETTINGS),
+      dashboard: sanitizeDashboardSettings(user.dashboard ?? DEFAULT_DASHBOARD_SETTINGS),
+      customCategories: sanitizeCustomCategories(user.customCategories ?? DEFAULT_CUSTOM_CATEGORIES),
     },
   });
 }

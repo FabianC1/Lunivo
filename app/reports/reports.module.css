@@ -33,6 +33,28 @@
   flex-wrap: wrap;
 }
 
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.secondaryButton {
+  padding: 0.65rem 0.95rem;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: var(--card-color);
+  color: var(--text-color);
+  font: inherit;
+  font-weight: 600;
+}
+
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .controlItem {
   display: flex;
   flex-direction: column;
@@ -186,6 +208,25 @@
 .inlineControl label {
   font-size: 0.82rem;
   opacity: 0.84;
+}
+
+.lockedMessage {
+  color: #d97706;
+  font-size: 0.88rem;
+}
+
+.goalEstimateCard {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.9rem;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--card-color) 95%, transparent);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.goalEstimateCard h3,
+.goalEstimateCard p {
+  margin: 0;
 }
 
 .chartFrame {

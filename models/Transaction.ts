@@ -9,6 +9,7 @@ export interface ITransaction extends Document {
   kind: 'income' | 'expense';
   category: string;
   description?: string;
+  tags?: string[];
 }
 
 const TransactionSchema: Schema<ITransaction> = new Schema(
@@ -25,6 +26,7 @@ const TransactionSchema: Schema<ITransaction> = new Schema(
     },
     category: { type: String, required: true },
     description: { type: String },
+    tags: { type: [String], default: [] },
   },
   { timestamps: true }
 );

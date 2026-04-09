@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
-import { forbiddenResponse, getAuthenticatedApiUser, unauthorizedResponse } from "../../../../lib/apiAuth";
+import { getAuthenticatedApiUser, unauthorizedResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { hasPlanAccess } from "../../../../lib/subscriptions";
+import { hasFeatureAccess } from "../../../../lib/subscriptions";
+import Goal from "../../../../models/Goal";
 import Transaction from "../../../../models/Transaction";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -41,9 +42,6 @@ export async function GET(req: NextRequest) {
   }
 
   const scope = req.nextUrl.searchParams.get("scope") === "detailed" ? "detailed" : "dashboard";
-    if (scope === "detailed" && !hasPlanAccess(authenticatedUser.planSlug, "sync")) {
-      return forbiddenResponse("Detailed reports are available on the Smart plan and above.");
-  }
 
   await connectToDatabase();
 
@@ -58,13 +56,7 @@ export async function GET(req: NextRequest) {
         month: { $month: "$date" },
         kind: 1,
         amount: "$amount",
-        category: {
-          $cond: [
-            { $eq: ["$kind", "expense"] },
-            { $ifNull: ["$category", "Other"] },
-            "__income__",
-          ],
-        },
+        category: { $ifNull: ["$category", "Other"] },
       },
     },
     {
@@ -132,19 +124,94 @@ export async function GET(req: NextRequest) {
     return result;
   }, {} as Record<string, number>);
 
+  const monthlyNetFlow = MONTHS.reduce((result, month) => {
+    result[month] = latestYearData[month].income - latestYearData[month].spendings;
+    return result;
+  }, {} as Record<string, number>);
+
+  const monthlySavingsProgress = MONTHS.reduce((result, month) => {
+    const previousTotal = Object.values(result).at(-1) ?? 0;
+    result[month] = previousTotal + monthlyNetFlow[month];
+    return result;
+  }, {} as Record<string, number>);
+
+  const incomeSourceBreakdown = grouped
+    .filter((entry) => String(entry._id.year) === latestYear && entry._id.kind === "income")
+    .reduce((result, entry) => {
+      const source = entry._id.category?.trim() || "Other";
+      result[source] = (result[source] ?? 0) + (Number(entry.total) || 0);
+      return result;
+    }, {} as Record<string, number>);
+
+  const latestMonthKey = [...MONTHS].reverse().find((month) => latestYearData[month].income > 0 || latestYearData[month].spendings > 0) ?? MONTHS[new Date().getMonth()] ?? "Jan";
+  const latestMonthSummary = {
+    income: latestYearData[latestMonthKey].income,
+    expenses: latestYearData[latestMonthKey].spendings,
+    netSavings: latestYearData[latestMonthKey].income - latestYearData[latestMonthKey].spendings,
+  };
+
+  const averageDailySpend = annualSpendings > 0 ? annualSpendings / 365 : 0;
+  const expectedIncome = monthlyIncome[latestMonthKey] ?? 0;
+  const accountBalanceEstimate = latestMonthSummary.netSavings;
+  const endOfMonthBalanceEstimate = accountBalanceEstimate + expectedIncome - (averageDailySpend * 30);
+  const recentThreeMonths = MONTHS.slice(-3);
+  const threeMonthAverageSpending = recentThreeMonths.reduce((sum, month) => sum + latestYearData[month].spendings, 0) / recentThreeMonths.length;
+  const monthlySavingsEstimate = annualIncome > 0 ? (annualIncome - annualSpendings) / 12 : 0;
+
+  const goals = scope === "detailed"
+    ? await Goal.find({ userId: authenticatedUser.userId, completed: false }).sort({ createdAt: -1 }).limit(6)
+    : [];
+  const goalEstimates = goals.map((goal) => {
+    const remaining = Math.max(0, Number(goal.targetAmount) - Number(goal.savedAmount));
+    const currentRateMonths = monthlySavingsEstimate > 0 ? remaining / monthlySavingsEstimate : null;
+    const manualContribution = monthlySavingsEstimate > 0 ? monthlySavingsEstimate : remaining;
+    const projectedCompletionDate = currentRateMonths === null
+      ? null
+      : new Date(new Date().setMonth(new Date().getMonth() + Math.ceil(currentRateMonths))).toISOString().slice(0, 10);
+    const manualContributionMonths = manualContribution > 0 ? Math.ceil(remaining / manualContribution) : null;
+
+    return {
+      id: String(goal._id),
+      title: goal.title,
+      targetAmount: Number(goal.targetAmount),
+      savedAmount: Number(goal.savedAmount),
+      remainingAmount: remaining,
+      completionMonthsAtCurrentRate: currentRateMonths === null ? null : Number(currentRateMonths.toFixed(1)),
+      projectedCompletionDate,
+      suggestedMonthlyContribution: Number(manualContribution.toFixed(2)),
+      manualContributionMonths,
+    };
+  });
+
   return NextResponse.json({
     planSlug: authenticatedUser.planSlug,
+    featureAccess: {
+      netFlowPerMonth: hasFeatureAccess(authenticatedUser.planSlug, "netFlowPerMonth"),
+      endOfMonthBalanceEstimate: hasFeatureAccess(authenticatedUser.planSlug, "endOfMonthBalanceEstimate"),
+      monthlySavingsEstimate: hasFeatureAccess(authenticatedUser.planSlug, "monthlySavingsEstimate"),
+      threeMonthAverageSpending: hasFeatureAccess(authenticatedUser.planSlug, "threeMonthAverageSpending"),
+      goalCompletionEstimate: hasFeatureAccess(authenticatedUser.planSlug, "goalCompletionEstimate"),
+      csvExport: hasFeatureAccess(authenticatedUser.planSlug, "csvExport"),
+    },
     reportData,
     summaries: {
       annualIncome,
       annualSpendings,
       annualNet: annualIncome - annualSpendings,
       savingsRate: annualIncome > 0 ? ((annualIncome - annualSpendings) / annualIncome) * 100 : 0,
+      monthlySavingsEstimate,
+      threeMonthAverageSpending,
+      endOfMonthBalanceEstimate,
     },
+    monthlySummary: latestMonthSummary,
+    netFlowByMonth: monthlyNetFlow,
+    goalEstimates,
     charts: {
       monthlyIncome,
       monthlySpendings,
       categoryBreakdown,
+      incomeSourceBreakdown,
+      savingsProgress: monthlySavingsProgress,
     },
   });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedApiUser, unauthorizedResponse } from '../../../../lib/apiAuth';
+import { getAuthenticatedApiUser, forbiddenResponse, unauthorizedResponse } from '../../../../lib/apiAuth';
 import { connectToDatabase } from '../../../../lib/mongodb';
+import { hasFeatureAccess } from '../../../../lib/subscriptions';
 import Transaction from '../../../../models/Transaction';
 
 function toTransactionResponse(transaction: any) {
@@ -15,9 +16,25 @@ function toTransactionResponse(transaction: any) {
     kind: transaction.kind,
     category: transaction.category,
     description: transaction.description ?? '',
+    tags: Array.isArray(transaction.tags) ? transaction.tags : [],
     createdAt: transaction.createdAt ? new Date(transaction.createdAt).toISOString() : undefined,
     updatedAt: transaction.updatedAt ? new Date(transaction.updatedAt).toISOString() : undefined,
   };
+}
+
+function normalizeTags(input: unknown) {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      input
+        .map((tag) => String(tag ?? '').trim())
+        .filter(Boolean)
+        .filter((tag) => tag.length <= 30)
+    )
+  );
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +56,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   if (data.category !== undefined && !String(data.category).trim()) {
     return NextResponse.json({ error: 'Category is required.' }, { status: 400 });
+  }
+
+  const normalizedTags = normalizeTags(data.tags);
+  if (normalizedTags.length > 0 && !hasFeatureAccess(authenticatedUser.planSlug, 'transactionTags')) {
+    return forbiddenResponse('Transaction tags are available on the Pro plan.');
+  }
+
+  if (data.tags !== undefined) {
+    data.tags = normalizedTags;
   }
 
   await connectToDatabase();

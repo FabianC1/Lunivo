@@ -247,12 +247,94 @@
   height: 360px;
 }
 
+.layoutControlGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.layoutControlCard,
+.goalCard {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.9rem;
+  padding: 0.9rem;
+  background: color-mix(in srgb, var(--card-color) 95%, transparent);
+  display: grid;
+  gap: 0.6rem;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inlineControlButtons {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.lockedMessage {
+  color: #d97706;
+  font-size: 0.84rem;
+}
+
+.widgetStack {
+  display: grid;
+  gap: 1rem;
+}
+
+.widgetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widgetHeader h2,
+.widgetHeader span {
+  margin: 0;
+}
+
+.goalList,
+.transactionList {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+}
+
+.progressBar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--button-gradient-start), var(--button-gradient-end));
+}
+
+.transactionRow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  padding-bottom: 0.75rem;
+}
+
 @media (max-width: 1100px) {
   .summaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .chartGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .layoutControlGrid {
     grid-template-columns: 1fr;
   }
 }

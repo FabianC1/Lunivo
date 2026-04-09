@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedApiUser, unauthorizedResponse, forbiddenResponse } from '../../../lib/apiAuth';
 import { connectToDatabase } from '../../../lib/mongodb';
-import { getPlanCapabilities } from '../../../lib/subscriptions';
+import { getPlanCapabilities, hasFeatureAccess } from '../../../lib/subscriptions';
 import Transaction from '../../../models/Transaction';
 
 type TransactionKind = 'income' | 'expense';
@@ -18,9 +18,25 @@ function toTransactionResponse(transaction: any) {
     kind: transaction.kind,
     category: transaction.category,
     description: transaction.description ?? '',
+    tags: Array.isArray(transaction.tags) ? transaction.tags : [],
     createdAt: transaction.createdAt ? new Date(transaction.createdAt).toISOString() : undefined,
     updatedAt: transaction.updatedAt ? new Date(transaction.updatedAt).toISOString() : undefined,
   };
+}
+
+function normalizeTags(input: unknown) {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      input
+        .map((tag) => String(tag ?? '').trim())
+        .filter(Boolean)
+        .filter((tag) => tag.length <= 30)
+    )
+  );
 }
 
 export async function GET(req: NextRequest) {
@@ -52,9 +68,10 @@ export async function POST(req: NextRequest) {
     return unauthorizedResponse();
   }
 
-  const { date, amount, kind, category, description } = await req.json();
+  const { date, amount, kind, category, description, tags } = await req.json();
   const normalizedCategory = String(category ?? '').trim();
   const normalizedDescription = typeof description === 'string' ? description.trim() : '';
+  const normalizedTags = normalizeTags(tags);
   const numericAmount = Number(amount);
 
   if (!date || !normalizedCategory || !Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -76,6 +93,10 @@ export async function POST(req: NextRequest) {
   await connectToDatabase();
 
   const capabilities = getPlanCapabilities(authenticatedUser.planSlug);
+  if (normalizedTags.length > 0 && !hasFeatureAccess(authenticatedUser.planSlug, 'transactionTags')) {
+    return forbiddenResponse('Transaction tags are available on the Pro plan.');
+  }
+
   if (capabilities.maxTransactionsPerMonth !== null) {
     const monthPrefix = String(date).slice(0, 7);
     const startOfMonth = new Date(`${monthPrefix}-01T00:00:00.000Z`);
@@ -99,6 +120,7 @@ export async function POST(req: NextRequest) {
     kind: kind || 'expense',
     category: normalizedCategory,
     description: normalizedDescription,
+    tags: normalizedTags,
   });
   await tx.save();
   return NextResponse.json({ transaction: toTransactionResponse(tx) }, { status: 201 });
@@ -110,16 +132,42 @@ export async function PATCH(req: NextRequest) {
     return unauthorizedResponse();
   }
 
-  const { fromCategory, toCategory } = await req.json();
+  const body = await req.json();
+  const action = String(body.action ?? 'merge-category');
 
+  await connectToDatabase();
+
+  if (action === 'bulk-update-category') {
+    if (!hasFeatureAccess(authenticatedUser.planSlug, 'bulkCategoryUpdates')) {
+      return forbiddenResponse('Bulk category updates are available on the Pro plan.');
+    }
+
+    const transactionIds = Array.isArray(body.transactionIds) ? body.transactionIds.map((id: unknown) => String(id)) : [];
+    const toCategory = String(body.toCategory ?? '').trim();
+    if (transactionIds.length === 0 || !toCategory) {
+      return NextResponse.json({ error: 'Transaction ids and a destination category are required.' }, { status: 400 });
+    }
+
+    const result = await Transaction.updateMany(
+      { _id: { $in: transactionIds }, userId: authenticatedUser.userId, kind: 'expense' },
+      { $set: { category: toCategory } }
+    );
+    return NextResponse.json({ modifiedCount: result.modifiedCount ?? 0 });
+  }
+
+  if (!hasFeatureAccess(authenticatedUser.planSlug, 'mergeCategories')) {
+    return forbiddenResponse('Category merging is available on the Pro plan.');
+  }
+
+  const fromCategory = String(body.fromCategory ?? '').trim();
+  const toCategory = String(body.toCategory ?? '').trim();
   if (!fromCategory || !toCategory) {
     return NextResponse.json({ error: 'Both source and destination categories are required.' }, { status: 400 });
   }
 
-  await connectToDatabase();
   const result = await Transaction.updateMany(
-    { userId: authenticatedUser.userId, kind: 'expense', category: String(fromCategory).trim() },
-    { $set: { category: String(toCategory).trim() } }
+    { userId: authenticatedUser.userId, kind: 'expense', category: fromCategory },
+    { $set: { category: toCategory } }
   );
 
   return NextResponse.json({ modifiedCount: result.modifiedCount ?? 0 });

@@ -247,6 +247,63 @@
   color: #ef4444;
 }
 
+.proToolsPanel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.proToolCard {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
+  border-radius: 0.9rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.proToolCard h3,
+.proToolCard p {
+  margin: 0;
+}
+
+.lockedMessage {
+  color: #d97706;
+  font-size: 0.84rem;
+}
+
+.inlineTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.inlineTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.rowTag,
+.emptyTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.74rem;
+}
+
+.rowTag {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.emptyTag {
+  color: color-mix(in srgb, var(--text-color) 58%, transparent);
+}
+
 .filterRow { display: flex; align-items: center; gap: 0.5rem; }
 .filterLabel { font-size: 0.82rem; opacity: 0.7; font-weight: 600; }
 
@@ -324,6 +381,10 @@
 
 @media (max-width: 1024px) {
   .compactChartGrid { grid-template-columns: 1fr; }
+
+  .proToolsPanel {
+    grid-template-columns: 1fr;
+  }
 
   .compactChartSection {
     max-width: none;

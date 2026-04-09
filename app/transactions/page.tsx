@@ -11,6 +11,8 @@ import { readApiError } from "../../lib/apiClient";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import { initialBudgets, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
 import { getSession } from "../../lib/auth";
+import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../lib/subscriptions";
+import { DEFAULT_CUSTOM_CATEGORIES, sanitizeCustomCategories } from "../../lib/userSettings";
 
 interface Transaction {
   id: string;
@@ -18,26 +20,34 @@ interface Transaction {
   description: string;
   category: string;
   amount: number;
+  tags?: string[];
 }
 
 type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
 
+type ProfileSettingsPayload = {
+  user?: {
+    planSlug?: string;
+    customCategories?: string[];
+  };
+};
+
 const dummy: Transaction[] = [
-  { id:  "1", date: "2026-03-01", description: "Groceries",      category: "Food",          amount:  52.60 },
-  { id:  "2", date: "2026-03-02", description: "Bus fare",        category: "Transport",     amount:   3.50 },
-  { id:  "3", date: "2026-03-03", description: "Streaming",       category: "Entertainment", amount:  15.99 },
-  { id:  "4", date: "2026-03-05", description: "Supermarket",     category: "Food",          amount:  38.20 },
-  { id:  "5", date: "2026-03-06", description: "Electricity bill",category: "Utilities",     amount:  95.00 },
-  { id:  "6", date: "2026-03-07", description: "Train ticket",    category: "Transport",     amount:  22.50 },
-  { id:  "7", date: "2026-03-09", description: "Restaurant",      category: "Food",          amount:  42.00 },
-  { id:  "8", date: "2026-03-10", description: "Cinema",          category: "Entertainment", amount:  12.50 },
-  { id:  "9", date: "2026-03-11", description: "Water bill",      category: "Utilities",     amount:  48.00 },
-  { id: "10", date: "2026-03-12", description: "Petrol",          category: "Transport",     amount:  55.00 },
-  { id: "11", date: "2026-03-14", description: "Cafe",            category: "Food",          amount:   8.50 },
-  { id: "12", date: "2026-03-15", description: "Gas bill",        category: "Utilities",     amount:  75.00 },
-  { id: "13", date: "2026-03-16", description: "Takeaway",        category: "Food",          amount:  22.30 },
-  { id: "14", date: "2026-03-17", description: "Spotify",         category: "Entertainment", amount:   9.99 },
-  { id: "15", date: "2026-03-18", description: "Bus pass",        category: "Transport",     amount:  35.00 },
+  { id:  "1", date: "2026-03-01", description: "Groceries",      category: "Food",          amount:  52.60, tags: [] },
+  { id:  "2", date: "2026-03-02", description: "Bus fare",        category: "Transport",     amount:   3.50, tags: [] },
+  { id:  "3", date: "2026-03-03", description: "Streaming",       category: "Entertainment", amount:  15.99, tags: [] },
+  { id:  "4", date: "2026-03-05", description: "Supermarket",     category: "Food",          amount:  38.20, tags: [] },
+  { id:  "5", date: "2026-03-06", description: "Electricity bill",category: "Utilities",     amount:  95.00, tags: [] },
+  { id:  "6", date: "2026-03-07", description: "Train ticket",    category: "Transport",     amount:  22.50, tags: [] },
+  { id:  "7", date: "2026-03-09", description: "Restaurant",      category: "Food",          amount:  42.00, tags: [] },
+  { id:  "8", date: "2026-03-10", description: "Cinema",          category: "Entertainment", amount:  12.50, tags: [] },
+  { id:  "9", date: "2026-03-11", description: "Water bill",      category: "Utilities",     amount:  48.00, tags: [] },
+  { id: "10", date: "2026-03-12", description: "Petrol",          category: "Transport",     amount:  55.00, tags: [] },
+  { id: "11", date: "2026-03-14", description: "Cafe",            category: "Food",          amount:   8.50, tags: [] },
+  { id: "12", date: "2026-03-15", description: "Gas bill",        category: "Utilities",     amount:  75.00, tags: [] },
+  { id: "13", date: "2026-03-16", description: "Takeaway",        category: "Food",          amount:  22.30, tags: [] },
+  { id: "14", date: "2026-03-17", description: "Spotify",         category: "Entertainment", amount:   9.99, tags: [] },
+  { id: "15", date: "2026-03-18", description: "Bus pass",        category: "Transport",     amount:  35.00, tags: [] },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -56,11 +66,18 @@ export default function Transactions() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [currentPlanSlug, setCurrentPlanSlug] = useState("free");
+  const [customCategories, setCustomCategories] = useState<string[]>(DEFAULT_CUSTOM_CATEGORIES);
   const [showForm, setShowForm] = useState(false);
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [selectedTransactionIds, setSelectedTransactionIds] = useState<string[]>([]);
   const [budgets, setBudgets] = useState<BudgetMap>(initialBudgets);
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
+  const [tagFilter, setTagFilter] = useState<string>("All tags");
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [mergeFromCategory, setMergeFromCategory] = useState("");
+  const [mergeToCategory, setMergeToCategory] = useState("");
   const [monthFilter, setMonthFilter] = useState<string>("All months");
   const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [isLoading, setIsLoading] = useState(true);
@@ -86,9 +103,10 @@ export default function Transactions() {
         setIsLoading(true);
         setError("");
 
-        const [transactionsResponse, budgetsResponse] = await Promise.all([
+        const [transactionsResponse, budgetsResponse, profileResponse] = await Promise.all([
           fetch("/api/transactions?kind=expense", { cache: "no-store" }),
           fetch("/api/budgets", { cache: "no-store" }),
+          fetch("/api/profile", { cache: "no-store" }),
         ]);
 
         if (!transactionsResponse.ok) {
@@ -101,6 +119,7 @@ export default function Transactions() {
 
         const transactionsPayload = await transactionsResponse.json();
         const budgetsPayload = await budgetsResponse.json();
+        const profilePayload = profileResponse.ok ? await profileResponse.json() as ProfileSettingsPayload : null;
 
         if (!isMounted) {
           return;
@@ -109,6 +128,8 @@ export default function Transactions() {
         const loadedTransactions = transactionsPayload.transactions ?? [];
         setTransactions(loadedTransactions);
         setBudgets(sanitizeBudgets(budgetsPayload.budget?.categories ?? initialBudgets));
+        setCurrentPlanSlug(profilePayload?.user?.planSlug ?? "free");
+        setCustomCategories(sanitizeCustomCategories(profilePayload?.user?.customCategories ?? DEFAULT_CUSTOM_CATEGORIES));
       } catch (loadError) {
         if (!isMounted) {
           return;
@@ -117,6 +138,8 @@ export default function Transactions() {
         setError(loadError instanceof Error ? loadError.message : "Failed to load spending data.");
         setTransactions([]);
         setBudgets(sanitizeBudgets(initialBudgets));
+        setCurrentPlanSlug("free");
+        setCustomCategories(DEFAULT_CUSTOM_CATEGORIES);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -130,6 +153,12 @@ export default function Transactions() {
       isMounted = false;
     };
   }, []);
+
+  const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
+  const canUseTags = hasFeatureAccess(currentPlan.slug, "transactionTags");
+  const canBulkEditCategories = hasFeatureAccess(currentPlan.slug, "bulkCategoryUpdates");
+  const canMergeCategories = hasFeatureAccess(currentPlan.slug, "mergeCategories");
+  const canManageCustomCategories = hasFeatureAccess(currentPlan.slug, "customCategories");
 
   async function saveTransaction(data: Omit<Transaction, "id">) {
     if (editingTransactionId) {
@@ -283,18 +312,20 @@ export default function Transactions() {
   }, [transactions]);
 
   const spendingCategories = useMemo(
-    () => Object.keys(sanitizeBudgets(budgets)),
-    [budgets]
+    () => Array.from(new Set([...Object.keys(sanitizeBudgets(budgets)), ...customCategories])).sort((left, right) => left.localeCompare(right)),
+    [budgets, customCategories]
   );
 
   // Filtered table rows
   const categories = ["All", ...Array.from(new Set(transactions.map((t) => t.category)))];
+  const tags = ["All tags", ...Array.from(new Set(transactions.flatMap((transaction) => transaction.tags ?? []))).sort((left, right) => left.localeCompare(right))];
   const monthOptions = [
     "All months",
     ...Array.from(new Set(transactions.map((transaction) => transaction.date.slice(0, 7)))).sort((a, b) => b.localeCompare(a)),
   ];
   const filtered = [...transactions]
     .filter((transaction) => categoryFilter === "All" || transaction.category === categoryFilter)
+    .filter((transaction) => tagFilter === "All tags" || (transaction.tags ?? []).includes(tagFilter))
     .filter((transaction) => monthFilter === "All months" || transaction.date.startsWith(monthFilter))
     .sort((left, right) => {
       switch (sortOption) {
@@ -331,6 +362,82 @@ export default function Transactions() {
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [selectedTransactionId, showForm]);
+
+  async function bulkUpdateSelectedCategory() {
+    if (selectedTransactionIds.length === 0 || !bulkCategory) {
+      return;
+    }
+
+    if (!sessionUserId) {
+      setTransactions((prev) => prev.map((transaction) => selectedTransactionIds.includes(transaction.id) ? { ...transaction, category: bulkCategory } : transaction));
+      setSelectedTransactionIds([]);
+      setBulkCategory("");
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch("/api/transactions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "bulk-update-category",
+          transactionIds: selectedTransactionIds,
+          toCategory: bulkCategory,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Failed to update selected categories."));
+      }
+
+      setTransactions((prev) => prev.map((transaction) => selectedTransactionIds.includes(transaction.id) ? { ...transaction, category: bulkCategory } : transaction));
+      setSelectedTransactionIds([]);
+      setBulkCategory("");
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : "Failed to update selected categories.");
+    }
+  }
+
+  async function mergeSelectedCategories() {
+    if (!mergeFromCategory || !mergeToCategory || mergeFromCategory === mergeToCategory) {
+      return;
+    }
+
+    if (!sessionUserId) {
+      setTransactions((prev) => prev.map((transaction) => transaction.category === mergeFromCategory ? { ...transaction, category: mergeToCategory } : transaction));
+      setMergeFromCategory("");
+      setMergeToCategory("");
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch("/api/transactions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "merge-category",
+          fromCategory: mergeFromCategory,
+          toCategory: mergeToCategory,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Failed to merge categories."));
+      }
+
+      setTransactions((prev) => prev.map((transaction) => transaction.category === mergeFromCategory ? { ...transaction, category: mergeToCategory } : transaction));
+      setMergeFromCategory("");
+      setMergeToCategory("");
+    } catch (mergeError) {
+      setError(mergeError instanceof Error ? mergeError.message : "Failed to merge categories.");
+    }
+  }
+
+  function toggleSelectedTransaction(transactionId: string, checked: boolean) {
+    setSelectedTransactionIds((prev) => checked ? [...new Set([...prev, transactionId])] : prev.filter((id) => id !== transactionId));
+  }
 
   if (isLoading) {
     return <PageLoading message="Loading spendings..." />;
@@ -377,6 +484,48 @@ export default function Transactions() {
           }
         }}
       >
+        <div className={styles.proToolsPanel}>
+          <div className={styles.proToolCard}>
+            <h3>Transaction tags</h3>
+            <p>Add tags in the transaction form to group entries like holiday or work.</p>
+            {!canUseTags ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
+          </div>
+          <div className={styles.proToolCard}>
+            <h3>Bulk category update</h3>
+            <div className={styles.inlineTools}>
+              <select className={styles.filterSelect} value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} disabled={!canBulkEditCategories}>
+                <option value="">Move selected rows to...</option>
+                {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+              <button type="button" className={styles.secondaryActionButton} onClick={() => void bulkUpdateSelectedCategory()} disabled={!canBulkEditCategories || selectedTransactionIds.length === 0 || !bulkCategory}>
+                Update {selectedTransactionIds.length > 0 ? `(${selectedTransactionIds.length})` : ""}
+              </button>
+            </div>
+            {!canBulkEditCategories ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
+          </div>
+          <div className={styles.proToolCard}>
+            <h3>Merge categories</h3>
+            <div className={styles.inlineTools}>
+              <select className={styles.filterSelect} value={mergeFromCategory} onChange={(event) => setMergeFromCategory(event.target.value)} disabled={!canMergeCategories}>
+                <option value="">From category</option>
+                {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+              <select className={styles.filterSelect} value={mergeToCategory} onChange={(event) => setMergeToCategory(event.target.value)} disabled={!canMergeCategories}>
+                <option value="">Into category</option>
+                {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+              <button type="button" className={styles.secondaryActionButton} onClick={() => void mergeSelectedCategories()} disabled={!canMergeCategories || !mergeFromCategory || !mergeToCategory || mergeFromCategory === mergeToCategory}>
+                Merge
+              </button>
+            </div>
+            {!canMergeCategories ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
+          </div>
+          <div className={styles.proToolCard}>
+            <h3>Custom categories</h3>
+            <p>{canManageCustomCategories ? "Manage your custom categories from profile settings." : "Visible here, but category creation is locked until Pro."}</p>
+          </div>
+        </div>
+
         <div className={styles.tableHeader}>
           <div>
             <h2 className={styles.tableTitle}>All Transactions</h2>
@@ -413,6 +562,17 @@ export default function Transactions() {
                       {option === "All months" ? option : new Date(`${option}-01T00:00:00`).toLocaleString("en-GB", { month: "long", year: "numeric" })}
                     </option>
                   ))}
+                </select>
+              </div>
+              <div className={styles.popoverField}>
+                <label htmlFor="tag-filter" className={styles.filterLabel}>Tag</label>
+                <select
+                  id="tag-filter"
+                  className={styles.filterSelect}
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                >
+                  {tags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
                 </select>
               </div>
             </IconPopoverButton>
@@ -481,7 +641,7 @@ export default function Transactions() {
               categoryPlaceholder="Select a category"
               submitLabel={editingTransaction ? "Save Changes" : "Save"}
               deleteLabel="Delete Spending"
-              initial={editingTransaction ?? { category: "", date: "", amount: 0, description: "" }}
+              initial={editingTransaction ?? { category: "", date: "", amount: 0, description: "", tags: [] }}
               onDelete={editingTransaction ? () => void deleteTransaction(editingTransaction.id) : undefined}
             />
           </div>
@@ -491,9 +651,11 @@ export default function Transactions() {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th>Select</th>
                 <th>Date</th>
                 <th>Description</th>
                 <th>Category</th>
+                <th>Tags</th>
                 <th>Amount</th>
               </tr>
             </thead>
@@ -504,6 +666,16 @@ export default function Transactions() {
                   className={selectedTransactionId === t.id ? styles.selectedRow : undefined}
                   onClick={() => setSelectedTransactionId(t.id)}
                 >
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedTransactionIds.includes(t.id)}
+                      onChange={(event) => {
+                        event.stopPropagation();
+                        toggleSelectedTransaction(t.id, event.target.checked);
+                      }}
+                    />
+                  </td>
                   <td>{formatDate(t.date)}</td>
                   <td>{t.description}</td>
                   <td>
@@ -517,11 +689,18 @@ export default function Transactions() {
                       {t.category}
                     </span>
                   </td>
+                  <td>
+                    <div className={styles.inlineTags}>
+                      {(t.tags ?? []).length > 0 ? (t.tags ?? []).map((tag) => (
+                        <span key={tag} className={styles.rowTag}>{tag}</span>
+                      )) : <span className={styles.emptyTag}>No tags</span>}
+                    </div>
+                  </td>
                   <td>{formatCurrency(t.amount)}</td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={4} className={styles.emptyRow}>No transactions found.</td></tr>
+                <tr><td colSpan={6} className={styles.emptyRow}>No transactions found.</td></tr>
               )}
             </tbody>
           </table>

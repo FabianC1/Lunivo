@@ -1,6 +1,14 @@
 // User model
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import {
+  DEFAULT_APPEARANCE_SETTINGS,
+  DEFAULT_CUSTOM_CATEGORIES,
+  DEFAULT_DASHBOARD_SETTINGS,
+  type AppearanceSettings,
+  type DashboardSettings,
+  type ThemePreset,
+} from '../lib/userSettings';
 
 export interface IUser extends Document {
   name: string;
@@ -19,8 +27,38 @@ export interface IUser extends Document {
     budgetAlerts: boolean;
     weeklyDigest: boolean;
   };
+  appearance?: AppearanceSettings;
+  dashboard?: DashboardSettings;
+  customCategories?: string[];
   createdAt: Date;
 }
+
+const ThemePresetSchema = new Schema<ThemePreset>(
+  {
+    id: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true },
+    mode: { type: String, enum: ['light', 'dark'], required: true },
+    isCustom: { type: Boolean, default: true },
+    colors: {
+      bgColor: { type: String, required: true },
+      textColor: { type: String, required: true },
+      primaryColor: { type: String, required: true },
+      accentColor: { type: String, required: true },
+      highlightColor: { type: String, required: true },
+      cardColor: { type: String, required: true },
+      navbarColor: { type: String, required: true },
+      navbarBorderGradient: { type: String, required: true },
+      navbarTextColor: { type: String, required: true },
+      bgGradient: { type: String, required: true },
+      buttonGradientStart: { type: String, required: true },
+      buttonGradientEnd: { type: String, required: true },
+      foregroundRgb: { type: String, required: true },
+      backgroundStartRgb: { type: String, required: true },
+      backgroundEndRgb: { type: String, required: true },
+    },
+  },
+  { _id: false }
+);
 
 const UserSchema: Schema<IUser> = new Schema(
   {
@@ -40,6 +78,20 @@ const UserSchema: Schema<IUser> = new Schema(
       budgetAlerts: { type: Boolean, default: true },
       weeklyDigest: { type: Boolean, default: false },
     },
+    appearance: {
+      selectedThemeId: { type: String, default: DEFAULT_APPEARANCE_SETTINGS.selectedThemeId },
+      customThemes: { type: [ThemePresetSchema], default: DEFAULT_APPEARANCE_SETTINGS.customThemes },
+    },
+    dashboard: {
+      visibleWidgets: {
+        charts: { type: Boolean, default: DEFAULT_DASHBOARD_SETTINGS.visibleWidgets.charts },
+        goals: { type: Boolean, default: DEFAULT_DASHBOARD_SETTINGS.visibleWidgets.goals },
+        transactions: { type: Boolean, default: DEFAULT_DASHBOARD_SETTINGS.visibleWidgets.transactions },
+      },
+      widgetOrder: { type: [String], default: DEFAULT_DASHBOARD_SETTINGS.widgetOrder },
+      defaultWidget: { type: String, default: DEFAULT_DASHBOARD_SETTINGS.defaultWidget },
+    },
+    customCategories: { type: [String], default: DEFAULT_CUSTOM_CATEGORIES },
   },
   { timestamps: true }
 );

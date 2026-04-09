@@ -17,6 +17,7 @@ interface Transaction {
   description: string;
   category: string;
   amount: number;
+  tags?: string[];
 }
 
 type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
@@ -31,11 +32,11 @@ const MONTHLY_INCOME: Record<string, number> = {
 };
 
 const dummy: Transaction[] = [
-  { id: "1", date: "2026-01-15", description: "Main payroll",     category: "Salary",       amount: 3000 },
-  { id: "2", date: "2026-01-22", description: "Client website",   category: "Side project", amount:  400 },
-  { id: "3", date: "2026-02-15", description: "Monthly payroll",  category: "Salary",       amount: 3080 },
-  { id: "4", date: "2026-03-10", description: "Design retainer",  category: "Freelance",    amount:  750 },
-  { id: "5", date: "2026-03-15", description: "Monthly payroll",  category: "Salary",       amount: 3000 },
+  { id: "1", date: "2026-01-15", description: "Main payroll",     category: "Salary",       amount: 3000, tags: [] },
+  { id: "2", date: "2026-01-22", description: "Client website",   category: "Side project", amount:  400, tags: [] },
+  { id: "3", date: "2026-02-15", description: "Monthly payroll",  category: "Salary",       amount: 3080, tags: [] },
+  { id: "4", date: "2026-03-10", description: "Design retainer",  category: "Freelance",    amount:  750, tags: [] },
+  { id: "5", date: "2026-03-15", description: "Monthly payroll",  category: "Salary",       amount: 3000, tags: [] },
 ];
 
 export default function Income() {
@@ -431,7 +432,7 @@ export default function Income() {
               descriptionLabel="Description / note"
               submitLabel={editingTransaction ? "Save Changes" : "Save"}
               deleteLabel="Delete Income"
-              initial={editingTransaction ?? { category: "", date: "", amount: 0, description: "" }}
+              initial={editingTransaction ?? { category: "", date: "", amount: 0, description: "", tags: [] }}
               onDelete={editingTransaction ? () => void deleteTransaction(editingTransaction.id) : undefined}
             />
           </div>

@@ -10,6 +10,7 @@ interface TransactionFormProps {
     amount: number;
     category: string;
     description: string;
+    tags?: string[];
   };
   categoryOptions: string[];
   categoryLabel?: string;
@@ -22,6 +23,7 @@ interface TransactionFormProps {
     amount: number;
     category: string;
     description: string;
+    tags: string[];
   }) => void;
   onCancel?: () => void;
   onDelete?: () => void;
@@ -44,6 +46,7 @@ export default function TransactionForm({
   const [amount, setAmount] = useState(initial?.amount || 0);
   const [category, setCategory] = useState(initial?.category || "");
   const [description, setDescription] = useState(initial?.description || "");
+  const [tags, setTags] = useState((initial?.tags ?? []).join(", "));
   const [error, setError] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -63,6 +66,7 @@ export default function TransactionForm({
     setAmount(initial?.amount || 0);
     setCategory(initial?.category || "");
     setDescription(initial?.description || "");
+    setTags((initial?.tags ?? []).join(", "));
     setError("");
   }, [initial]);
 
@@ -89,7 +93,16 @@ export default function TransactionForm({
     }
 
     setError("");
-    onSubmit({ date, amount, category, description: description.trim() });
+    onSubmit({
+      date,
+      amount,
+      category,
+      description: description.trim(),
+      tags: tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    });
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
@@ -163,6 +176,15 @@ export default function TransactionForm({
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+        />
+      </label>
+      <label>
+        Tags
+        <input
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="holiday, work"
         />
       </label>
       <div className={styles.actions}>

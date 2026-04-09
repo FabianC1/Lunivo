@@ -12,6 +12,25 @@ export type SubscriptionPlan = {
 
 export type SubscriptionPlanSlug = "free" | "sync" | "scale";
 
+export type SubscriptionFeatureKey =
+  | "bankSync"
+  | "advancedDashboardInsights"
+  | "netFlowPerMonth"
+  | "endOfMonthBalanceEstimate"
+  | "monthlySavingsEstimate"
+  | "threeMonthAverageSpending"
+  | "goalCompletionEstimate"
+  | "dashboardWidgetToggles"
+  | "dashboardSectionReordering"
+  | "defaultHomepageWidget"
+  | "customThemeCreation"
+  | "savedThemePresets"
+  | "customCategories"
+  | "transactionTags"
+  | "bulkCategoryUpdates"
+  | "mergeCategories"
+  | "csvExport";
+
 type PlanCapabilities = {
   maxTransactionsPerMonth: number | null;
   maxGoals: number | null;
@@ -23,6 +42,26 @@ type PlanCapabilities = {
 };
 
 const PLAN_ORDER: SubscriptionPlanSlug[] = ["free", "sync", "scale"];
+
+const FEATURE_MINIMUM_PLAN: Record<SubscriptionFeatureKey, SubscriptionPlanSlug> = {
+  bankSync: "sync",
+  advancedDashboardInsights: "sync",
+  netFlowPerMonth: "sync",
+  endOfMonthBalanceEstimate: "sync",
+  monthlySavingsEstimate: "sync",
+  threeMonthAverageSpending: "sync",
+  goalCompletionEstimate: "sync",
+  dashboardWidgetToggles: "sync",
+  dashboardSectionReordering: "sync",
+  defaultHomepageWidget: "sync",
+  customThemeCreation: "scale",
+  savedThemePresets: "scale",
+  customCategories: "scale",
+  transactionTags: "scale",
+  bulkCategoryUpdates: "scale",
+  mergeCategories: "scale",
+  csvExport: "scale",
+};
 
 const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
   free: {
@@ -73,7 +112,7 @@ export const FREE_PLAN: SubscriptionPlan = {
   priceMonthly: 0,
   description: "Manual money tracking for people who want to log spending, income, budgets, and goals themselves without automated syncing.",
   audience: "Best for getting started",
-  themeAccess: "1 core theme",
+  themeAccess: "2 built-in themes",
   reportsAccess: "Basic summaries",
   features: [
     "Manual income entry",
@@ -241,7 +280,7 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Theme selection",
         description: "Choose from the available built-in theme options.",
-        values: { free: "1 theme", sync: "12 built-in themes", scale: "Full library" },
+        values: { free: "2 themes", sync: "12 built-in themes", scale: "Full library" },
       },
       {
         label: "Custom theme creation",
@@ -320,6 +359,19 @@ export function normalizePlanSlug(slug: string | null | undefined): Subscription
 
 export function hasPlanAccess(currentPlan: string | null | undefined, minimumPlan: SubscriptionPlanSlug) {
   return PLAN_ORDER.indexOf(normalizePlanSlug(currentPlan)) >= PLAN_ORDER.indexOf(minimumPlan);
+}
+
+export function getMinimumPlanForFeature(feature: SubscriptionFeatureKey): SubscriptionPlanSlug {
+  return FEATURE_MINIMUM_PLAN[feature];
+}
+
+export function hasFeatureAccess(currentPlan: string | null | undefined, feature: SubscriptionFeatureKey) {
+  return hasPlanAccess(currentPlan, getMinimumPlanForFeature(feature));
+}
+
+export function getAvailableBuiltInThemeCount(currentPlan: string | null | undefined) {
+  const normalizedPlan = normalizePlanSlug(currentPlan);
+  return normalizedPlan === "free" ? 2 : 12;
 }
 
 export function getPlanCapabilities(plan: string | null | undefined) {
