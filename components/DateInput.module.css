@@ -9,7 +9,7 @@
   gap: 0.75rem;
   width: 100%;
   padding: 0.6rem 0.85rem;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.58);
   border-radius: 0.5rem;
   background-color: var(--card-color);
   color: var(--text-color);
@@ -231,10 +231,6 @@
 
 .footerButton:hover {
   background: color-mix(in srgb, var(--button-gradient-start) 10%, transparent);
-}
-
-.root:hover .displayButton {
-  border-color: rgba(148, 163, 184, 0.6);
 }
 
 .root:hover .icon,

@@ -17,14 +17,6 @@ type Metric = "spendings" | "income" | "net";
 type ChartKind = "line" | "bar";
 type CategoryName = string;
 
-type GoalPreview = {
-  id: string;
-  title: string;
-  targetAmount: number;
-  savedAmount: number;
-  targetDate: string;
-};
-
 type ProfileSettingsPayload = {
   user?: {
     planSlug?: string;
@@ -152,8 +144,6 @@ export default function Dashboard() {
   const [reportData, setReportData] = useState<Record<string, YearReport>>({});
   const [currentPlanSlug, setCurrentPlanSlug] = useState("free");
   const [dashboardSettings, setDashboardSettings] = useState<DashboardSettings>(DEFAULT_DASHBOARD_SETTINGS);
-  const [goalPreview, setGoalPreview] = useState<GoalPreview[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<Array<{ id: string; date: string; category: string; amount: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [usesSampleData, setUsesSampleData] = useState(false);
@@ -166,7 +156,6 @@ export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState<Metric>("spendings");
   const [mainChartType, setMainChartType] = useState<ChartKind>("line");
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>(DEFAULT_DASHBOARD_CATEGORIES[0]);
-
   useEffect(() => {
     const session = getSession();
     const normalizedEmail = session?.email.trim().toLowerCase() ?? "";
@@ -178,14 +167,6 @@ export default function Dashboard() {
       setReportData(SAMPLE_REPORT_DATA);
       setCurrentPlanSlug("sync");
       setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
-      setGoalPreview([
-        { id: "goal-1", title: "Emergency Fund", targetAmount: 6000, savedAmount: 2800, targetDate: "2026-10-01" },
-        { id: "goal-2", title: "Holiday", targetAmount: 1800, savedAmount: 900, targetDate: "2026-08-15" },
-      ]);
-      setRecentTransactions([
-        { id: "tx-1", date: "2026-03-18", category: "Transport", amount: 35 },
-        { id: "tx-2", date: "2026-03-17", category: "Entertainment", amount: 9.99 },
-      ]);
       setError("");
       setIsLoading(false);
       return;
@@ -195,8 +176,6 @@ export default function Dashboard() {
       setReportData(createEmptyReportData([String(new Date().getFullYear())]));
       setCurrentPlanSlug("free");
       setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
-      setGoalPreview([]);
-      setRecentTransactions([]);
       setError("");
       setIsLoading(false);
       return;
@@ -209,11 +188,9 @@ export default function Dashboard() {
         setIsLoading(true);
         setError("");
 
-        const [response, profileResponse, goalsResponse, transactionsResponse] = await Promise.all([
+        const [response, profileResponse] = await Promise.all([
           fetch("/api/reports/summary?scope=dashboard", { cache: "no-store" }),
           fetch("/api/profile", { cache: "no-store" }),
-          fetch("/api/goals", { cache: "no-store" }),
-          fetch("/api/transactions?kind=expense", { cache: "no-store" }),
         ]);
 
         if (!response.ok) {
@@ -224,12 +201,6 @@ export default function Dashboard() {
         const profilePayload: ProfileSettingsPayload | null = profileResponse.ok
           ? ((await profileResponse.json()) as ProfileSettingsPayload)
           : null;
-        const goalsPayload: { goals?: GoalPreview[] } = goalsResponse.ok
-          ? ((await goalsResponse.json()) as { goals?: GoalPreview[] })
-          : { goals: [] };
-        const transactionsPayload: { transactions?: Array<{ id: string; date: string; category: string; amount: number }> } = transactionsResponse.ok
-          ? ((await transactionsResponse.json()) as { transactions?: Array<{ id: string; date: string; category: string; amount: number }> })
-          : { transactions: [] };
 
         if (!isMounted) {
           return;
@@ -238,8 +209,6 @@ export default function Dashboard() {
         setReportData(payload.reportData ?? createEmptyReportData([String(new Date().getFullYear())]));
         setCurrentPlanSlug(profilePayload?.user?.planSlug ?? "free");
         setDashboardSettings(profilePayload?.user?.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
-        setGoalPreview((goalsPayload.goals ?? []).filter((goal: any) => !goal.completed).slice(0, 3));
-        setRecentTransactions((transactionsPayload.transactions ?? []).slice(0, 5));
       } catch (loadError) {
         if (!isMounted) {
           return;
@@ -248,8 +217,6 @@ export default function Dashboard() {
         setReportData(createEmptyReportData([String(new Date().getFullYear())]));
         setCurrentPlanSlug("free");
         setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
-        setGoalPreview([]);
-        setRecentTransactions([]);
         setError(loadError instanceof Error ? loadError.message : "Failed to load dashboard data.");
       } finally {
         if (isMounted) {
@@ -266,9 +233,9 @@ export default function Dashboard() {
   }, []);
 
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
-  const canToggleWidgets = hasFeatureAccess(currentPlan.slug, "dashboardWidgetToggles");
-  const canReorderWidgets = hasFeatureAccess(currentPlan.slug, "dashboardSectionReordering");
-  const canSetDefaultWidget = hasFeatureAccess(currentPlan.slug, "defaultHomepageWidget");
+  const canCustomizeDashboard = hasFeatureAccess(currentPlan.slug, "dashboardWidgetToggles")
+    || hasFeatureAccess(currentPlan.slug, "dashboardSectionReordering")
+    || hasFeatureAccess(currentPlan.slug, "defaultHomepageWidget");
 
   useEffect(() => {
     if (years.length === 0) {
@@ -412,60 +379,14 @@ export default function Dashboard() {
     }
   }
 
-  function updateWidgetVisibility(widget: DashboardWidgetKey, visible: boolean) {
-    if (!canToggleWidgets) {
-      return;
-    }
-
-    void persistDashboardSettings({
-      ...dashboardSettings,
-      visibleWidgets: {
-        ...dashboardSettings.visibleWidgets,
-        [widget]: visible,
-      },
-      defaultWidget: dashboardSettings.defaultWidget === widget && !visible
-        ? (dashboardSettings.widgetOrder.find((item) => item !== widget) ?? "charts")
-        : dashboardSettings.defaultWidget,
-    });
-  }
-
-  function moveWidget(widget: DashboardWidgetKey, direction: -1 | 1) {
-    if (!canReorderWidgets) {
-      return;
-    }
-
-    const currentIndex = dashboardSettings.widgetOrder.indexOf(widget);
-    const targetIndex = currentIndex + direction;
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= dashboardSettings.widgetOrder.length) {
-      return;
-    }
-
-    const nextOrder = [...dashboardSettings.widgetOrder];
-    [nextOrder[currentIndex], nextOrder[targetIndex]] = [nextOrder[targetIndex], nextOrder[currentIndex]];
-    void persistDashboardSettings({ ...dashboardSettings, widgetOrder: nextOrder });
-  }
-
-  function updateDefaultWidget(widget: DashboardWidgetKey) {
-    if (!canSetDefaultWidget) {
-      return;
-    }
-
-    void persistDashboardSettings({
-      ...dashboardSettings,
-      defaultWidget: widget,
-      visibleWidgets: {
-        ...dashboardSettings.visibleWidgets,
-        [widget]: true,
-      },
-    });
-  }
-
   const orderedWidgets = [
     dashboardSettings.defaultWidget,
     ...dashboardSettings.widgetOrder.filter((widget) => widget !== dashboardSettings.defaultWidget),
   ].filter((widget, index, items) => items.indexOf(widget) === index);
 
-  const visibleOrderedWidgets = orderedWidgets.filter((widget) => dashboardSettings.visibleWidgets[widget]);
+  const visibleOrderedWidgets = canCustomizeDashboard
+    ? orderedWidgets.filter((widget) => dashboardSettings.visibleWidgets[widget])
+    : (["charts", "transactions", "goals"] as DashboardWidgetKey[]);
 
   if (isLoading) {
     return <PageLoading message="Loading your dashboard..." />;
@@ -476,74 +397,43 @@ export default function Dashboard() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Dashboard</h1>
-          <p className={styles.subtitle}>Monthly insights, trends, and reports in one place.</p>
+          <p className={styles.subtitle}>
+            {canCustomizeDashboard
+              ? "A flexible finance workspace with adjustable widgets, layouts, and default views."
+              : "Your finance overview, arranged into a clean default dashboard with everything in place."}
+          </p>
           {error ? <p className={styles.subtitle}>{error}</p> : null}
         </div>
-        <div className={styles.controls}>
-          <label className={styles.controlItem}>
-            <span>Year</span>
-            <select
-              className={styles.select}
-              value={selectedYear}
-              onChange={(event) => setSelectedYear(event.target.value)}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.controlItem}>
-            <span>Month</span>
-            <select
-              className={styles.select}
-              value={selectedMonth}
-              onChange={(event) => setSelectedMonth(event.target.value as MonthKey)}
-            >
-              {MONTHS.map((month) => (
-                <option key={month} value={month}>{month}</option>
-              ))}
-            </select>
-          </label>
+        <div className={styles.headerActions}>
+          <div className={styles.controls}>
+            <label className={styles.controlItem}>
+              <span>Year</span>
+              <select
+                className={styles.select}
+                value={selectedYear}
+                onChange={(event) => setSelectedYear(event.target.value)}
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.controlItem}>
+              <span>Month</span>
+              <select
+                className={styles.select}
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value as MonthKey)}
+              >
+                {MONTHS.map((month) => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
         </div>
       </div>
-
-      <section className={styles.chartSection}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <h2>Dashboard layout</h2>
-            <p>Smart and Pro can toggle widgets, reorder sections, and choose a default dashboard widget.</p>
-          </div>
-        </div>
-        <div className={styles.layoutControlGrid}>
-          {(["charts", "goals", "transactions"] as DashboardWidgetKey[]).map((widget) => (
-            <div key={widget} className={styles.layoutControlCard}>
-              <strong>{widget.charAt(0).toUpperCase() + widget.slice(1)}</strong>
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  checked={dashboardSettings.visibleWidgets[widget]}
-                  onChange={(event) => updateWidgetVisibility(widget, event.target.checked)}
-                  disabled={!canToggleWidgets}
-                />
-                <span>Visible on dashboard</span>
-              </label>
-              <div className={styles.inlineControlButtons}>
-                <button type="button" className={styles.toggleButton} onClick={() => moveWidget(widget, -1)} disabled={!canReorderWidgets}>Up</button>
-                <button type="button" className={styles.toggleButton} onClick={() => moveWidget(widget, 1)} disabled={!canReorderWidgets}>Down</button>
-                <button
-                  type="button"
-                  className={`${styles.toggleButton} ${dashboardSettings.defaultWidget === widget ? styles.toggleButtonActive : ""}`}
-                  onClick={() => updateDefaultWidget(widget)}
-                  disabled={!canSetDefaultWidget}
-                >
-                  Default
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        {!canToggleWidgets ? <p className={styles.lockedMessage}>Dashboard personalization is available on Smart and Pro.</p> : null}
-      </section>
 
       <div className={styles.toggleRow}>
         <div className={styles.toggleGroup}>
@@ -560,7 +450,7 @@ export default function Dashboard() {
       {visibleOrderedWidgets.includes("charts") ? (
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
-            <h2>Charts</h2>
+            <h2>Overview</h2>
             <span>{dashboardSettings.defaultWidget === "charts" ? "Default widget" : ""}</span>
           </div>
           <div className={styles.summaryGrid}>
@@ -625,35 +515,29 @@ export default function Dashboard() {
       {visibleOrderedWidgets.includes("goals") ? (
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
-            <h2>Goals</h2>
+            <h2>Category Focus</h2>
             <span>{dashboardSettings.defaultWidget === "goals" ? "Default widget" : ""}</span>
           </div>
           <section className={styles.chartSection}>
             <div className={styles.sectionHeader}>
-              <div>
-                <h2>Goal progress</h2>
-                <p>Current savings goals and their completion progress.</p>
+              <h2>Category Trend</h2>
+              <div className={styles.inlineControl}>
+                <label htmlFor="dashboard-category">Category</label>
+                <select
+                  id="dashboard-category"
+                  className={styles.select}
+                  value={selectedCategory}
+                  onChange={(event) => setSelectedCategory(event.target.value as CategoryName)}
+                >
+                  {Object.keys(monthDetails.categories).map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            {goalPreview.length === 0 ? (
-              <p>No active goals yet.</p>
-            ) : (
-              <div className={styles.goalList}>
-                {goalPreview.map((goal) => {
-                  const progress = goal.targetAmount > 0 ? Math.min(100, (goal.savedAmount / goal.targetAmount) * 100) : 0;
-                  return (
-                    <article key={goal.id} className={styles.goalCard}>
-                      <div>
-                        <strong>{goal.title}</strong>
-                        <p>{formatCurrency(goal.savedAmount)} of {formatCurrency(goal.targetAmount)}</p>
-                      </div>
-                      <div className={styles.progressBar}><span style={{ width: `${progress}%` }} /></div>
-                      <span>Target date: {goal.targetDate}</span>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
+            <div className={styles.chartFrameTall}>
+              <Chart data={categoryTrend} type="line" showLegend={false} />
+            </div>
           </section>
         </section>
       ) : null}
@@ -661,7 +545,7 @@ export default function Dashboard() {
       {visibleOrderedWidgets.includes("transactions") ? (
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
-            <h2>Transactions</h2>
+            <h2>Monthly Breakdowns</h2>
             <span>{dashboardSettings.defaultWidget === "transactions" ? "Default widget" : ""}</span>
           </div>
           <div className={styles.chartGrid}>
@@ -685,48 +569,6 @@ export default function Dashboard() {
               </div>
             </section>
           </div>
-
-          <section className={styles.chartSection}>
-            <div className={styles.sectionHeader}>
-              <h2>Recent transactions</h2>
-              <p>Latest recorded spendings.</p>
-            </div>
-            {recentTransactions.length === 0 ? (
-              <p>No recent spendings yet.</p>
-            ) : (
-              <div className={styles.transactionList}>
-                {recentTransactions.map((transaction) => (
-                  <div key={transaction.id} className={styles.transactionRow}>
-                    <span>{transaction.category}</span>
-                    <span>{transaction.date}</span>
-                    <strong>{formatCurrency(transaction.amount)}</strong>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className={styles.chartSection}>
-            <div className={styles.sectionHeader}>
-              <h2>Category Trend</h2>
-              <div className={styles.inlineControl}>
-                <label htmlFor="dashboard-category">Category</label>
-                <select
-                  id="dashboard-category"
-                  className={styles.select}
-                  value={selectedCategory}
-                  onChange={(event) => setSelectedCategory(event.target.value as CategoryName)}
-                >
-                  {Object.keys(monthDetails.categories).map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className={styles.chartFrameTall}>
-              <Chart data={categoryTrend} type="line" showLegend={false} />
-            </div>
-          </section>
         </section>
       ) : null}
     </div>
