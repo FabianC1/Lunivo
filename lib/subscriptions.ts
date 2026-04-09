@@ -7,11 +7,10 @@ export type SubscriptionPlan = {
   audience: string;
   themeAccess: string;
   reportsAccess: string;
-  supportLevel: string;
   features: string[];
 };
 
-export type SubscriptionPlanSlug = "free" | "starter" | "growth" | "scale";
+export type SubscriptionPlanSlug = "free" | "sync" | "scale";
 
 type PlanCapabilities = {
   maxTransactionsPerMonth: number | null;
@@ -23,7 +22,7 @@ type PlanCapabilities = {
   canCreateThemes: boolean;
 };
 
-const PLAN_ORDER: SubscriptionPlanSlug[] = ["free", "starter", "growth", "scale"];
+const PLAN_ORDER: SubscriptionPlanSlug[] = ["free", "sync", "scale"];
 
 const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
   free: {
@@ -35,16 +34,7 @@ const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
     canUseExports: false,
     canCreateThemes: false,
   },
-  starter: {
-    maxTransactionsPerMonth: 600,
-    maxGoals: 20,
-    maxAccounts: 3,
-    reportsLevel: "basic",
-    canUseForecasting: false,
-    canUseExports: true,
-    canCreateThemes: false,
-  },
-  growth: {
+  sync: {
     maxTransactionsPerMonth: 3000,
     maxGoals: 75,
     maxAccounts: 5,
@@ -81,75 +71,51 @@ export const FREE_PLAN: SubscriptionPlan = {
   slug: "free",
   name: "Free",
   priceMonthly: 0,
-  description: "A solid base for tracking everyday money movement, keeping budgets in check, and learning the product before you upgrade.",
-  audience: "Best for getting started",
+  description: "Manual money tracking for people who want to log spending, income, budgets, and goals themselves without automated syncing.",
+  audience: "Best for manual tracking",
   themeAccess: "1 core theme",
   reportsAccess: "Basic summaries",
-  supportLevel: "Community support",
   features: [
-    "Income and spending tracking",
-    "Core monthly budgeting",
-    "Dashboard totals and quick charts",
-    "Manual category-based planning",
+    "Manual income entry",
+    "Manual spending entry",
+    "Core budgeting and goals tracking",
+    "Basic dashboard insights",
     "Basic profile and preferences",
   ],
 };
 
 export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
   {
-    slug: "starter",
-    name: "Starter",
+    slug: "sync",
+    name: "Sync",
     priceMonthly: 8,
-    description: "Built for users who want a cleaner day-to-day budgeting workflow, better visuals, and a little more room to organize their finances.",
-    audience: "Best for individuals",
-    themeAccess: "Selection of built-in themes",
-    reportsAccess: "Enhanced monthly insights",
-    supportLevel: "Priority email support",
+    description: "Automatic bank-connected tracking for people who want income and spendings synced into Lunivo instead of entering everything manually.",
+    audience: "Best for automatic tracking",
+    featured: true,
+    themeAccess: "12 built-in themes",
+    reportsAccess: "Advanced reports and forecasting",
     features: [
       "Everything in Free",
-      "Richer category insights",
-      "Cleaner spending breakdowns",
-      "Enhanced monthly budget analysis",
-      "Extra dashboard widgets",
-      "Quarterly trend snapshots",
-      "Access to a built-in theme selection",
-      "Faster export-ready summaries",
-      "Priority email support",
-    ],
-  },
-  {
-    slug: "growth",
-    name: "Growth",
-    priceMonthly: 18,
-    description: "Made for active budgeters who want stronger forecasting, deeper reports, better review tools, and more personalization across the app.",
-    audience: "Best for active budgeters",
-    featured: true,
-    themeAccess: "Larger built-in theme selection",
-    reportsAccess: "Advanced reports and forecasting",
-    supportLevel: "Priority support with faster turnaround",
-    features: [
-      "Everything in Starter",
+      "Automatic bank account sync",
+      "Auto-categorised income and spending history",
       "Advanced financial reports",
-      "Longer trend history",
       "Savings-rate and cash-flow forecasting tools",
       "Smarter month-over-month comparisons",
       "Goal and budget performance views",
-      "Access to a larger set of built-in themes",
+      "Built-in theme library",
       "More detailed income source analysis",
-      "Priority support with faster turnaround",
     ],
   },
   {
     slug: "scale",
     name: "Scale",
-    priceMonthly: 34,
+    priceMonthly: 14,
     description: "Designed for power users, shared households, and anyone who wants the full Lunivo workspace with the richest controls, themes, and reporting depth.",
     audience: "Best for households and power users",
     themeAccess: "Create your own themes",
     reportsAccess: "Full reporting and export suite",
-    supportLevel: "White-glove priority support",
     features: [
-      "Everything in Growth",
+      "Everything in Sync",
       "Multi-profile support",
       "Full CSV and data export tools",
       "Shared household budgeting workflows",
@@ -158,7 +124,6 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
       "Save and reuse personal theme presets",
       "Early access feature previews",
       "Richer data controls and export tooling",
-      "White-glove priority support",
       "Early access to new features",
     ],
   },
@@ -173,27 +138,32 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Income tracking",
         description: "Log income entries and review source history.",
-        values: { free: true, starter: true, growth: true, scale: true },
+        values: { free: true, sync: true, scale: true },
       },
       {
         label: "Spending tracking",
         description: "Log, edit, and review spending entries.",
-        values: { free: true, starter: true, growth: true, scale: true },
+        values: { free: true, sync: true, scale: true },
       },
       {
         label: "Budget management",
         description: "Set and maintain category spending limits.",
-        values: { free: true, starter: true, growth: true, scale: true },
+        values: { free: true, sync: true, scale: true },
       },
       {
         label: "Goals tracking",
         description: "Track savings goals and completion progress.",
-        values: { free: true, starter: true, growth: true, scale: true },
+        values: { free: true, sync: true, scale: true },
+      },
+      {
+        label: "Bank sync and automation",
+        description: "Connect your bank so income and spendings sync automatically into the app.",
+        values: { free: false, sync: true, scale: true },
       },
       {
         label: "Dashboard insights",
         description: "See the main dashboard with current income and spending summaries.",
-        values: { free: "Basic", starter: "Enhanced", growth: "Advanced", scale: "Advanced" },
+        values: { free: "Basic", sync: "Advanced", scale: "Advanced" },
       },
     ],
   },
@@ -203,27 +173,27 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Monthly summaries",
         description: "Review month-level totals and visual summaries.",
-        values: { free: true, starter: true, growth: true, scale: true },
+        values: { free: true, sync: true, scale: true },
       },
       {
         label: "Detailed reports",
         description: "Use deeper category and performance reporting views.",
-        values: { free: false, starter: false, growth: true, scale: true },
+        values: { free: false, sync: true, scale: true },
       },
       {
         label: "Forecasting tools",
         description: "See projected savings, cash-flow, and longer-range planning estimates.",
-        values: { free: false, starter: false, growth: true, scale: true },
+        values: { free: false, sync: true, scale: true },
       },
       {
         label: "Long-range planning views",
         description: "Plan further ahead with deeper timeline views and comparisons.",
-        values: { free: false, starter: false, growth: false, scale: true },
+        values: { free: false, sync: false, scale: true },
       },
       {
         label: "Export-ready summaries",
         description: "Use cleaner summaries prepared for sharing or export workflows.",
-        values: { free: false, starter: true, growth: true, scale: true },
+        values: { free: false, sync: true, scale: true },
       },
     ],
   },
@@ -233,22 +203,22 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Theme selection",
         description: "Choose from the available built-in theme options.",
-        values: { free: "1 theme", starter: "4 built-in themes", growth: "12 built-in themes", scale: "Full library" },
+        values: { free: "1 theme", sync: "12 built-in themes", scale: "Full library" },
       },
       {
         label: "Custom theme creation",
         description: "Create your own theme presets and save them for reuse.",
-        values: { free: false, starter: false, growth: false, scale: true },
+        values: { free: false, sync: false, scale: true },
       },
       {
         label: "Saved theme presets",
         description: "Store and switch between personal visual presets.",
-        values: { free: false, starter: false, growth: false, scale: true },
+        values: { free: false, sync: false, scale: true },
       },
       {
         label: "Expanded dashboard layout options",
         description: "Access more ways to surface information in the dashboard.",
-        values: { free: false, starter: true, growth: true, scale: true },
+        values: { free: false, sync: true, scale: true },
       },
     ],
   },
@@ -258,37 +228,22 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Multi-profile support",
         description: "Manage shared or separate finance profiles inside one workspace.",
-        values: { free: false, starter: false, growth: false, scale: true },
+        values: { free: false, sync: false, scale: true },
       },
       {
         label: "CSV and data exports",
         description: "Export account and planning data for external use.",
-        values: { free: false, starter: false, growth: false, scale: true },
+        values: { free: false, sync: false, scale: true },
       },
       {
         label: "Shared household workflows",
         description: "Coordinate planning for family or shared-finance use cases.",
-        values: { free: false, starter: false, growth: false, scale: true },
+        values: { free: false, sync: false, scale: true },
       },
       {
-        label: "Priority feature previews",
-        description: "Get access to selected upcoming product features before general release.",
-        values: { free: false, starter: false, growth: false, scale: true },
-      },
-    ],
-  },
-  {
-    title: "Support",
-    rows: [
-      {
-        label: "Support level",
-        description: "How quickly and directly support is provided.",
-        values: {
-          free: "Community",
-          starter: "Priority email",
-          growth: "Priority with faster turnaround",
-          scale: "White-glove priority",
-        },
+        label: "Shared household workflows",
+        description: "Coordinate planning for family or shared-finance use cases.",
+        values: { free: false, sync: false, scale: true },
       },
     ],
   },
@@ -299,7 +254,11 @@ export function getSubscriptionPlanBySlug(slug: string | null | undefined) {
     return null;
   }
 
-  const normalizedSlug = slug.trim().toLowerCase();
+  const normalizedSlug = slug.trim().toLowerCase() === "starter"
+    ? "free"
+    : slug.trim().toLowerCase() === "growth"
+      ? "sync"
+      : slug.trim().toLowerCase();
   return ALL_SUBSCRIPTION_PLANS.find((plan) => plan.slug === normalizedSlug) ?? null;
 }
 

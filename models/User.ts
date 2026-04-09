@@ -6,7 +6,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string; // hashed
-  planSlug: 'free' | 'starter' | 'growth' | 'scale';
+  planSlug: 'free' | 'starter' | 'growth' | 'sync' | 'scale';
   backupEmail?: string;
   phone?: string;
   preferences?: {
@@ -27,7 +27,7 @@ const UserSchema: Schema<IUser> = new Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    planSlug: { type: String, enum: ['free', 'starter', 'growth', 'scale'], default: 'free' },
+    planSlug: { type: String, enum: ['free', 'starter', 'growth', 'sync', 'scale'], default: 'free' },
     backupEmail: { type: String, trim: true, default: '' },
     phone: { type: String, trim: true, default: '' },
     preferences: {

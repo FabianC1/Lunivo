@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
   }
 
   const scope = req.nextUrl.searchParams.get("scope") === "detailed" ? "detailed" : "dashboard";
-  if (scope === "detailed" && !hasPlanAccess(authenticatedUser.planSlug, "growth")) {
-    return forbiddenResponse("Detailed reports are available on the Growth plan and above.");
+  if (scope === "detailed" && !hasPlanAccess(authenticatedUser.planSlug, "sync")) {
+    return forbiddenResponse("Detailed reports are available on the Sync plan and above.");
   }
 
   await connectToDatabase();

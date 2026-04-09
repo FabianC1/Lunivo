@@ -24,7 +24,7 @@ type ReportsPayload = {
 };
 
 const SAMPLE_REPORTS: ReportsPayload = {
-  planSlug: "growth",
+  planSlug: "sync",
   summaries: {
     annualIncome: 41270,
     annualSpendings: 28580,
@@ -73,7 +73,7 @@ export default function ReportsPage() {
 
         const response = await fetch("/api/reports/summary?scope=detailed", { cache: "no-store" });
         if (response.status === 403) {
-          const message = await readApiError(response, "Upgrade to Growth to unlock advanced reports.");
+          const message = await readApiError(response, "Upgrade to Sync to unlock advanced reports.");
           if (isMounted) {
             setIsUpgradeBlocked(true);
             setError(message);
@@ -206,12 +206,12 @@ export default function ReportsPage() {
                 <article className={styles.summaryCard}>
                   <p>Detailed reporting</p>
                   <h3>Enabled</h3>
-                  <span>Growth and Scale plans</span>
+                  <span>Sync and Scale plans</span>
                 </article>
                 <article className={styles.summaryCard}>
                   <p>Forecasting</p>
                   <h3>Enabled</h3>
-                  <span>Server-side gated access</span>
+                  <span>Available on Sync and Scale</span>
                 </article>
               </div>
             </section>
