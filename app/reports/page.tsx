@@ -5,6 +5,7 @@ import Chart from "../../components/Chart";
 import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
 import { DEMO_EMAIL, getSession } from "../../lib/auth";
+import { getSubscriptionPlanBySlug } from "../../lib/subscriptions";
 import { formatCurrency } from "../../lib/utils";
 import styles from "./reports.module.css";
 
@@ -73,7 +74,7 @@ export default function ReportsPage() {
 
         const response = await fetch("/api/reports/summary?scope=detailed", { cache: "no-store" });
         if (response.status === 403) {
-          const message = await readApiError(response, "Upgrade to Sync to unlock advanced reports.");
+          const message = await readApiError(response, "Upgrade to Smart to unlock advanced reports.");
           if (isMounted) {
             setIsUpgradeBlocked(true);
             setError(message);
@@ -121,6 +122,8 @@ export default function ReportsPage() {
       { title: "Savings Rate", value: `${data.summaries.savingsRate.toFixed(1)}%`, note: "Based on recorded income" },
     ];
   }, [data]);
+
+  const currentPlanName = data ? getSubscriptionPlanBySlug(data.planSlug)?.name ?? data.planSlug : "";
 
   if (isLoading) {
     return <PageLoading message="Loading reports..." />;
@@ -199,19 +202,19 @@ export default function ReportsPage() {
               <div className={styles.sectionHeader}>
                 <div>
                   <h2>Plan access</h2>
-                  <p>Your current reporting tier is {data.planSlug}.</p>
+                  <p>Your current reporting tier is {currentPlanName}.</p>
                 </div>
               </div>
               <div className={styles.summaryGrid}>
                 <article className={styles.summaryCard}>
                   <p>Detailed reporting</p>
                   <h3>Enabled</h3>
-                  <span>Sync and Scale plans</span>
+                  <span>Smart and Pro plans</span>
                 </article>
                 <article className={styles.summaryCard}>
                   <p>Forecasting</p>
                   <h3>Enabled</h3>
-                  <span>Available on Sync and Scale</span>
+                  <span>Available on Smart and Pro</span>
                 </article>
               </div>
             </section>

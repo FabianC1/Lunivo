@@ -31,14 +31,14 @@ export default function SubscriptionsPage() {
       <section className={styles.matrixSection}>
         <div className={styles.sectionIntro}>
           <h2>Plan comparison</h2>
-          <p>Each row below is designed to describe what changes between manual tracking, automatic bank sync, and the full power-user workspace.</p>
+          <p>Each row below is designed to describe what changes between manual tracking, automatic bank sync, and the full premium workspace.</p>
         </div>
 
         <div className={styles.matrixBoard}>
           <div className={styles.matrixHeaderRow}>
             <div className={styles.matrixFeatureHeader}>
               <span className={styles.matrixFeatureHeaderTitle}>Feature Matrix</span>
-              <span className={styles.matrixFeatureHeaderSubtitle}>How Free, Sync, and Scale change the product experience</span>
+              <span className={styles.matrixFeatureHeaderSubtitle}>How Starter, Smart, and Pro change the product experience</span>
             </div>
             {visiblePlans.map((plan) => (
               <div
@@ -104,8 +104,8 @@ export default function SubscriptionsPage() {
       <section className={styles.notes}>
         <h3>What happens next?</h3>
         <ul>
-          <li>You can start on Free and upgrade later.</li>
-          <li>Free is built for manual entry, Sync adds automatic bank-connected tracking, and Scale adds advanced controls and exports.</li>
+          <li>You can start on Starter and upgrade later.</li>
+          <li>Starter is built for manual entry, Smart adds automatic bank-connected tracking, and Pro adds advanced controls and exports.</li>
           <li>Plan selection is already passed into signup, and the next step would be persisting it on the user record.</li>
         </ul>
       </section>

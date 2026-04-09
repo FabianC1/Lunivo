@@ -40,7 +40,7 @@ const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
     maxAccounts: 5,
     reportsLevel: "advanced",
     canUseForecasting: true,
-    canUseExports: true,
+    canUseExports: false,
     canCreateThemes: false,
   },
   scale: {
@@ -69,10 +69,10 @@ export type SubscriptionComparisonSection = {
 
 export const FREE_PLAN: SubscriptionPlan = {
   slug: "free",
-  name: "Free",
+  name: "Starter",
   priceMonthly: 0,
   description: "Manual money tracking for people who want to log spending, income, budgets, and goals themselves without automated syncing.",
-  audience: "Best for manual tracking",
+  audience: "Best for getting started",
   themeAccess: "1 core theme",
   reportsAccess: "Basic summaries",
   features: [
@@ -87,7 +87,7 @@ export const FREE_PLAN: SubscriptionPlan = {
 export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
   {
     slug: "sync",
-    name: "Sync",
+    name: "Smart",
     priceMonthly: 8,
     description: "Automatic bank-connected tracking for people who want income and spendings synced into Lunivo instead of entering everything manually.",
     audience: "Best for automatic tracking",
@@ -95,30 +95,29 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
     themeAccess: "12 built-in themes",
     reportsAccess: "Advanced reports and forecasting",
     features: [
-      "Everything in Free",
+      "Everything in Starter",
       "Automatic bank account sync",
       "Auto-categorised income and spending history",
       "Advanced financial reports",
       "Savings-rate and cash-flow forecasting tools",
       "Smarter month-over-month comparisons",
       "Goal and budget performance views",
+      "Long-range planning views",
       "Built-in theme library",
       "More detailed income source analysis",
     ],
   },
   {
     slug: "scale",
-    name: "Scale",
+    name: "Pro",
     priceMonthly: 14,
-    description: "Designed for power users, shared households, and anyone who wants the full Lunivo workspace with the richest controls, themes, and reporting depth.",
-    audience: "Best for households and power users",
+    description: "Designed for people who want the full Lunivo workspace with the richest controls, exports, themes, and reporting depth.",
+    audience: "Ultimate finance tracker",
     themeAccess: "Create your own themes",
     reportsAccess: "Full reporting and export suite",
     features: [
-      "Everything in Sync",
-      "Multi-profile support",
+      "Everything in Smart",
       "Full CSV and data export tools",
-      "Shared household budgeting workflows",
       "Deeper planning views for longer timelines",
       "Create your own custom themes",
       "Save and reuse personal theme presets",
@@ -188,7 +187,7 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Long-range planning views",
         description: "Plan further ahead with deeper timeline views and comparisons.",
-        values: { free: false, sync: false, scale: true },
+        values: { free: false, sync: true, scale: true },
       },
       {
         label: "Export-ready summaries",
@@ -223,26 +222,16 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
     ],
   },
   {
-    title: "Household & Data Access",
+    title: "Data & Advanced Access",
     rows: [
-      {
-        label: "Multi-profile support",
-        description: "Manage shared or separate finance profiles inside one workspace.",
-        values: { free: false, sync: false, scale: true },
-      },
       {
         label: "CSV and data exports",
         description: "Export account and planning data for external use.",
         values: { free: false, sync: false, scale: true },
       },
       {
-        label: "Shared household workflows",
-        description: "Coordinate planning for family or shared-finance use cases.",
-        values: { free: false, sync: false, scale: true },
-      },
-      {
-        label: "Shared household workflows",
-        description: "Coordinate planning for family or shared-finance use cases.",
+        label: "Advanced data controls",
+        description: "Unlock deeper workspace controls for managing and reusing your financial data.",
         values: { free: false, sync: false, scale: true },
       },
     ],
@@ -254,11 +243,14 @@ export function getSubscriptionPlanBySlug(slug: string | null | undefined) {
     return null;
   }
 
-  const normalizedSlug = slug.trim().toLowerCase() === "starter"
+  const trimmedSlug = slug.trim().toLowerCase();
+  const normalizedSlug = trimmedSlug === "starter"
     ? "free"
-    : slug.trim().toLowerCase() === "growth"
+    : trimmedSlug === "growth" || trimmedSlug === "smart"
       ? "sync"
-      : slug.trim().toLowerCase();
+      : trimmedSlug === "pro"
+        ? "scale"
+        : trimmedSlug;
   return ALL_SUBSCRIPTION_PLANS.find((plan) => plan.slug === normalizedSlug) ?? null;
 }
 
@@ -276,5 +268,5 @@ export function getPlanCapabilities(plan: string | null | undefined) {
 }
 
 export function formatPlanPrice(priceMonthly: number) {
-  return priceMonthly === 0 ? "Free" : `GBP ${priceMonthly}/month`;
+  return priceMonthly === 0 ? "Starter" : `GBP ${priceMonthly}/month`;
 }
