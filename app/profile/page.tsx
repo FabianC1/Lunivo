@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
 import styles from "./profile.module.css";
-import { AuthSession, clearSession, getSession, markLogoutPending, setSession } from "../../lib/auth";
+import { AuthSession, clearSession, DEMO_PLAN_SLUG, getSession, markLogoutPending, setSession } from "../../lib/auth";
 import { useTheme } from "../../components/ThemeProvider";
 import {
   FREE_PLAN,
@@ -51,9 +51,53 @@ type ProfilePayload = {
   };
 };
 
-function createThemeDraft(name: string, mode: ThemeMode, primaryColor: string, accentColor: string, backgroundColor: string, textColor: string): ThemePreset {
+function mixColors(colorA: string, colorB: string, weight = 0.5) {
+  const normalize = (value: string) => value.replace("#", "").trim();
+  const a = normalize(colorA);
+  const b = normalize(colorB);
+  if (!/^[0-9a-fA-F]{6}$/.test(a) || !/^[0-9a-fA-F]{6}$/.test(b)) {
+    return colorA;
+  }
+
+  const blend = (index: number) => {
+    const first = Number.parseInt(a.slice(index, index + 2), 16);
+    const second = Number.parseInt(b.slice(index, index + 2), 16);
+    return Math.round((first * (1 - weight)) + (second * weight))
+      .toString(16)
+      .padStart(2, "0");
+  };
+
+  return `#${blend(0)}${blend(2)}${blend(4)}`.toUpperCase();
+}
+
+function parseGradientAngle(gradient: string) {
+  const match = gradient.match(/linear-gradient\((\d+)deg/i);
+  return match ? Number.parseInt(match[1], 10) : 135;
+}
+
+function isInvertedGradient(gradient: string, accentColor: string) {
+  return gradient.toLowerCase().includes(`${accentColor.toLowerCase()} 0%`);
+}
+
+function createThemeDraft(
+  name: string,
+  mode: ThemeMode,
+  primaryColor: string,
+  accentColor: string,
+  backgroundColor: string,
+  textColor: string,
+  gradientAngle: number,
+  gradientInverted: boolean,
+): ThemePreset {
   const id = `custom-${Date.now()}`;
   const cardColor = mode === "dark" ? "#1E293B" : "#FFFFFF";
+  const gradientStart = gradientInverted ? accentColor : backgroundColor;
+  const gradientEnd = gradientInverted ? backgroundColor : accentColor;
+  const midColor = mode === "dark"
+    ? mixColors(backgroundColor, "#0F172A", 0.42)
+    : mixColors(backgroundColor, "#FFFFFF", 0.4);
+  const navbarStart = gradientInverted ? accentColor : cardColor;
+  const navbarEnd = gradientInverted ? cardColor : primaryColor;
   return {
     id,
     name,
@@ -66,10 +110,10 @@ function createThemeDraft(name: string, mode: ThemeMode, primaryColor: string, a
       accentColor,
       highlightColor: accentColor,
       cardColor,
-      navbarColor: `linear-gradient(135deg, ${backgroundColor} 0%, ${cardColor} 100%)`,
+      navbarColor: `linear-gradient(${gradientAngle}deg, ${navbarStart} 0%, ${navbarEnd} 100%)`,
       navbarBorderGradient: `linear-gradient(90deg, ${primaryColor} 0%, ${accentColor} 100%)`,
       navbarTextColor: textColor,
-      bgGradient: `linear-gradient(135deg, ${backgroundColor} 0%, ${cardColor} 55%, ${accentColor}22 100%)`,
+      bgGradient: `linear-gradient(${gradientAngle}deg, ${gradientStart} 0%, ${midColor} 55%, ${gradientEnd} 100%)`,
       buttonGradientStart: primaryColor,
       buttonGradientEnd: accentColor,
       foregroundRgb: mode === "dark" ? "241, 245, 249" : "30, 41, 59",
@@ -162,6 +206,9 @@ export default function ProfilePage() {
   const [themeAccent, setThemeAccent] = useState("#F97316");
   const [themeBackground, setThemeBackground] = useState("#F8FAFC");
   const [themeText, setThemeText] = useState("#1E293B");
+  const [themeGradientAngle, setThemeGradientAngle] = useState(135);
+  const [themeGradientInverted, setThemeGradientInverted] = useState(false);
+  const [editingThemeId, setEditingThemeId] = useState<string | null>(null);
   const [contactMessage, setContactMessage] = useState("");
   const [billingMessage, setBillingMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
@@ -192,7 +239,7 @@ export default function ProfilePage() {
     const currentSession = session;
 
     if (!currentSession?.userId || currentSession.isDemo) {
-      setCurrentPlanSlug("free");
+      setCurrentPlanSlug(currentSession?.isDemo ? DEMO_PLAN_SLUG : "free");
       setIsProfileLoading(false);
       return;
     }
@@ -541,6 +588,30 @@ export default function ProfilePage() {
     });
   }
 
+  function resetThemeBuilder() {
+    setEditingThemeId(null);
+    setThemeName("My Theme");
+    setThemeMode("light");
+    setThemePrimary("#2563EB");
+    setThemeAccent("#F97316");
+    setThemeBackground("#F8FAFC");
+    setThemeText("#1E293B");
+    setThemeGradientAngle(135);
+    setThemeGradientInverted(false);
+  }
+
+  function startEditingTheme(theme: ThemePreset) {
+    setEditingThemeId(theme.id);
+    setThemeName(theme.name);
+    setThemeMode(theme.mode);
+    setThemePrimary(theme.colors.primaryColor);
+    setThemeAccent(theme.colors.accentColor);
+    setThemeBackground(theme.colors.bgColor);
+    setThemeText(theme.colors.textColor);
+    setThemeGradientAngle(parseGradientAngle(theme.colors.bgGradient));
+    setThemeGradientInverted(isInvertedGradient(theme.colors.bgGradient, theme.colors.accentColor));
+  }
+
   async function handleCreateCustomTheme() {
     setThemeError("");
     if (!themeName.trim()) {
@@ -548,20 +619,36 @@ export default function ProfilePage() {
       return;
     }
 
-    const nextTheme = createThemeDraft(
+    const draftTheme = createThemeDraft(
       themeName.trim(),
       themeMode,
       themePrimary,
       themeAccent,
       themeBackground,
       themeText,
+      themeGradientAngle,
+      themeGradientInverted,
     );
-    const nextCustomThemes = [...customThemes, nextTheme];
+
+    const nextTheme = editingThemeId
+      ? { ...draftTheme, id: editingThemeId }
+      : draftTheme;
+
+    const nextCustomThemes = editingThemeId
+      ? customThemes.map((theme) => (theme.id === editingThemeId ? nextTheme : theme))
+      : [...customThemes, nextTheme];
+
     setCustomThemes(nextCustomThemes);
-    await persistAppearanceSettings({
-      selectedThemeId: nextTheme.id,
+    const saved = await persistAppearanceSettings({
+      selectedThemeId: selectedThemeId === editingThemeId || !editingThemeId ? nextTheme.id : selectedThemeId,
       customThemes: nextCustomThemes,
     });
+
+    if (saved) {
+      setThemeMessage(editingThemeId ? "Theme preset updated." : "Theme preset created.");
+      window.setTimeout(() => setThemeMessage(""), 2200);
+      resetThemeBuilder();
+    }
   }
 
   async function handleDeleteCustomTheme(themeId: string) {
@@ -828,32 +915,113 @@ export default function ProfilePage() {
             <div className={styles.inlineCard}>
               <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
               <p>Pro can create and save personal theme presets. Other plans can preview the controls here, but saving is locked.</p>
-              <div className={styles.themeBuilderGrid}>
-                <label className={styles.fieldLabel} htmlFor="themeName">Theme name</label>
-                <input id="themeName" className={styles.input} value={themeName} onChange={(event) => setThemeName(event.target.value)} />
+              <div className={styles.themeBuilderLayout}>
+                <div className={styles.themeBuilderGrid}>
+                  <label className={styles.fieldLabel} htmlFor="themeName">Theme name</label>
+                  <input id="themeName" className={styles.input} value={themeName} onChange={(event) => setThemeName(event.target.value)} />
 
-                <label className={styles.fieldLabel} htmlFor="themeMode">Base mode</label>
-                <select id="themeMode" className={styles.input} value={themeMode} onChange={(event) => setThemeMode(event.target.value as ThemeMode)}>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
+                  <label className={styles.fieldLabel} htmlFor="themeMode">Base mode</label>
+                  <select id="themeMode" className={styles.input} value={themeMode} onChange={(event) => setThemeMode(event.target.value as ThemeMode)}>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
 
-                <label className={styles.fieldLabel} htmlFor="themePrimary">Primary color</label>
-                <input id="themePrimary" className={styles.input} type="color" value={themePrimary} onChange={(event) => setThemePrimary(event.target.value)} />
+                  <label className={styles.fieldLabel} htmlFor="themePrimary">Primary color</label>
+                  <label className={styles.colorPickerField} htmlFor="themePrimary">
+                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themePrimary }} />
+                    <span className={styles.colorPickerValue}>{themePrimary.toUpperCase()}</span>
+                    <input id="themePrimary" className={styles.colorPickerInput} type="color" value={themePrimary} onChange={(event) => setThemePrimary(event.target.value)} />
+                  </label>
 
-                <label className={styles.fieldLabel} htmlFor="themeAccent">Accent color</label>
-                <input id="themeAccent" className={styles.input} type="color" value={themeAccent} onChange={(event) => setThemeAccent(event.target.value)} />
+                  <label className={styles.fieldLabel} htmlFor="themeAccent">Accent color</label>
+                  <label className={styles.colorPickerField} htmlFor="themeAccent">
+                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeAccent }} />
+                    <span className={styles.colorPickerValue}>{themeAccent.toUpperCase()}</span>
+                    <input id="themeAccent" className={styles.colorPickerInput} type="color" value={themeAccent} onChange={(event) => setThemeAccent(event.target.value)} />
+                  </label>
 
-                <label className={styles.fieldLabel} htmlFor="themeBackground">Background color</label>
-                <input id="themeBackground" className={styles.input} type="color" value={themeBackground} onChange={(event) => setThemeBackground(event.target.value)} />
+                  <label className={styles.fieldLabel} htmlFor="themeBackground">Background color</label>
+                  <label className={styles.colorPickerField} htmlFor="themeBackground">
+                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeBackground }} />
+                    <span className={styles.colorPickerValue}>{themeBackground.toUpperCase()}</span>
+                    <input id="themeBackground" className={styles.colorPickerInput} type="color" value={themeBackground} onChange={(event) => setThemeBackground(event.target.value)} />
+                  </label>
 
-                <label className={styles.fieldLabel} htmlFor="themeText">Text color</label>
-                <input id="themeText" className={styles.input} type="color" value={themeText} onChange={(event) => setThemeText(event.target.value)} />
+                  <label className={styles.fieldLabel} htmlFor="themeText">Text color</label>
+                  <label className={styles.colorPickerField} htmlFor="themeText">
+                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeText }} />
+                    <span className={styles.colorPickerValue}>{themeText.toUpperCase()}</span>
+                    <input id="themeText" className={styles.colorPickerInput} type="color" value={themeText} onChange={(event) => setThemeText(event.target.value)} />
+                  </label>
+                </div>
+
+                <aside className={styles.themeBuilderPreviewCard}>
+                  <span className={styles.themeBuilderPreviewEyebrow}>{editingThemeId ? "Editing preset" : "Live preview"}</span>
+                  <div
+                    className={styles.themeBuilderPreviewFrame}
+                    style={{
+                      background: `linear-gradient(${themeGradientAngle}deg, ${themeGradientInverted ? themeAccent : themeBackground} 0%, ${mixColors(themeBackground, themeMode === "dark" ? "#111827" : "#FFFFFF", themeMode === "dark" ? 0.5 : 0.62)} 55%, ${themeGradientInverted ? themeBackground : themeAccent} 100%)`,
+                      color: themeText,
+                      borderColor: themePrimary,
+                    }}
+                  >
+                    <div className={styles.themeBuilderPreviewTop}>
+                      <strong>{themeName || "Untitled theme"}</strong>
+                      <span
+                        className={styles.themeBuilderPreviewBadge}
+                        style={{ backgroundColor: themeAccent, color: themeMode === "dark" ? "#0F172A" : "#FFFFFF" }}
+                      >
+                        {themeMode}
+                      </span>
+                    </div>
+                    <div className={styles.themeBuilderPreviewPanel} style={{ backgroundColor: themeMode === "dark" ? "#1E293B" : "#FFFFFF" }}>
+                      <span className={styles.themeBuilderPreviewLabel}>Buttons</span>
+                      <div className={styles.themeBuilderPreviewActions}>
+                        <span className={styles.themeBuilderPreviewPrimary} style={{ backgroundColor: themePrimary, color: themeMode === "dark" ? "#F8FAFC" : "#FFFFFF" }}>Primary</span>
+                        <span className={styles.themeBuilderPreviewSecondary} style={{ borderColor: themeAccent, color: themeText }}>Accent</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.gradientControlCard}>
+                    <div className={styles.themeBuilderPreviewTop}>
+                      <span className={styles.themeBuilderPreviewLabel}>Gradient angle</span>
+                      <strong>{themeGradientAngle}deg</strong>
+                    </div>
+                    <input
+                      id="themeGradientAngle"
+                      className={styles.gradientRange}
+                      type="range"
+                      min="0"
+                      max="360"
+                      step="1"
+                      value={themeGradientAngle}
+                      onChange={(event) => setThemeGradientAngle(Number(event.target.value))}
+                    />
+                    <div className={styles.gradientControlFooter}>
+                      <label className={styles.gradientCheckboxLabel}>
+                        <input
+                          type="checkbox"
+                          checked={themeGradientInverted}
+                          onChange={(event) => setThemeGradientInverted(event.target.checked)}
+                        />
+                        Inverse gradient
+                      </label>
+                    </div>
+                  </div>
+                </aside>
               </div>
               <div className={styles.actionRow}>
                 <button type="button" className={styles.primaryButton} onClick={() => void handleCreateCustomTheme()} disabled={!canCreateCustomThemes}>
-                  Create theme preset
+                  {editingThemeId ? "Save changes" : "Create theme preset"}
                 </button>
+                <button type="button" className={styles.secondaryButton} onClick={resetThemeBuilder}>
+                  Reset
+                </button>
+                {editingThemeId ? (
+                  <button type="button" className={styles.secondaryButton} onClick={resetThemeBuilder}>
+                    Cancel editing
+                  </button>
+                ) : null}
                 {!canCreateCustomThemes ? <span className={styles.hintText}>Available on Pro.</span> : null}
               </div>
             </div>
@@ -872,6 +1040,9 @@ export default function ProfilePage() {
                       <div className={styles.actionRow}>
                         <button type="button" className={styles.secondaryButton} onClick={() => void handleThemeSelection(theme.id)}>
                           Apply
+                        </button>
+                        <button type="button" className={styles.secondaryButton} onClick={() => startEditingTheme(theme)} disabled={!canCreateCustomThemes}>
+                          Edit
                         </button>
                         <button type="button" className={styles.secondaryButton} onClick={() => void handleDeleteCustomTheme(theme.id)} disabled={!canCreateCustomThemes}>
                           Delete
@@ -1292,11 +1463,30 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Privacy & Data</h1>
             <p className={styles.subheading}>Control visibility and data export options.</p>
             <div className={styles.inlineCard}>
-              <p>Your account email is kept private by default.</p>
-              <p>Analytics are used for feature improvement and financial insight recommendations.</p>
-              <a href="/privacy" className={styles.link}>
-                View full privacy policy
-              </a>
+              <h3 className={styles.sectionSubtitle}>Privacy Overview</h3>
+              <div className={styles.supportActionList}>
+                <div className={styles.supportActionButton}>
+                  <span>
+                    <strong>Account email visibility</strong>
+                    <small>Your account email is kept private by default.</small>
+                  </span>
+                  <em>Private</em>
+                </div>
+                <div className={styles.supportActionButton}>
+                  <span>
+                    <strong>Product analytics</strong>
+                    <small>Analytics are used for feature improvement and financial insight recommendations.</small>
+                  </span>
+                  <em>Enabled</em>
+                </div>
+                <a href="/privacy" className={styles.supportActionButton}>
+                  <span>
+                    <strong>Privacy policy</strong>
+                    <small>Review the full privacy policy, data handling details, and account protections.</small>
+                  </span>
+                  <em>Open</em>
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -1308,15 +1498,29 @@ export default function ProfilePage() {
 
             <div className={styles.inlineCard}>
               <h3 className={styles.sectionSubtitle}>Support Channels</h3>
-              <a href="/terms" className={styles.link}>
-                Terms and account policies
-              </a>
-              <a href="/privacy" className={styles.link}>
-                Privacy policy
-              </a>
-              <a href="mailto:support@lunivo.app" className={styles.link}>
-                support@lunivo.app
-              </a>
+              <div className={styles.supportActionList}>
+                <a href="/terms" className={styles.supportActionButton}>
+                  <span>
+                    <strong>Terms and account policies</strong>
+                    <small>Read account rules, terms, and platform expectations.</small>
+                  </span>
+                  <em>Open</em>
+                </a>
+                <a href="/privacy" className={styles.supportActionButton}>
+                  <span>
+                    <strong>Privacy policy</strong>
+                    <small>See how account and billing data is stored and handled.</small>
+                  </span>
+                  <em>Open</em>
+                </a>
+                <a href="mailto:support@lunivo.app" className={styles.supportActionButton}>
+                  <span>
+                    <strong>support@lunivo.app</strong>
+                    <small>Contact support directly for account or billing help.</small>
+                  </span>
+                  <em>Email</em>
+                </a>
+              </div>
             </div>
 
             <div className={styles.divider} />

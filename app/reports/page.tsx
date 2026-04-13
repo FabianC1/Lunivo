@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Chart from "../../components/Chart";
 import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
-import { DEMO_EMAIL, getSession } from "../../lib/auth";
+import { DEMO_EMAIL, DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
 import { getSubscriptionPlanBySlug } from "../../lib/subscriptions";
 import { formatCurrency } from "../../lib/utils";
 import styles from "./reports.module.css";
@@ -55,14 +55,14 @@ type ReportsPayload = {
 };
 
 const SAMPLE_REPORTS: ReportsPayload = {
-  planSlug: "sync",
+  planSlug: DEMO_PLAN_SLUG,
   featureAccess: {
     netFlowPerMonth: true,
     endOfMonthBalanceEstimate: true,
     monthlySavingsEstimate: true,
     threeMonthAverageSpending: true,
     goalCompletionEstimate: true,
-    csvExport: false,
+    csvExport: true,
   },
   summaries: {
     annualIncome: 41270,

@@ -5,7 +5,7 @@ import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
 import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
-import { DEMO_EMAIL, getSession } from "../../lib/auth";
+import { DEMO_EMAIL, DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
 import { initialBudgets } from "../../lib/budgets";
 import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../lib/subscriptions";
 import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings, type DashboardWidgetKey } from "../../lib/userSettings";
@@ -165,7 +165,7 @@ export default function Dashboard() {
 
     if (shouldUseSampleData) {
       setReportData(SAMPLE_REPORT_DATA);
-      setCurrentPlanSlug("sync");
+      setCurrentPlanSlug(DEMO_PLAN_SLUG);
       setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
       setError("");
       setIsLoading(false);

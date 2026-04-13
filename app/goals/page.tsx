@@ -8,6 +8,8 @@ import styles from "./goals.module.css";
 import { formatCurrency } from "../../lib/utils";
 import { getSession } from "../../lib/auth";
 
+const DEMO_GOALS_SEED_KEY = "lunivo-goals-demo-seeded";
+
 type GoalKind =
   | "Home"
   | "Holiday"
@@ -36,6 +38,11 @@ type Tab = "active" | "completed";
 function storageKey(): string {
   const session = getSession();
   return `lunivo-goals-${session?.userId ?? session?.email ?? "guest"}`;
+}
+
+function seedKey(): string {
+  const session = getSession();
+  return `${DEMO_GOALS_SEED_KEY}-${session?.userId ?? session?.email ?? "guest"}`;
 }
 
 function loadGoals(): GoalItem[] {
@@ -76,6 +83,40 @@ function getInitialGoals(): GoalItem[] {
       notes: "Ceremony, reception, and travel for 80 guests.",
       completed: false,
       createdAt: new Date("2025-10-20").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "Japan anniversary trip",
+      kind: "Holiday",
+      targetAmount: 6400,
+      savedAmount: 2150,
+      targetDate: "2026-10-05",
+      notes: "Flights, rail passes, hotels, and a bit of shopping money.",
+      completed: false,
+      createdAt: new Date("2026-02-08").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "Emergency fund",
+      kind: "Emergency Fund",
+      targetAmount: 12000,
+      savedAmount: 9300,
+      targetDate: "2026-09-30",
+      notes: "Keep six months of essential costs parked and untouched.",
+      completed: false,
+      createdAt: new Date("2025-08-01").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "New car deposit",
+      kind: "Vehicle",
+      targetAmount: 8000,
+      savedAmount: 8000,
+      targetDate: "2026-03-18",
+      notes: "Deposit saved for a hybrid upgrade before the end of spring.",
+      completed: true,
+      completedAt: new Date("2026-03-12").toISOString(),
+      createdAt: new Date("2025-11-02").toISOString(),
     },
   ];
 }
@@ -164,6 +205,26 @@ export default function GoalsPage() {
       persistGoals(goals);
     }
   }, [goals, usesDatabase]);
+
+  useEffect(() => {
+    if (usesDatabase || typeof window === "undefined") {
+      return;
+    }
+
+    const session = getSession();
+    if (!session?.isDemo || goals.length > 0 || localStorage.getItem(seedKey())) {
+      return;
+    }
+
+    const seededGoals = getInitialGoals();
+    if (seededGoals.length === 0) {
+      return;
+    }
+
+    setGoals(seededGoals);
+    localStorage.setItem(seedKey(), "true");
+    localStorage.setItem(storageKey(), JSON.stringify(seededGoals));
+  }, [goals.length, usesDatabase]);
 
   const activeGoals = useMemo(() => goals.filter((g) => !g.completed), [goals]);
   const completedGoals = useMemo(() => goals.filter((g) => g.completed), [goals]);

@@ -10,7 +10,7 @@ import BudgetComparisonChart from "../../components/BudgetComparisonChart";
 import { readApiError } from "../../lib/apiClient";
 import { formatCurrency, formatDate } from "../../lib/utils";
 import { initialBudgets, sanitizeBudgets, type BudgetMap } from "../../lib/budgets";
-import { getSession } from "../../lib/auth";
+import { DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
 import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../lib/subscriptions";
 import { DEFAULT_CUSTOM_CATEGORIES, sanitizeCustomCategories } from "../../lib/userSettings";
 
@@ -92,6 +92,7 @@ export default function Transactions() {
 
     if (!userId) {
       setTransactions(dummy);
+      setCurrentPlanSlug(session?.isDemo ? DEMO_PLAN_SLUG : "free");
       setIsLoading(false);
       return;
     }

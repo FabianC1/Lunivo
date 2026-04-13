@@ -30,8 +30,8 @@
 }
 
 .kpiCard {
-  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--content-surface);
+  border: 1px solid var(--content-border);
   border-radius: 1rem;
   padding: 1.25rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -68,8 +68,8 @@
 
 /* Card sections (progress + table containers) */
 .cardSection {
-  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--content-surface);
+  border: 1px solid var(--content-border);
   padding: 1.5rem;
   border-radius: 1rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -120,7 +120,7 @@
   padding: 0.7rem 0.85rem;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 0.6rem;
-  background: var(--card-color);
+  background: var(--content-surface);
   color: var(--text-color);
   font: inherit;
 }
@@ -206,8 +206,8 @@
 }
 
 .chartSection {
-  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--content-surface);
+  border: 1px solid var(--content-border);
   padding: 1.5rem;
   border-radius: 1rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -287,7 +287,7 @@
   padding: 0.55rem 0.7rem;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 0.5rem;
-  background-color: var(--card-color);
+  background-color: var(--content-surface);
   color: var(--text-color);
   font-family: inherit;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;

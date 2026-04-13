@@ -603,11 +603,170 @@ select.input option {
   border: 2px solid transparent;
 }
 
+.themeBuilderLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
 .themeBuilderGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem 1rem;
   align-items: end;
+}
+
+.colorPickerField {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1.5px solid color-mix(in srgb, var(--text-color) 24%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-color) 55%, transparent);
+  cursor: pointer;
+}
+
+.colorPickerSwatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, #ffffff 75%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-color) 20%, transparent);
+  flex-shrink: 0;
+}
+
+.colorPickerValue {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.gradientControlCard {
+  display: grid;
+  gap: 0.7rem;
+  min-height: 3rem;
+  padding: 0.8rem;
+  border-radius: 0.8rem;
+  border: 1.5px solid color-mix(in srgb, var(--text-color) 24%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-color) 55%, transparent);
+}
+
+.gradientRange {
+  width: 100%;
+  accent-color: var(--button-gradient-start);
+}
+
+.gradientControlFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.gradientCheckboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: color-mix(in srgb, var(--text-color) 74%, transparent);
+}
+
+.gradientCheckboxLabel input {
+  accent-color: var(--button-gradient-start);
+}
+
+.colorPickerInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.themeBuilderPreviewCard {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.95rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+}
+
+.themeBuilderPreviewEyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-color) 62%, transparent);
+  font-weight: 700;
+}
+
+.themeBuilderPreviewFrame {
+  display: grid;
+  gap: 0.85rem;
+  min-height: 14rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+}
+
+.themeBuilderPreviewTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.themeBuilderPreviewBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.themeBuilderPreviewPanel {
+  margin-top: auto;
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, #ffffff 32%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.themeBuilderPreviewLabel {
+  font-size: 0.82rem;
+  opacity: 0.78;
+}
+
+.themeBuilderPreviewActions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.themeBuilderPreviewPrimary,
+.themeBuilderPreviewSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.themeBuilderPreviewSecondary {
+  border: 1.5px solid;
+  background: color-mix(in srgb, var(--surface-color) 70%, transparent);
 }
 
 .tagList {
@@ -643,6 +802,52 @@ select.input option {
 .link:hover {
   color: var(--button-gradient-end);
   border-color: color-mix(in srgb, var(--button-gradient-end) 55%, transparent);
+}
+
+.supportActionList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.supportActionButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 20%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--button-gradient-start) 8%, transparent), color-mix(in srgb, var(--surface-color) 94%, transparent));
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.supportActionButton:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 42%, transparent);
+  box-shadow: 0 12px 22px color-mix(in srgb, var(--button-gradient-start) 10%, transparent);
+}
+
+.supportActionButton span {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.supportActionButton strong {
+  font-size: 1rem;
+}
+
+.supportActionButton small {
+  font-size: 0.84rem;
+  color: color-mix(in srgb, var(--text-color) 66%, transparent);
+}
+
+.supportActionButton em {
+  font-style: normal;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--button-gradient-start) 86%, transparent);
+  white-space: nowrap;
 }
 
 .billingHero {
@@ -805,8 +1010,15 @@ select.input option {
     width: 100%;
   }
 
+  .themeBuilderLayout,
   .themeBuilderGrid {
     grid-template-columns: 1fr;
+  }
+
+  .gradientControlFooter,
+  .supportActionButton {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .securityGrid {

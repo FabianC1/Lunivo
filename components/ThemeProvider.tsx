@@ -34,6 +34,7 @@ function applyTheme(themeId: string, customThemes: ThemePreset[]) {
   document.documentElement.style.setProperty("--accent-color", preset.colors.accentColor);
   document.documentElement.style.setProperty("--highlight-color", preset.colors.highlightColor);
   document.documentElement.style.setProperty("--card-color", preset.colors.cardColor);
+  document.documentElement.style.setProperty("--surface-color", preset.colors.cardColor);
   document.documentElement.style.setProperty("--navbar-color", preset.colors.navbarColor);
   document.documentElement.style.setProperty("--navbar-border-gradient", preset.colors.navbarBorderGradient);
   document.documentElement.style.setProperty("--navbar-text-color", preset.colors.navbarTextColor);

@@ -93,7 +93,7 @@
   min-width: 120px;
   border: 1px solid rgba(148, 163, 184, 0.38);
   border-radius: 0.55rem;
-  background: var(--card-color);
+  background: var(--content-surface);
   color: var(--text-color);
   padding: 0.5rem 0.65rem;
   font-family: inherit;
@@ -111,8 +111,8 @@
 .toggleGroup {
   display: inline-flex;
   gap: 0.3rem;
-  background: var(--card-color);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--content-surface);
+  border: 1px solid var(--content-border);
   border-radius: 0.7rem;
   padding: 0.3rem;
 }
@@ -149,8 +149,8 @@
 }
 
 .summaryCard {
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: var(--card-color);
+  border: 1px solid var(--content-border);
+  background: var(--content-surface);
   border-radius: 0.9rem;
   padding: 0.9rem 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -227,10 +227,10 @@
 }
 
 .chartSection {
-  background: linear-gradient(135deg, var(--card-color) 0%, var(--bg-color) 100%);
+  background: var(--content-surface);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--content-border);
   padding: 1.25rem;
   border-radius: 1rem;
   box-shadow:

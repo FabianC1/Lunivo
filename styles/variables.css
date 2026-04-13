@@ -6,6 +6,9 @@
   --accent-color: #8B5CF6; /* violet accent */
   --highlight-color: #F97316; /* warm orange highlight */
   --card-color: #FFFFFF;
+  --surface-color: #FFFFFF;
+  --content-surface: #FFFFFF;
+  --content-border: rgba(148, 163, 184, 0.22);
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
   --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #F97316 100%);
   --navbar-text-color: #1E293B;
@@ -27,6 +30,9 @@
   --accent-color: #8B5CF6;
   --highlight-color: #F97316;
   --card-color: #FFFFFF;
+  --surface-color: #FFFFFF;
+  --content-surface: #FFFFFF;
+  --content-border: rgba(148, 163, 184, 0.22);
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
   --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #F97316 100%);
   --navbar-text-color: #1E293B;
@@ -49,6 +55,9 @@
   --accent-color: #ff4d00; /* bright orange */
   --highlight-color: #db48ec; /* hot pink */
   --card-color: #1E293B;
+  --surface-color: #1E293B;
+  --content-surface: #1E293B;
+  --content-border: rgba(148, 163, 184, 0.26);
   --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
   --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
   --navbar-text-color: #F1F5F9;
@@ -68,6 +77,9 @@
     --accent-color: #ff4d00; /* bright orange */
     --highlight-color: #db48ec; /* hot pink */
     --card-color: #1E293B;
+    --surface-color: #1E293B;
+    --content-surface: #1E293B;
+    --content-border: rgba(148, 163, 184, 0.26);
     --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
     --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
     --navbar-text-color: #F1F5F9;

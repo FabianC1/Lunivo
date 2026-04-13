@@ -1,6 +1,7 @@
 export const DEMO_EMAIL = "galaselfabian@gmail.com";
 export const DEMO_PASSWORD = "Elissa<3";
 export const DEMO_NAME = "Fabian Galasel";
+export const DEMO_PLAN_SLUG = "scale";
 
 const SESSION_KEY = "lunivo-session";
 const SESSION_PREFERENCE_KEY = "lunivo-session-preference";
