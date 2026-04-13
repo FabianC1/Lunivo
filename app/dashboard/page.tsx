@@ -11,6 +11,8 @@ import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../li
 import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings, type DashboardWidgetKey } from "../../lib/userSettings";
 import { formatCurrency } from "../../lib/utils";
 
+const DASHBOARD_SETTINGS_STORAGE_PREFIX = "lunivo-dashboard-settings";
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 type MonthKey = (typeof MONTHS)[number];
 type Metric = "spendings" | "income" | "net";
@@ -139,6 +141,54 @@ function formatSignedPercentage(value: number | null): string {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
+function getDashboardSettingsStorageKey() {
+  const session = getSession();
+  return `${DASHBOARD_SETTINGS_STORAGE_PREFIX}-${session?.userId ?? session?.email ?? "guest"}`;
+}
+
+function loadLocalDashboardSettings() {
+  if (typeof window === "undefined") {
+    return DEFAULT_DASHBOARD_SETTINGS;
+  }
+
+  try {
+    const raw = localStorage.getItem(getDashboardSettingsStorageKey());
+    return raw ? JSON.parse(raw) as DashboardSettings : DEFAULT_DASHBOARD_SETTINGS;
+  } catch {
+    return DEFAULT_DASHBOARD_SETTINGS;
+  }
+}
+
+function persistLocalDashboardSettings(nextSettings: DashboardSettings) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.setItem(getDashboardSettingsStorageKey(), JSON.stringify(nextSettings));
+}
+
+const DASHBOARD_WIDGET_DETAILS: Array<{
+  key: DashboardWidgetKey;
+  title: string;
+  description: string;
+}> = [
+  {
+    key: "charts",
+    title: "Overview",
+    description: "Headline totals, trend chart, and the main finance summary.",
+  },
+  {
+    key: "goals",
+    title: "Category Focus",
+    description: "Deep-dive into a selected category trend over the year.",
+  },
+  {
+    key: "transactions",
+    title: "Monthly Breakdowns",
+    description: "Category doughnut and income-versus-spendings comparison.",
+  },
+];
+
 export default function Dashboard() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [reportData, setReportData] = useState<Record<string, YearReport>>({});
@@ -156,6 +206,8 @@ export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState<Metric>("spendings");
   const [mainChartType, setMainChartType] = useState<ChartKind>("line");
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>(DEFAULT_DASHBOARD_CATEGORIES[0]);
+  const [draggedWidget, setDraggedWidget] = useState<DashboardWidgetKey | null>(null);
+
   useEffect(() => {
     const session = getSession();
     const normalizedEmail = session?.email.trim().toLowerCase() ?? "";
@@ -166,7 +218,7 @@ export default function Dashboard() {
     if (shouldUseSampleData) {
       setReportData(SAMPLE_REPORT_DATA);
       setCurrentPlanSlug(DEMO_PLAN_SLUG);
-      setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
+      setDashboardSettings(loadLocalDashboardSettings());
       setError("");
       setIsLoading(false);
       return;
@@ -175,7 +227,7 @@ export default function Dashboard() {
     if (!session?.userId) {
       setReportData(createEmptyReportData([String(new Date().getFullYear())]));
       setCurrentPlanSlug("free");
-      setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
+      setDashboardSettings(loadLocalDashboardSettings());
       setError("");
       setIsLoading(false);
       return;
@@ -233,9 +285,10 @@ export default function Dashboard() {
   }, []);
 
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
-  const canCustomizeDashboard = hasFeatureAccess(currentPlan.slug, "dashboardWidgetToggles")
-    || hasFeatureAccess(currentPlan.slug, "dashboardSectionReordering")
-    || hasFeatureAccess(currentPlan.slug, "defaultHomepageWidget");
+  const canUseAdvancedInsights = hasFeatureAccess(currentPlan.slug, "advancedDashboardInsights");
+  const canToggleWidgets = hasFeatureAccess(currentPlan.slug, "dashboardWidgetToggles");
+  const canReorderWidgets = true;
+  const canCustomizeDashboard = canToggleWidgets || canReorderWidgets || canUseAdvancedInsights;
 
   useEffect(() => {
     if (years.length === 0) {
@@ -340,6 +393,19 @@ export default function Dashboard() {
   const previousMetricValue = previousMonth ? monthlyMetricData[previousMonth] : null;
   const monthChange = previousMetricValue === null ? null : currentMetricValue - previousMetricValue;
   const bestNetMonthShare = bestNetMonth && annualNet > 0 ? (bestNetMonth.value / annualNet) * 100 : null;
+  const topCategoryForMonth = Object.entries(monthDetails.categories).reduce(
+    (best, [category, amount]) => (!best || amount > best.amount ? { category, amount } : best),
+    null as { category: string; amount: number } | null,
+  );
+  const highestSpendingMonth = MONTHS.reduce(
+    (best, month) => (!best || yearData[month].spendings > best.amount ? { month, amount: yearData[month].spendings } : best),
+    null as { month: MonthKey; amount: number } | null,
+  );
+  const lowestSpendingMonth = MONTHS.reduce(
+    (best, month) => (!best || yearData[month].spendings < best.amount ? { month, amount: yearData[month].spendings } : best),
+    null as { month: MonthKey; amount: number } | null,
+  );
+  const averageMonthlyNet = annualNet / MONTHS.length;
 
   const metricLabel =
     selectedMetric === "income"
@@ -361,6 +427,7 @@ export default function Dashboard() {
     setDashboardSettings(nextSettings);
 
     if (!sessionUserId) {
+      persistLocalDashboardSettings(nextSettings);
       return;
     }
 
@@ -379,76 +446,66 @@ export default function Dashboard() {
     }
   }
 
-  const orderedWidgets = [
-    dashboardSettings.defaultWidget,
-    ...dashboardSettings.widgetOrder.filter((widget) => widget !== dashboardSettings.defaultWidget),
-  ].filter((widget, index, items) => items.indexOf(widget) === index);
+  const orderedWidgets = dashboardSettings.widgetOrder.filter((widget, index, items) => items.indexOf(widget) === index);
 
-  const visibleOrderedWidgets = canCustomizeDashboard
-    ? orderedWidgets.filter((widget) => dashboardSettings.visibleWidgets[widget])
-    : (["charts", "transactions", "goals"] as DashboardWidgetKey[]);
+  const visibleOrderedWidgets = orderedWidgets.filter((widget) => canToggleWidgets ? dashboardSettings.visibleWidgets[widget] : true);
+
+  async function toggleWidget(widget: DashboardWidgetKey) {
+    if (!canToggleWidgets) {
+      return;
+    }
+
+    const currentlyVisible = dashboardSettings.visibleWidgets[widget];
+    const visibleCount = Object.values(dashboardSettings.visibleWidgets).filter(Boolean).length;
+
+    if (currentlyVisible && visibleCount === 1) {
+      return;
+    }
+
+    const nextVisibleWidgets = {
+      ...dashboardSettings.visibleWidgets,
+      [widget]: !currentlyVisible,
+    };
+
+    await persistDashboardSettings({
+      ...dashboardSettings,
+      visibleWidgets: nextVisibleWidgets,
+    });
+  }
+
+  async function reorderWidgets(fromWidget: DashboardWidgetKey, toWidget: DashboardWidgetKey) {
+    if (!canReorderWidgets) {
+      return;
+    }
+
+    if (fromWidget === toWidget) {
+      return;
+    }
+
+    const currentIndex = dashboardSettings.widgetOrder.indexOf(fromWidget);
+    const targetIndex = dashboardSettings.widgetOrder.indexOf(toWidget);
+    if (currentIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    const nextOrder = [...dashboardSettings.widgetOrder];
+    const [movedWidget] = nextOrder.splice(currentIndex, 1);
+    nextOrder.splice(targetIndex, 0, movedWidget);
+
+    await persistDashboardSettings({
+      ...dashboardSettings,
+      widgetOrder: nextOrder,
+    });
+  }
 
   if (isLoading) {
     return <PageLoading message="Loading your dashboard..." />;
   }
 
-  return (
-    <div className={styles.container + " container"}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Dashboard</h1>
-          <p className={styles.subtitle}>
-            {canCustomizeDashboard
-              ? "A flexible finance workspace with adjustable widgets, layouts, and default views."
-              : "Your finance overview, arranged into a clean default dashboard with everything in place."}
-          </p>
-          {error ? <p className={styles.subtitle}>{error}</p> : null}
-        </div>
-        <div className={styles.headerActions}>
-          <div className={styles.controls}>
-            <label className={styles.controlItem}>
-              <span>Year</span>
-              <select
-                className={styles.select}
-                value={selectedYear}
-                onChange={(event) => setSelectedYear(event.target.value)}
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </label>
-            <label className={styles.controlItem}>
-              <span>Month</span>
-              <select
-                className={styles.select}
-                value={selectedMonth}
-                onChange={(event) => setSelectedMonth(event.target.value as MonthKey)}
-              >
-                {MONTHS.map((month) => (
-                  <option key={month} value={month}>{month}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-        </div>
-      </div>
-
-      <div className={styles.toggleRow}>
-        <div className={styles.toggleGroup}>
-          <button type="button" className={`${styles.toggleButton} ${selectedMetric === "spendings" ? styles.toggleButtonActive : ""}`} onClick={() => setSelectedMetric("spendings")}>Spendings</button>
-          <button type="button" className={`${styles.toggleButton} ${selectedMetric === "income" ? styles.toggleButtonActive : ""}`} onClick={() => setSelectedMetric("income")}>Income</button>
-          <button type="button" className={`${styles.toggleButton} ${selectedMetric === "net" ? styles.toggleButtonActive : ""}`} onClick={() => setSelectedMetric("net")}>Net</button>
-        </div>
-        <div className={styles.toggleGroup}>
-          <button type="button" className={`${styles.toggleButton} ${mainChartType === "line" ? styles.toggleButtonActive : ""}`} onClick={() => setMainChartType("line")}>Line</button>
-          <button type="button" className={`${styles.toggleButton} ${mainChartType === "bar" ? styles.toggleButtonActive : ""}`} onClick={() => setMainChartType("bar")}>Bar</button>
-        </div>
-      </div>
-
-      {visibleOrderedWidgets.includes("charts") ? (
-        <section className={styles.widgetStack}>
+  const renderDashboardWidget = (widget: DashboardWidgetKey) => {
+    if (widget === "charts") {
+      return (
+        <section key={widget} className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
             <h2>Overview</h2>
           </div>
@@ -499,20 +556,64 @@ export default function Dashboard() {
             </article>
           </div>
 
+          {canUseAdvancedInsights ? (
+            <section className={styles.chartSection}>
+              <div className={styles.sectionHeader}>
+                <h2>Advanced Insights</h2>
+                <p>Higher-signal trend callouts for monthly pacing and category concentration.</p>
+              </div>
+              <div className={styles.summaryGrid}>
+                <article className={styles.summaryCard}>
+                  <p>Average monthly net</p>
+                  <h3>{formatCurrency(averageMonthlyNet)}</h3>
+                  <span>{formatCurrency(annualNet)} net spread across the year</span>
+                </article>
+                <article className={styles.summaryCard}>
+                  <p>Top category in {selectedMonth}</p>
+                  <h3>{topCategoryForMonth?.category ?? "No data"}</h3>
+                  <span>{topCategoryForMonth ? formatCurrency(topCategoryForMonth.amount) : "No category data"}</span>
+                </article>
+                <article className={styles.summaryCard}>
+                  <p>Highest spending month</p>
+                  <h3>{highestSpendingMonth?.month ?? "No data"}</h3>
+                  <span>{highestSpendingMonth ? formatCurrency(highestSpendingMonth.amount) : "No spending data"}</span>
+                </article>
+                <article className={styles.summaryCard}>
+                  <p>Lowest spending month</p>
+                  <h3>{lowestSpendingMonth?.month ?? "No data"}</h3>
+                  <span>{lowestSpendingMonth ? formatCurrency(lowestSpendingMonth.amount) : "No spending data"}</span>
+                </article>
+              </div>
+            </section>
+          ) : null}
+
           <section className={styles.chartSection}>
             <div className={styles.sectionHeader}>
               <h2>{metricLabel} Trend ({selectedYear})</h2>
               <p>{selectedMonth}: {formatCurrency(currentMetricValue)} · {monthChangeLabel}</p>
+            </div>
+            <div className={styles.toggleRow}>
+              <div className={styles.toggleGroup}>
+                <button type="button" className={`${styles.toggleButton} ${selectedMetric === "spendings" ? styles.toggleButtonActive : ""}`} onClick={() => setSelectedMetric("spendings")}>Spendings</button>
+                <button type="button" className={`${styles.toggleButton} ${selectedMetric === "income" ? styles.toggleButtonActive : ""}`} onClick={() => setSelectedMetric("income")}>Income</button>
+                <button type="button" className={`${styles.toggleButton} ${selectedMetric === "net" ? styles.toggleButtonActive : ""}`} onClick={() => setSelectedMetric("net")}>Net</button>
+              </div>
+              <div className={styles.toggleGroup}>
+                <button type="button" className={`${styles.toggleButton} ${mainChartType === "line" ? styles.toggleButtonActive : ""}`} onClick={() => setMainChartType("line")}>Line</button>
+                <button type="button" className={`${styles.toggleButton} ${mainChartType === "bar" ? styles.toggleButtonActive : ""}`} onClick={() => setMainChartType("bar")}>Bar</button>
+              </div>
             </div>
             <div className={styles.chartFrameTall}>
               <Chart data={monthlyMetricData} type={mainChartType} showLegend={false} />
             </div>
           </section>
         </section>
-      ) : null}
+      );
+    }
 
-      {visibleOrderedWidgets.includes("goals") ? (
-        <section className={styles.widgetStack}>
+    if (widget === "goals") {
+      return (
+        <section key={widget} className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
             <h2>Category Focus</h2>
           </div>
@@ -538,36 +639,188 @@ export default function Dashboard() {
             </div>
           </section>
         </section>
-      ) : null}
+      );
+    }
 
-      {visibleOrderedWidgets.includes("transactions") ? (
-        <section className={styles.widgetStack}>
-          <div className={styles.widgetHeader}>
-            <h2>Monthly Breakdowns</h2>
-          </div>
-          <div className={styles.chartGrid}>
-            <section className={styles.chartSection}>
-              <div className={styles.sectionHeader}>
-                <h2>{selectedMonth} Category Breakdown</h2>
-                <p>See where your monthly spendings went.</p>
-              </div>
-              <div className={`${styles.chartFrame} ${styles.chartFrameRoomy}`}>
-                <Chart data={monthDetails.categories} type="doughnut" legendSpacing="roomy" />
-              </div>
-            </section>
+    return (
+      <section key={widget} className={styles.widgetStack}>
+        <div className={styles.widgetHeader}>
+          <h2>Monthly Breakdowns</h2>
+        </div>
+        <div className={styles.chartGrid}>
+          <section className={styles.chartSection}>
+            <div className={styles.sectionHeader}>
+              <h2>{selectedMonth} Category Breakdown</h2>
+              <p>See where your monthly spendings went.</p>
+            </div>
+            <div className={`${styles.chartFrame} ${styles.chartFrameRoomy}`}>
+              <Chart data={monthDetails.categories} type="doughnut" legendSpacing="roomy" />
+            </div>
+          </section>
 
-            <section className={styles.chartSection}>
-              <div className={styles.sectionHeader}>
-                <h2>{selectedMonth} Income vs Spendings</h2>
-                <p>Quick balance snapshot for the selected month.</p>
-              </div>
-              <div className={styles.chartFrame}>
-                <Chart data={selectedMonthSummary} type="bar" />
-              </div>
-            </section>
+          <section className={styles.chartSection}>
+            <div className={styles.sectionHeader}>
+              <h2>{selectedMonth} Income vs Spendings</h2>
+              <p>Quick balance snapshot for the selected month.</p>
+            </div>
+            <div className={styles.chartFrame}>
+              <Chart data={selectedMonthSummary} type="bar" />
+            </div>
+          </section>
+        </div>
+      </section>
+    );
+  };
+
+  return (
+    <div className={styles.container + " container"}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Dashboard</h1>
+          <p className={styles.subtitle}>
+            {canCustomizeDashboard
+              ? "A flexible finance workspace with adjustable widgets and layout controls."
+              : "Your finance overview, arranged into a clean default dashboard with everything in place."}
+          </p>
+          <p className={styles.planSummary}>
+            {canUseAdvancedInsights
+              ? `${currentPlan.name} unlocks advanced insights and dashboard controls.`
+              : `${currentPlan.name} keeps the core insights, while Smart unlocks visibility controls and advanced analysis.`}
+          </p>
+          {error ? <p className={styles.subtitle}>{error}</p> : null}
+        </div>
+        <div className={styles.headerActions}>
+          <div className={styles.controls}>
+            <label className={styles.controlItem}>
+              <span>Year</span>
+              <select
+                className={styles.select}
+                value={selectedYear}
+                onChange={(event) => setSelectedYear(event.target.value)}
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.controlItem}>
+              <span>Month</span>
+              <select
+                className={styles.select}
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value as MonthKey)}
+              >
+                {MONTHS.map((month) => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+            </label>
           </div>
-        </section>
-      ) : null}
+
+        </div>
+      </div>
+
+      <section className={styles.layoutPanel}>
+        <div className={styles.layoutPanelHeader}>
+          <div>
+            <h2>Workspace Layout</h2>
+            <p>
+              {canToggleWidgets
+                ? "Drag sections into the order you want and hide the ones you do not need. The page follows this exact sequence."
+                : "Drag sections to change the dashboard flow. Upgrade to Smart to unlock visibility controls and advanced insights."}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.layoutRail}>
+          {(canToggleWidgets ? visibleOrderedWidgets : orderedWidgets).map((widget, index) => {
+            const details = DASHBOARD_WIDGET_DETAILS.find((entry) => entry.key === widget);
+            if (!details) {
+              return null;
+            }
+
+            return (
+              <div key={widget} className={styles.layoutRailItem}>
+                <span className={styles.layoutRailIndex}>{index + 1}</span>
+                <strong>{details.title}</strong>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className={styles.layoutList}>
+          {orderedWidgets.map((widget) => {
+            const details = DASHBOARD_WIDGET_DETAILS.find((entry) => entry.key === widget);
+            if (!details) {
+              return null;
+            }
+
+            const isVisible = dashboardSettings.visibleWidgets[widget];
+            const visibleCount = Object.values(dashboardSettings.visibleWidgets).filter(Boolean).length;
+
+            return (
+              <article
+                key={widget}
+                className={`${styles.layoutItem} ${draggedWidget === widget ? styles.layoutItemDragging : ""}`}
+                draggable={canReorderWidgets}
+                onDragStart={() => setDraggedWidget(widget)}
+                onDragEnd={() => setDraggedWidget(null)}
+                onDragOver={(event) => {
+                  if (!canReorderWidgets) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  if (!draggedWidget) {
+                    return;
+                  }
+
+                  void reorderWidgets(draggedWidget, widget);
+                  setDraggedWidget(null);
+                }}
+              >
+                <div className={styles.layoutItemLead}>
+                  <div className={styles.layoutHandle} aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className={styles.layoutPreview} aria-hidden="true">
+                    <span className={styles.layoutPreviewTop} />
+                    <span className={styles.layoutPreviewMid} />
+                    <span className={styles.layoutPreviewBottom} />
+                  </div>
+                </div>
+
+                <div className={styles.layoutItemBody}>
+                  <div className={styles.layoutItemTop}>
+                    <strong>{details.title}</strong>
+                  </div>
+                  <span>{details.description}</span>
+                </div>
+                <div className={styles.layoutItemMeta}>
+                  <button
+                    type="button"
+                    className={`${styles.visibilityToggle} ${isVisible ? styles.visibilityToggleActive : ""}`}
+                    onClick={() => void toggleWidget(widget)}
+                    disabled={!canToggleWidgets || (isVisible && visibleCount === 1)}
+                  >
+                    <span className={styles.visibilityToggleKnob} />
+                    <span>{isVisible ? "Visible" : "Hidden"}</span>
+                  </button>
+                  {canReorderWidgets ? <span className={styles.layoutHint}>Drag to reorder</span> : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      {visibleOrderedWidgets.map((widget) => renderDashboardWidget(widget))}
     </div>
   );
 }

@@ -35,6 +35,12 @@
   font-size: 0.95rem;
 }
 
+.planSummary {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: color-mix(in srgb, var(--text-color) 66%, transparent);
+}
+
 .controls {
   display: flex;
   gap: 0.75rem;
@@ -115,6 +121,249 @@
   border: 1px solid var(--content-border);
   border-radius: 0.7rem;
   padding: 0.3rem;
+}
+
+.layoutPanel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--button-gradient-start) 7%, transparent), color-mix(in srgb, var(--content-surface) 97%, transparent));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.layoutPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.layoutPanelHeader h2,
+.layoutPanelHeader p {
+  margin: 0;
+}
+
+.layoutPanelHeader h2 {
+  font-size: 1.05rem;
+}
+
+.layoutPanelHeader p {
+  margin-top: 0.3rem;
+  max-width: 64ch;
+  font-size: 0.9rem;
+  opacity: 0.78;
+}
+
+.layoutBadge,
+.widgetBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--button-gradient-start) 14%, transparent);
+  color: color-mix(in srgb, var(--button-gradient-start) 88%, transparent);
+  white-space: nowrap;
+}
+
+.layoutList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.layoutRail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.layoutRailItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.78rem;
+  border-radius: 999px;
+  border: 1px solid var(--content-border);
+  background: var(--content-surface);
+  font-size: 0.82rem;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.layoutRailIndex {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-color) 10%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.layoutItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 14%, var(--content-border));
+  background: var(--content-surface);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.layoutItem:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 32%, transparent);
+  box-shadow: 0 20px 30px rgba(15, 23, 42, 0.09);
+}
+
+.layoutItemDragging {
+  opacity: 0.58;
+  transform: scale(0.985);
+}
+
+.layoutItemLead {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.layoutHandle {
+  display: grid;
+  grid-template-columns: repeat(2, 0.3rem);
+  gap: 0.22rem;
+  padding: 0.4rem 0.15rem;
+  cursor: grab;
+}
+
+.layoutHandle span {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-color) 30%, transparent);
+}
+
+.layoutPreview {
+  width: 3.2rem;
+  min-width: 3.2rem;
+  padding: 0.55rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 16%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-gradient-start) 8%, transparent), color-mix(in srgb, var(--content-surface) 98%, transparent));
+  display: grid;
+  gap: 0.32rem;
+}
+
+.layoutPreviewTop,
+.layoutPreviewMid,
+.layoutPreviewBottom {
+  display: block;
+  height: 0.34rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-color) 18%, transparent);
+}
+
+.layoutPreviewTop {
+  width: 92%;
+}
+
+.layoutPreviewMid {
+  width: 68%;
+  background: color-mix(in srgb, var(--button-gradient-start) 42%, transparent);
+}
+
+.layoutPreviewBottom {
+  width: 80%;
+}
+
+.layoutItemBody {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.layoutItemTop {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.layoutItemBody strong {
+  font-size: 0.98rem;
+}
+
+.layoutItemBody span {
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--text-color) 66%, transparent);
+}
+
+.layoutItemMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.visibilityToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--text-color) 16%, transparent);
+  background: transparent;
+  color: var(--text-color);
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem 0.38rem 0.42rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.visibilityToggleActive {
+  border-color: color-mix(in srgb, var(--button-gradient-start) 35%, transparent);
+  background: color-mix(in srgb, var(--button-gradient-start) 10%, transparent);
+}
+
+.visibilityToggleKnob {
+  display: inline-block;
+  width: 1.6rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-color) 16%, transparent);
+  position: relative;
+}
+
+.visibilityToggleKnob::after {
+  content: "";
+  position: absolute;
+  top: 0.14rem;
+  left: 0.14rem;
+  width: 0.67rem;
+  height: 0.67rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: transform 0.18s ease;
+}
+
+.visibilityToggleActive .visibilityToggleKnob {
+  background: linear-gradient(90deg, var(--button-gradient-start), var(--button-gradient-end));
+}
+
+.visibilityToggleActive .visibilityToggleKnob::after {
+  transform: translateX(0.65rem);
+}
+
+.layoutHint {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--text-color) 54%, transparent);
 }
 
 .toggleButton {
@@ -465,6 +714,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .widgetHeader h2,
@@ -513,6 +764,15 @@
   .studioGrid {
     grid-template-columns: 1fr;
   }
+
+  .layoutItem {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .layoutItemMeta {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
@@ -525,8 +785,21 @@
     justify-content: stretch;
   }
 
+  .layoutPanel {
+    padding: 1rem;
+  }
+
   .studioToggle {
     width: 100%;
+  }
+
+  .toggleRow {
+    align-items: stretch;
+  }
+
+  .layoutRail {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .chartFrame,

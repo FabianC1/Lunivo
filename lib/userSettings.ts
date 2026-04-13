@@ -64,7 +64,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #8B5CF6 0%, #F97316 100%)",
     navbarTextColor: "#1E293B",
-    bgGradient: "linear-gradient(135deg, #F3E8FF 0%, #FDF2F8 48%, #FFEDD5 100%)",
+    bgGradient: "linear-gradient(135deg, #F3E8FF 0%, #FFEDD5 100%)",
     buttonGradientStart: "#8B5CF6",
     buttonGradientEnd: "#F97316",
     foregroundRgb: "30, 41, 59",
@@ -81,7 +81,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #1E293B 0%, #334155 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%)",
     navbarTextColor: "#F1F5F9",
-    bgGradient: "linear-gradient(135deg, #0C1D3D 0%, #1A1558 50%, #2D1B3D 100%)",
+    bgGradient: "linear-gradient(135deg, #0C1D3D 0%, #2D1B3D 100%)",
     buttonGradientStart: "#8B5CF6",
     buttonGradientEnd: "#40E0D0",
     foregroundRgb: "241, 245, 249",
@@ -98,7 +98,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #D9F3E4 0%, #BEE3D2 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #2F855A 0%, #D97706 100%)",
     navbarTextColor: "#20352B",
-    bgGradient: "linear-gradient(135deg, #EEFDF3 0%, #F4FBF6 50%, #FFF6E7 100%)",
+    bgGradient: "linear-gradient(135deg, #EEFDF3 0%, #FFF6E7 100%)",
     buttonGradientStart: "#2F855A",
     buttonGradientEnd: "#D97706",
     foregroundRgb: "32, 53, 43",
@@ -115,7 +115,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #D9F0FF 0%, #BAE6FD 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #0284C7 0%, #0F766E 100%)",
     navbarTextColor: "#16324F",
-    bgGradient: "linear-gradient(135deg, #E0F2FE 0%, #F2FBFF 55%, #ECFEFF 100%)",
+    bgGradient: "linear-gradient(135deg, #E0F2FE 0%, #ECFEFF 100%)",
     buttonGradientStart: "#0284C7",
     buttonGradientEnd: "#0F766E",
     foregroundRgb: "22, 50, 79",
@@ -132,7 +132,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #DB2777 0%, #8B5CF6 100%)",
     navbarTextColor: "#4A1D33",
-    bgGradient: "linear-gradient(135deg, #FDF2F8 0%, #FFF7FA 50%, #F5F3FF 100%)",
+    bgGradient: "linear-gradient(135deg, #FDF2F8 0%, #F5F3FF 100%)",
     buttonGradientStart: "#DB2777",
     buttonGradientEnd: "#8B5CF6",
     foregroundRgb: "74, 29, 51",
@@ -149,7 +149,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #FDE68A 0%, #FCD34D 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #D97706 0%, #0EA5E9 100%)",
     navbarTextColor: "#422006",
-    bgGradient: "linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 50%, #EFF6FF 100%)",
+    bgGradient: "linear-gradient(135deg, #FEF3C7 0%, #EFF6FF 100%)",
     buttonGradientStart: "#D97706",
     buttonGradientEnd: "#0EA5E9",
     foregroundRgb: "66, 32, 6",
@@ -166,7 +166,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #0F2F29 0%, #153932 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #14B8A6 0%, #F59E0B 100%)",
     navbarTextColor: "#E6FFFB",
-    bgGradient: "linear-gradient(135deg, #05211C 0%, #071A16 50%, #172554 100%)",
+    bgGradient: "linear-gradient(135deg, #05211C 0%, #172554 100%)",
     buttonGradientStart: "#14B8A6",
     buttonGradientEnd: "#F59E0B",
     foregroundRgb: "230, 255, 251",
@@ -183,7 +183,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #1F2937 0%, #374151 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #6366F1 0%, #EC4899 100%)",
     navbarTextColor: "#F9FAFB",
-    bgGradient: "linear-gradient(135deg, #0F172A 0%, #111827 50%, #27272A 100%)",
+    bgGradient: "linear-gradient(135deg, #0F172A 0%, #27272A 100%)",
     buttonGradientStart: "#6366F1",
     buttonGradientEnd: "#EC4899",
     foregroundRgb: "249, 250, 251",
@@ -200,7 +200,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #111B35 0%, #1D2A53 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #38BDF8 0%, #A78BFA 100%)",
     navbarTextColor: "#E0F2FE",
-    bgGradient: "linear-gradient(135deg, #020617 0%, #0A1022 45%, #1D4ED8 100%)",
+    bgGradient: "linear-gradient(135deg, #020617 0%, #1D4ED8 100%)",
     buttonGradientStart: "#38BDF8",
     buttonGradientEnd: "#A78BFA",
     foregroundRgb: "224, 242, 254",
@@ -217,7 +217,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #2B1812 0%, #3B221A 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #F97316 0%, #FB7185 100%)",
     navbarTextColor: "#FFF7ED",
-    bgGradient: "linear-gradient(135deg, #140A06 0%, #1C0F0A 50%, #451A03 100%)",
+    bgGradient: "linear-gradient(135deg, #140A06 0%, #451A03 100%)",
     buttonGradientStart: "#F97316",
     buttonGradientEnd: "#FB7185",
     foregroundRgb: "255, 247, 237",
@@ -234,7 +234,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #221438 0%, #31214D 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #A78BFA 0%, #22D3EE 100%)",
     navbarTextColor: "#F5F3FF",
-    bgGradient: "linear-gradient(135deg, #0F071A 0%, #140B24 50%, #164E63 100%)",
+    bgGradient: "linear-gradient(135deg, #0F071A 0%, #164E63 100%)",
     buttonGradientStart: "#A78BFA",
     buttonGradientEnd: "#22D3EE",
     foregroundRgb: "245, 243, 255",
@@ -251,7 +251,7 @@ export const BUILT_IN_THEME_PRESETS: ThemePreset[] = [
     navbarColor: "linear-gradient(135deg, #13221A 0%, #1D3024 100%)",
     navbarBorderGradient: "linear-gradient(90deg, #22C55E 0%, #F59E0B 100%)",
     navbarTextColor: "#ECFDF5",
-    bgGradient: "linear-gradient(135deg, #052E16 0%, #08140D 50%, #14532D 100%)",
+    bgGradient: "linear-gradient(135deg, #052E16 0%, #14532D 100%)",
     buttonGradientStart: "#22C55E",
     buttonGradientEnd: "#F59E0B",
     foregroundRgb: "236, 253, 245",
@@ -320,14 +320,25 @@ export function sanitizeDashboardSettings(input: unknown): DashboardSettings {
     ? candidate.defaultWidget as DashboardWidgetKey
     : DEFAULT_DASHBOARD_SETTINGS.defaultWidget;
 
-  return {
-    visibleWidgets: {
+  const normalizedVisibleWidgets = {
       charts: visibleWidgets.charts !== undefined ? Boolean(visibleWidgets.charts) : true,
       goals: visibleWidgets.goals !== undefined ? Boolean(visibleWidgets.goals) : true,
       transactions: visibleWidgets.transactions !== undefined ? Boolean(visibleWidgets.transactions) : true,
-    },
+  };
+
+  const hasAnyVisibleWidget = DASHBOARD_WIDGETS.some((widget) => normalizedVisibleWidgets[widget]);
+  if (!hasAnyVisibleWidget) {
+    normalizedVisibleWidgets[defaultWidget] = true;
+  }
+
+  const resolvedDefaultWidget = normalizedVisibleWidgets[defaultWidget]
+    ? defaultWidget
+    : DASHBOARD_WIDGETS.find((widget) => normalizedVisibleWidgets[widget]) ?? DEFAULT_DASHBOARD_SETTINGS.defaultWidget;
+
+  return {
+    visibleWidgets: normalizedVisibleWidgets,
     widgetOrder: orderedWidgets,
-    defaultWidget,
+    defaultWidget: resolvedDefaultWidget,
   };
 }
 

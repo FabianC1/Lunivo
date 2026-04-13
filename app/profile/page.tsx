@@ -79,6 +79,10 @@ function isInvertedGradient(gradient: string, accentColor: string) {
   return gradient.toLowerCase().includes(`${accentColor.toLowerCase()} 0%`);
 }
 
+function createBalancedGradient(angle: number, startColor: string, endColor: string) {
+  return `linear-gradient(${angle}deg, ${startColor} 0%, ${endColor} 100%)`;
+}
+
 function createThemeDraft(
   name: string,
   mode: ThemeMode,
@@ -93,9 +97,6 @@ function createThemeDraft(
   const cardColor = mode === "dark" ? "#1E293B" : "#FFFFFF";
   const gradientStart = gradientInverted ? accentColor : backgroundColor;
   const gradientEnd = gradientInverted ? backgroundColor : accentColor;
-  const midColor = mode === "dark"
-    ? mixColors(backgroundColor, "#0F172A", 0.42)
-    : mixColors(backgroundColor, "#FFFFFF", 0.4);
   const navbarStart = gradientInverted ? accentColor : cardColor;
   const navbarEnd = gradientInverted ? cardColor : primaryColor;
   return {
@@ -113,7 +114,7 @@ function createThemeDraft(
       navbarColor: `linear-gradient(${gradientAngle}deg, ${navbarStart} 0%, ${navbarEnd} 100%)`,
       navbarBorderGradient: `linear-gradient(90deg, ${primaryColor} 0%, ${accentColor} 100%)`,
       navbarTextColor: textColor,
-      bgGradient: `linear-gradient(${gradientAngle}deg, ${gradientStart} 0%, ${midColor} 55%, ${gradientEnd} 100%)`,
+      bgGradient: createBalancedGradient(gradientAngle, gradientStart, gradientEnd),
       buttonGradientStart: primaryColor,
       buttonGradientEnd: accentColor,
       foregroundRgb: mode === "dark" ? "241, 245, 249" : "30, 41, 59",
@@ -960,7 +961,11 @@ export default function ProfilePage() {
                   <div
                     className={styles.themeBuilderPreviewFrame}
                     style={{
-                      background: `linear-gradient(${themeGradientAngle}deg, ${themeGradientInverted ? themeAccent : themeBackground} 0%, ${mixColors(themeBackground, themeMode === "dark" ? "#111827" : "#FFFFFF", themeMode === "dark" ? 0.5 : 0.62)} 55%, ${themeGradientInverted ? themeBackground : themeAccent} 100%)`,
+                      background: createBalancedGradient(
+                        themeGradientAngle,
+                        themeGradientInverted ? themeAccent : themeBackground,
+                        themeGradientInverted ? themeBackground : themeAccent,
+                      ),
                       color: themeText,
                       borderColor: themePrimary,
                     }}
