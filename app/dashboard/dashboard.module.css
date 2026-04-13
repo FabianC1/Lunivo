@@ -134,6 +134,47 @@
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
+.visualBuilderPanel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--button-gradient-end) 18%, transparent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--button-gradient-end) 12%, transparent), transparent 42%),
+    linear-gradient(135deg, color-mix(in srgb, var(--button-gradient-start) 5%, transparent), color-mix(in srgb, var(--content-surface) 98%, transparent));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.visualBuilderGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.visualInput {
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  border-radius: 0.55rem;
+  background: var(--content-surface);
+  color: var(--text-color);
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+}
+
+.visualBuilderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.customVisualGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
 .layoutPanelHeader {
   display: flex;
   justify-content: space-between;
@@ -765,6 +806,11 @@
     grid-template-columns: 1fr;
   }
 
+  .visualBuilderGrid,
+  .customVisualGrid {
+    grid-template-columns: 1fr;
+  }
+
   .layoutItem {
     grid-template-columns: 1fr;
     align-items: flex-start;
@@ -786,6 +832,10 @@
   }
 
   .layoutPanel {
+    padding: 1rem;
+  }
+
+  .visualBuilderPanel {
     padding: 1rem;
   }
 

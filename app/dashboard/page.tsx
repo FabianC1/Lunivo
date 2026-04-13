@@ -8,7 +8,15 @@ import { readApiError } from "../../lib/apiClient";
 import { DEMO_EMAIL, DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
 import { initialBudgets } from "../../lib/budgets";
 import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../lib/subscriptions";
-import { DEFAULT_DASHBOARD_SETTINGS, type DashboardSettings, type DashboardWidgetKey } from "../../lib/userSettings";
+import {
+  DEFAULT_DASHBOARD_SETTINGS,
+  sanitizeDashboardSettings,
+  type DashboardSettings,
+  type DashboardVisual,
+  type DashboardVisualChartType,
+  type DashboardVisualSource,
+  type DashboardWidgetKey,
+} from "../../lib/userSettings";
 import { formatCurrency } from "../../lib/utils";
 
 const DASHBOARD_SETTINGS_STORAGE_PREFIX = "lunivo-dashboard-settings";
@@ -18,6 +26,7 @@ type MonthKey = (typeof MONTHS)[number];
 type Metric = "spendings" | "income" | "net";
 type ChartKind = "line" | "bar";
 type CategoryName = string;
+type CustomMetric = "spendings" | "income" | "net";
 
 type ProfileSettingsPayload = {
   user?: {
@@ -153,7 +162,7 @@ function loadLocalDashboardSettings() {
 
   try {
     const raw = localStorage.getItem(getDashboardSettingsStorageKey());
-    return raw ? JSON.parse(raw) as DashboardSettings : DEFAULT_DASHBOARD_SETTINGS;
+    return raw ? sanitizeDashboardSettings(JSON.parse(raw)) : DEFAULT_DASHBOARD_SETTINGS;
   } catch {
     return DEFAULT_DASHBOARD_SETTINGS;
   }
@@ -164,7 +173,7 @@ function persistLocalDashboardSettings(nextSettings: DashboardSettings) {
     return;
   }
 
-  localStorage.setItem(getDashboardSettingsStorageKey(), JSON.stringify(nextSettings));
+  localStorage.setItem(getDashboardSettingsStorageKey(), JSON.stringify(sanitizeDashboardSettings(nextSettings)));
 }
 
 const DASHBOARD_WIDGET_DETAILS: Array<{
@@ -189,6 +198,8 @@ const DASHBOARD_WIDGET_DETAILS: Array<{
   },
 ];
 
+const CUSTOM_VISUAL_LIMIT = 4;
+
 export default function Dashboard() {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [reportData, setReportData] = useState<Record<string, YearReport>>({});
@@ -207,6 +218,12 @@ export default function Dashboard() {
   const [mainChartType, setMainChartType] = useState<ChartKind>("line");
   const [selectedCategory, setSelectedCategory] = useState<CategoryName>(DEFAULT_DASHBOARD_CATEGORIES[0]);
   const [draggedWidget, setDraggedWidget] = useState<DashboardWidgetKey | null>(null);
+  const [customVisualTitle, setCustomVisualTitle] = useState("Monthly Spendings Pulse");
+  const [customVisualSource, setCustomVisualSource] = useState<DashboardVisualSource>("monthlyMetric");
+  const [customVisualChartType, setCustomVisualChartType] = useState<DashboardVisualChartType>("line");
+  const [customVisualMetric, setCustomVisualMetric] = useState<CustomMetric>("spendings");
+  const [customVisualCategory, setCustomVisualCategory] = useState<CategoryName>(DEFAULT_DASHBOARD_CATEGORIES[0]);
+  const [customVisualMonth, setCustomVisualMonth] = useState<MonthKey>(getCurrentMonthKey());
 
   useEffect(() => {
     const session = getSession();
@@ -260,7 +277,7 @@ export default function Dashboard() {
 
         setReportData(payload.reportData ?? createEmptyReportData([String(new Date().getFullYear())]));
         setCurrentPlanSlug(profilePayload?.user?.planSlug ?? "free");
-        setDashboardSettings(profilePayload?.user?.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
+        setDashboardSettings(sanitizeDashboardSettings(profilePayload?.user?.dashboard ?? DEFAULT_DASHBOARD_SETTINGS));
       } catch (loadError) {
         if (!isMounted) {
           return;
@@ -268,7 +285,7 @@ export default function Dashboard() {
 
         setReportData(createEmptyReportData([String(new Date().getFullYear())]));
         setCurrentPlanSlug("free");
-        setDashboardSettings(DEFAULT_DASHBOARD_SETTINGS);
+        setDashboardSettings(sanitizeDashboardSettings(DEFAULT_DASHBOARD_SETTINGS));
         setError(loadError instanceof Error ? loadError.message : "Failed to load dashboard data.");
       } finally {
         if (isMounted) {
@@ -288,6 +305,7 @@ export default function Dashboard() {
   const canUseAdvancedInsights = hasFeatureAccess(currentPlan.slug, "advancedDashboardInsights");
   const canToggleWidgets = hasFeatureAccess(currentPlan.slug, "dashboardWidgetToggles");
   const canReorderWidgets = true;
+  const canCreateCustomDashboardVisuals = hasFeatureAccess(currentPlan.slug, "customDashboardVisuals");
   const canCustomizeDashboard = canToggleWidgets || canReorderWidgets || canUseAdvancedInsights;
 
   useEffect(() => {
@@ -406,6 +424,7 @@ export default function Dashboard() {
     null as { month: MonthKey; amount: number } | null,
   );
   const averageMonthlyNet = annualNet / MONTHS.length;
+  const customVisualCategories = availableCategories.length > 0 ? availableCategories : DEFAULT_DASHBOARD_CATEGORIES;
 
   const metricLabel =
     selectedMetric === "income"
@@ -422,6 +441,16 @@ export default function Dashboard() {
   const incomeCardTitle = usesSampleData ? "Annual Income" : "Income Recorded";
   const spendingCardTitle = usesSampleData ? "Annual Spendings" : "Spendings Recorded";
   const savingsCardTitle = usesSampleData ? "Savings Rate" : "Recorded Savings Rate";
+
+  useEffect(() => {
+    if (customVisualCategories.length === 0) {
+      return;
+    }
+
+    if (!customVisualCategories.includes(customVisualCategory)) {
+      setCustomVisualCategory(customVisualCategories[0]);
+    }
+  }, [customVisualCategories, customVisualCategory]);
 
   async function persistDashboardSettings(nextSettings: DashboardSettings) {
     setDashboardSettings(nextSettings);
@@ -495,6 +524,82 @@ export default function Dashboard() {
     await persistDashboardSettings({
       ...dashboardSettings,
       widgetOrder: nextOrder,
+    });
+  }
+
+  function buildVisualData(visual: DashboardVisual): Record<string, number> {
+    if (visual.source === "monthlyMetric") {
+      const metric = visual.metric ?? "spendings";
+      return MONTHS.reduce((result, month) => {
+        const report = yearData[month];
+        result[month] = metric === "income" ? report.income : metric === "net" ? report.income - report.spendings : report.spendings;
+        return result;
+      }, {} as Record<string, number>);
+    }
+
+    if (visual.source === "categoryTrend") {
+      const category = visual.category ?? customVisualCategories[0] ?? DEFAULT_DASHBOARD_CATEGORIES[0];
+      return MONTHS.reduce((result, month) => {
+        result[month] = yearData[month].categories[category] ?? 0;
+        return result;
+      }, {} as Record<string, number>);
+    }
+
+    if (visual.source === "monthBreakdown") {
+      const month = (visual.month as MonthKey | undefined) ?? selectedMonth;
+      return yearData[month]?.categories ?? {};
+    }
+
+    const month = (visual.month as MonthKey | undefined) ?? selectedMonth;
+    const report = yearData[month] ?? createEmptyYearReport()[selectedMonth];
+    return {
+      Income: report.income,
+      Spendings: report.spendings,
+      Net: report.income - report.spendings,
+    };
+  }
+
+  function getVisualSubtitle(visual: DashboardVisual) {
+    if (visual.source === "monthlyMetric") {
+      return `${selectedYear} ${visual.metric ?? "spendings"} trend`;
+    }
+
+    if (visual.source === "categoryTrend") {
+      return `${visual.category ?? customVisualCategory} across ${selectedYear}`;
+    }
+
+    if (visual.source === "monthBreakdown") {
+      return `${visual.month ?? selectedMonth} category split`;
+    }
+
+    return `${visual.month ?? selectedMonth} income versus spendings snapshot`;
+  }
+
+  async function addCustomVisual() {
+    if (!canCreateCustomDashboardVisuals || dashboardSettings.customVisuals.length >= CUSTOM_VISUAL_LIMIT) {
+      return;
+    }
+
+    const nextVisual: DashboardVisual = {
+      id: `visual-${Date.now()}`,
+      title: customVisualTitle.trim() || "Custom visual",
+      source: customVisualSource,
+      chartType: customVisualChartType,
+      metric: customVisualSource === "monthlyMetric" ? customVisualMetric : undefined,
+      category: customVisualSource === "categoryTrend" ? customVisualCategory : undefined,
+      month: customVisualSource === "monthBreakdown" || customVisualSource === "monthSnapshot" ? customVisualMonth : undefined,
+    };
+
+    await persistDashboardSettings({
+      ...dashboardSettings,
+      customVisuals: [...dashboardSettings.customVisuals, nextVisual],
+    });
+  }
+
+  async function removeCustomVisual(visualId: string) {
+    await persistDashboardSettings({
+      ...dashboardSettings,
+      customVisuals: dashboardSettings.customVisuals.filter((visual) => visual.id !== visualId),
     });
   }
 
@@ -820,7 +925,111 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <section className={styles.visualBuilderPanel}>
+        <div className={styles.layoutPanelHeader}>
+          <div>
+            <h2>Custom Dashboard Visuals</h2>
+            <p>
+              {canCreateCustomDashboardVisuals
+                ? "Build extra charts from your monthly metrics, category trends, and month snapshots."
+                : "Pro unlocks saved custom visuals so you can build your own extra dashboard charts from your data."}
+            </p>
+          </div>
+          <span className={styles.layoutBadge}>{dashboardSettings.customVisuals.length}/{CUSTOM_VISUAL_LIMIT} saved</span>
+        </div>
+
+        <div className={styles.visualBuilderGrid}>
+          <label className={styles.controlItem}>
+            <span>Visual name</span>
+            <input className={styles.visualInput} value={customVisualTitle} onChange={(event) => setCustomVisualTitle(event.target.value)} placeholder="Monthly Spendings Pulse" />
+          </label>
+          <label className={styles.controlItem}>
+            <span>Source</span>
+            <select className={styles.select} value={customVisualSource} onChange={(event) => setCustomVisualSource(event.target.value as DashboardVisualSource)}>
+              <option value="monthlyMetric">Monthly metric trend</option>
+              <option value="categoryTrend">Category trend</option>
+              <option value="monthBreakdown">Monthly category breakdown</option>
+              <option value="monthSnapshot">Monthly snapshot</option>
+            </select>
+          </label>
+          <label className={styles.controlItem}>
+            <span>Chart type</span>
+            <select className={styles.select} value={customVisualChartType} onChange={(event) => setCustomVisualChartType(event.target.value as DashboardVisualChartType)}>
+              <option value="line">Line</option>
+              <option value="bar">Bar</option>
+              <option value="doughnut">Doughnut</option>
+            </select>
+          </label>
+          {customVisualSource === "monthlyMetric" ? (
+            <label className={styles.controlItem}>
+              <span>Metric</span>
+              <select className={styles.select} value={customVisualMetric} onChange={(event) => setCustomVisualMetric(event.target.value as CustomMetric)}>
+                <option value="spendings">Spendings</option>
+                <option value="income">Income</option>
+                <option value="net">Net</option>
+              </select>
+            </label>
+          ) : null}
+          {customVisualSource === "categoryTrend" ? (
+            <label className={styles.controlItem}>
+              <span>Category</span>
+              <select className={styles.select} value={customVisualCategory} onChange={(event) => setCustomVisualCategory(event.target.value)}>
+                {customVisualCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </label>
+          ) : null}
+          {customVisualSource === "monthBreakdown" || customVisualSource === "monthSnapshot" ? (
+            <label className={styles.controlItem}>
+              <span>Month</span>
+              <select className={styles.select} value={customVisualMonth} onChange={(event) => setCustomVisualMonth(event.target.value as MonthKey)}>
+                {MONTHS.map((month) => <option key={month} value={month}>{month}</option>)}
+              </select>
+            </label>
+          ) : null}
+        </div>
+
+        <div className={styles.visualBuilderActions}>
+          <button type="button" className={`${styles.toggleButton} ${styles.toggleButtonActive}`} onClick={() => void addCustomVisual()} disabled={!canCreateCustomDashboardVisuals || dashboardSettings.customVisuals.length >= CUSTOM_VISUAL_LIMIT}>
+            Add visual
+          </button>
+          {!canCreateCustomDashboardVisuals ? <span className={styles.layoutHint}>Available on Pro.</span> : null}
+        </div>
+      </section>
+
       {visibleOrderedWidgets.map((widget) => renderDashboardWidget(widget))}
+
+      {dashboardSettings.customVisuals.length > 0 ? (
+        <section className={styles.widgetStack}>
+          <div className={styles.widgetHeader}>
+            <h2>Custom Visuals</h2>
+          </div>
+          <div className={styles.customVisualGrid}>
+            {dashboardSettings.customVisuals.map((visual) => (
+              <section key={visual.id} className={styles.chartSection}>
+                <div className={styles.sectionHeader}>
+                  <div>
+                    <h2>{visual.title}</h2>
+                    <p>{getVisualSubtitle(visual)}</p>
+                  </div>
+                  {canCreateCustomDashboardVisuals ? (
+                    <button type="button" className={styles.visibilityToggle} onClick={() => void removeCustomVisual(visual.id)}>
+                      <span>Remove</span>
+                    </button>
+                  ) : null}
+                </div>
+                <div className={styles.chartFrameTall}>
+                  <Chart
+                    data={buildVisualData(visual)}
+                    type={visual.chartType}
+                    showLegend={visual.chartType === "doughnut"}
+                    legendSpacing={visual.chartType === "doughnut" ? "roomy" : "default"}
+                  />
+                </div>
+              </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

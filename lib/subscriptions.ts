@@ -23,6 +23,7 @@ export type SubscriptionFeatureKey =
   | "dashboardWidgetToggles"
   | "dashboardSectionReordering"
   | "defaultHomepageWidget"
+  | "customDashboardVisuals"
   | "customThemeCreation"
   | "savedThemePresets"
   | "customCategories"
@@ -54,6 +55,7 @@ const FEATURE_MINIMUM_PLAN: Record<SubscriptionFeatureKey, SubscriptionPlanSlug>
   dashboardWidgetToggles: "sync",
   dashboardSectionReordering: "free",
   defaultHomepageWidget: "sync",
+  customDashboardVisuals: "scale",
   customThemeCreation: "scale",
   savedThemePresets: "scale",
   customCategories: "scale",
@@ -164,6 +166,7 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
       "Add tags to transactions",
       "Bulk edit transaction categories",
       "Merge categories",
+      "Build your own dashboard visuals",
       "Create your own custom themes",
       "Save and reuse personal theme presets",
       "Early access to new features",
@@ -301,6 +304,11 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
         label: "Dashboard section reordering",
         description: "Move dashboard sections up or down, or support drag-and-drop ordering later.",
         values: { free: true, sync: true, scale: true },
+      },
+      {
+        label: "Custom dashboard visuals",
+        description: "Build and save your own extra charts from monthly metrics, categories, and month snapshots.",
+        values: { free: false, sync: false, scale: true },
       },
     ],
   },

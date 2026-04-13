@@ -6,6 +6,7 @@ import {
   DEFAULT_CUSTOM_CATEGORIES,
   DEFAULT_DASHBOARD_SETTINGS,
   type AppearanceSettings,
+  type DashboardVisual,
   type DashboardSettings,
   type ThemePreset,
 } from '../lib/userSettings';
@@ -60,6 +61,19 @@ const ThemePresetSchema = new Schema<ThemePreset>(
   { _id: false }
 );
 
+const DashboardVisualSchema = new Schema<DashboardVisual>(
+  {
+    id: { type: String, required: true, trim: true },
+    title: { type: String, required: true, trim: true },
+    source: { type: String, enum: ['monthlyMetric', 'categoryTrend', 'monthBreakdown', 'monthSnapshot'], required: true },
+    chartType: { type: String, enum: ['line', 'bar', 'doughnut'], required: true },
+    metric: { type: String, enum: ['spendings', 'income', 'net'], required: false },
+    category: { type: String, trim: true, required: false },
+    month: { type: String, trim: true, required: false },
+  },
+  { _id: false }
+);
+
 const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -90,6 +104,7 @@ const UserSchema: Schema<IUser> = new Schema(
       },
       widgetOrder: { type: [String], default: DEFAULT_DASHBOARD_SETTINGS.widgetOrder },
       defaultWidget: { type: String, default: DEFAULT_DASHBOARD_SETTINGS.defaultWidget },
+      customVisuals: { type: [DashboardVisualSchema], default: DEFAULT_DASHBOARD_SETTINGS.customVisuals },
     },
     customCategories: { type: [String], default: DEFAULT_CUSTOM_CATEGORIES },
   },

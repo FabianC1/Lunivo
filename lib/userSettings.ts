@@ -2,6 +2,8 @@ import { initialBudgets } from "./budgets";
 
 export type DashboardWidgetKey = "charts" | "goals" | "transactions";
 export type ThemeMode = "light" | "dark";
+export type DashboardVisualSource = "monthlyMetric" | "categoryTrend" | "monthBreakdown" | "monthSnapshot";
+export type DashboardVisualChartType = "line" | "bar" | "doughnut";
 
 export type ThemeColors = {
   bgColor: string;
@@ -38,6 +40,17 @@ export type DashboardSettings = {
   visibleWidgets: Record<DashboardWidgetKey, boolean>;
   widgetOrder: DashboardWidgetKey[];
   defaultWidget: DashboardWidgetKey;
+  customVisuals: DashboardVisual[];
+};
+
+export type DashboardVisual = {
+  id: string;
+  title: string;
+  source: DashboardVisualSource;
+  chartType: DashboardVisualChartType;
+  metric?: "spendings" | "income" | "net";
+  category?: string;
+  month?: string;
 };
 
 export const DASHBOARD_WIDGETS: DashboardWidgetKey[] = ["charts", "goals", "transactions"];
@@ -273,7 +286,20 @@ export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
   },
   widgetOrder: [...DASHBOARD_WIDGETS],
   defaultWidget: "charts",
+  customVisuals: [],
 };
+
+function isDashboardVisual(value: unknown): value is DashboardVisual {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.id === "string"
+    && typeof candidate.title === "string"
+    && (candidate.source === "monthlyMetric" || candidate.source === "categoryTrend" || candidate.source === "monthBreakdown" || candidate.source === "monthSnapshot")
+    && (candidate.chartType === "line" || candidate.chartType === "bar" || candidate.chartType === "doughnut");
+}
 
 function isThemePreset(value: unknown): value is ThemePreset {
   if (!value || typeof value !== "object") {
@@ -319,6 +345,17 @@ export function sanitizeDashboardSettings(input: unknown): DashboardSettings {
   const defaultWidget = typeof candidate.defaultWidget === "string" && DASHBOARD_WIDGETS.includes(candidate.defaultWidget as DashboardWidgetKey)
     ? candidate.defaultWidget as DashboardWidgetKey
     : DEFAULT_DASHBOARD_SETTINGS.defaultWidget;
+  const customVisuals = Array.isArray(candidate.customVisuals)
+    ? candidate.customVisuals.filter(isDashboardVisual).map((visual) => ({
+        id: visual.id,
+        title: visual.title.trim().slice(0, 40) || "Custom visual",
+        source: visual.source,
+        chartType: visual.chartType,
+        metric: visual.metric === "income" || visual.metric === "net" || visual.metric === "spendings" ? visual.metric : undefined,
+        category: typeof visual.category === "string" ? visual.category.trim().slice(0, 40) : undefined,
+        month: typeof visual.month === "string" ? visual.month.trim().slice(0, 12) : undefined,
+      }))
+    : [];
 
   const normalizedVisibleWidgets = {
       charts: visibleWidgets.charts !== undefined ? Boolean(visibleWidgets.charts) : true,
@@ -339,6 +376,7 @@ export function sanitizeDashboardSettings(input: unknown): DashboardSettings {
     visibleWidgets: normalizedVisibleWidgets,
     widgetOrder: orderedWidgets,
     defaultWidget: resolvedDefaultWidget,
+    customVisuals,
   };
 }
 
