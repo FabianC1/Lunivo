@@ -65,11 +65,16 @@ const DashboardVisualSchema = new Schema<DashboardVisual>(
   {
     id: { type: String, required: true, trim: true },
     title: { type: String, required: true, trim: true },
-    source: { type: String, enum: ['monthlyMetric', 'categoryTrend', 'monthBreakdown', 'monthSnapshot'], required: true },
+    source: {
+      type: String,
+      enum: ['monthlyMetric', 'categoryTrend', 'monthBreakdown', 'monthSnapshot', 'savingsRateTrend', 'netFlowTrend', 'topSpendingCategoriesYear', 'incomeSourceBreakdown', 'rollingThreeMonthAverageSpend', 'goalProgressComparison', 'monthlyForecastVsActual'],
+      required: true,
+    },
     chartType: { type: String, enum: ['line', 'bar', 'doughnut'], required: true },
     metric: { type: String, enum: ['spendings', 'income', 'net'], required: false },
     category: { type: String, trim: true, required: false },
     month: { type: String, trim: true, required: false },
+    period: { type: String, enum: ['month', 'year'], required: false },
   },
   { _id: false }
 );

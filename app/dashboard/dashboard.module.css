@@ -47,6 +47,60 @@
   flex-wrap: wrap;
 }
 
+.controlDock {
+  display: grid;
+  gap: 1rem;
+}
+
+.panelToggleRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.panelToggleButton {
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+  border-radius: 1rem;
+  padding: 1rem 1.05rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--button-gradient-end) 14%, transparent), transparent 46%),
+    linear-gradient(135deg, color-mix(in srgb, var(--content-surface) 97%, transparent), color-mix(in srgb, var(--button-gradient-start) 4%, transparent));
+  color: var(--text-color);
+  text-align: left;
+  display: grid;
+  gap: 0.18rem;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+  transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.panelToggleButton:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--button-gradient-start) 34%, transparent);
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.11);
+}
+
+.panelToggleButtonOpen {
+  border-color: color-mix(in srgb, var(--button-gradient-start) 42%, transparent);
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.12);
+}
+
+.panelToggleButton strong {
+  font-size: 1rem;
+}
+
+.panelToggleEyebrow {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--button-gradient-start) 82%, transparent);
+}
+
+.panelToggleMeta {
+  font-size: 0.84rem;
+  opacity: 0.74;
+}
+
 .studioToggle {
   min-width: 250px;
   border: 1px solid color-mix(in srgb, var(--button-gradient-start) 25%, transparent);
@@ -528,6 +582,16 @@
     0 2px 8px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.25s ease;
+}
+
+@media (max-width: 900px) {
+  .panelToggleRow,
+  .visualBuilderGrid,
+  .summaryGrid,
+  .chartGrid,
+  .customVisualGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chartSection:hover {

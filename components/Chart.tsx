@@ -31,6 +31,7 @@ interface ChartProps {
   type?: 'doughnut' | 'line' | 'bar';
   showLegend?: boolean;
   legendSpacing?: 'default' | 'relaxed' | 'roomy';
+  valueFormat?: 'currency' | 'percent' | 'number';
 }
 
 export default function Chart({
@@ -38,6 +39,7 @@ export default function Chart({
   type = 'doughnut',
   showLegend = true,
   legendSpacing,
+  valueFormat = 'currency',
 }: ChartProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [visibleLabels, setVisibleLabels] = useState<Record<string, boolean>>({});
@@ -182,6 +184,24 @@ export default function Chart({
     return `${sign}£${absoluteValue.toLocaleString('en-GB')}`;
   };
 
+  const formatTickValue = (value: number | string) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return valueFormat === 'percent' ? '0%' : valueFormat === 'number' ? '0' : '£0';
+    }
+
+    if (valueFormat === 'percent') {
+      return `${numericValue.toFixed(1).replace(/\.0$/, '')}%`;
+    }
+
+    if (valueFormat === 'number') {
+      return numericValue.toLocaleString('en-GB');
+    }
+
+    return formatCurrencyTick(numericValue);
+  };
+
   const options: any = {
     responsive: true,
     maintainAspectRatio: false,
@@ -200,7 +220,16 @@ export default function Chart({
         displayColors: true,
         callbacks: {
           label(context: any) {
-            return `£${Number(context.raw ?? 0).toLocaleString('en-GB')}`;
+            const rawValue = Number(context.raw ?? 0);
+            if (valueFormat === 'percent') {
+              return `${rawValue.toFixed(1).replace(/\.0$/, '')}%`;
+            }
+
+            if (valueFormat === 'number') {
+              return rawValue.toLocaleString('en-GB');
+            }
+
+            return `£${rawValue.toLocaleString('en-GB')}`;
           },
         },
       },
@@ -220,7 +249,7 @@ export default function Chart({
         ticks: {
           color: textColor,
           maxTicksLimit: type === 'bar' ? 6 : undefined,
-          callback: (value: number | string) => formatCurrencyTick(value),
+          callback: (value: number | string) => formatTickValue(value),
         },
         grid: { color: gridColor },
       },

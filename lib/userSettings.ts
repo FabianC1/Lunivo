@@ -2,8 +2,20 @@ import { initialBudgets } from "./budgets";
 
 export type DashboardWidgetKey = "charts" | "goals" | "transactions";
 export type ThemeMode = "light" | "dark";
-export type DashboardVisualSource = "monthlyMetric" | "categoryTrend" | "monthBreakdown" | "monthSnapshot";
+export type DashboardVisualSource =
+  | "monthlyMetric"
+  | "categoryTrend"
+  | "monthBreakdown"
+  | "monthSnapshot"
+  | "savingsRateTrend"
+  | "netFlowTrend"
+  | "topSpendingCategoriesYear"
+  | "incomeSourceBreakdown"
+  | "rollingThreeMonthAverageSpend"
+  | "goalProgressComparison"
+  | "monthlyForecastVsActual";
 export type DashboardVisualChartType = "line" | "bar" | "doughnut";
+export type DashboardVisualPeriod = "month" | "year";
 
 export type ThemeColors = {
   bgColor: string;
@@ -51,6 +63,7 @@ export type DashboardVisual = {
   metric?: "spendings" | "income" | "net";
   category?: string;
   month?: string;
+  period?: DashboardVisualPeriod;
 };
 
 export const DASHBOARD_WIDGETS: DashboardWidgetKey[] = ["charts", "goals", "transactions"];
@@ -297,7 +310,19 @@ function isDashboardVisual(value: unknown): value is DashboardVisual {
   const candidate = value as Record<string, unknown>;
   return typeof candidate.id === "string"
     && typeof candidate.title === "string"
-    && (candidate.source === "monthlyMetric" || candidate.source === "categoryTrend" || candidate.source === "monthBreakdown" || candidate.source === "monthSnapshot")
+    && (
+      candidate.source === "monthlyMetric"
+      || candidate.source === "categoryTrend"
+      || candidate.source === "monthBreakdown"
+      || candidate.source === "monthSnapshot"
+      || candidate.source === "savingsRateTrend"
+      || candidate.source === "netFlowTrend"
+      || candidate.source === "topSpendingCategoriesYear"
+      || candidate.source === "incomeSourceBreakdown"
+      || candidate.source === "rollingThreeMonthAverageSpend"
+      || candidate.source === "goalProgressComparison"
+      || candidate.source === "monthlyForecastVsActual"
+    )
     && (candidate.chartType === "line" || candidate.chartType === "bar" || candidate.chartType === "doughnut");
 }
 
@@ -354,6 +379,7 @@ export function sanitizeDashboardSettings(input: unknown): DashboardSettings {
         metric: visual.metric === "income" || visual.metric === "net" || visual.metric === "spendings" ? visual.metric : undefined,
         category: typeof visual.category === "string" ? visual.category.trim().slice(0, 40) : undefined,
         month: typeof visual.month === "string" ? visual.month.trim().slice(0, 12) : undefined,
+        period: visual.period === "month" || visual.period === "year" ? visual.period : undefined,
       }))
     : [];
 

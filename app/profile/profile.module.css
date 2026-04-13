@@ -586,6 +586,16 @@ select.input option {
   cursor: pointer;
 }
 
+.themeCard strong,
+.themeCardStatic strong {
+  color: var(--text-color);
+}
+
+.themeCard span,
+.themeCardStatic span {
+  color: color-mix(in srgb, var(--text-color) 72%, transparent);
+}
+
 .themeCard:disabled {
   cursor: not-allowed;
   opacity: 0.6;

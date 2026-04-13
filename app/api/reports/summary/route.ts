@@ -17,6 +17,10 @@ type MonthReport = {
 
 type YearReport = Record<MonthKey, MonthReport>;
 
+type IncomeSourceBreakdownByMonth = Record<MonthKey, Record<string, number>>;
+type IncomeSourceBreakdownByYear = Record<string, Record<string, number>>;
+type IncomeSourceBreakdownByMonthByYear = Record<string, IncomeSourceBreakdownByMonth>;
+
 function createEmptyYearReport(categories: string[]): YearReport {
   return MONTHS.reduce((report, month) => {
     report[month] = {
@@ -135,13 +139,40 @@ export async function GET(req: NextRequest) {
     return result;
   }, {} as Record<string, number>);
 
-  const incomeSourceBreakdown = grouped
-    .filter((entry) => String(entry._id.year) === latestYear && entry._id.kind === "income")
-    .reduce((result, entry) => {
-      const source = entry._id.category?.trim() || "Other";
-      result[source] = (result[source] ?? 0) + (Number(entry.total) || 0);
-      return result;
-    }, {} as Record<string, number>);
+  const incomeSourceBreakdownByYear = resolvedYears.reduce((result, year) => {
+    result[year] = {};
+    return result;
+  }, {} as IncomeSourceBreakdownByYear);
+
+  const incomeSourceBreakdownByMonthByYear = resolvedYears.reduce((result, year) => {
+    result[year] = MONTHS.reduce((monthResult, month) => {
+      monthResult[month] = {};
+      return monthResult;
+    }, {} as IncomeSourceBreakdownByMonth);
+    return result;
+  }, {} as IncomeSourceBreakdownByMonthByYear);
+
+  for (const entry of grouped) {
+    if (entry._id.kind !== "income") {
+      continue;
+    }
+
+    const year = String(entry._id.year);
+    const month = MONTHS[entry._id.month - 1] as MonthKey | undefined;
+    if (!month || !incomeSourceBreakdownByYear[year] || !incomeSourceBreakdownByMonthByYear[year]) {
+      continue;
+    }
+
+    const source = entry._id.category?.trim() || "Other";
+    incomeSourceBreakdownByYear[year][source] = (incomeSourceBreakdownByYear[year][source] ?? 0) + (Number(entry.total) || 0);
+    incomeSourceBreakdownByMonthByYear[year][month][source] = (incomeSourceBreakdownByMonthByYear[year][month][source] ?? 0) + (Number(entry.total) || 0);
+  }
+
+  const incomeSourceBreakdown = incomeSourceBreakdownByYear[latestYear] ?? {};
+  const incomeSourceBreakdownByMonth = incomeSourceBreakdownByMonthByYear[latestYear] ?? MONTHS.reduce((result, month) => {
+    result[month] = {};
+    return result;
+  }, {} as IncomeSourceBreakdownByMonth);
 
   const latestMonthKey = [...MONTHS].reverse().find((month) => latestYearData[month].income > 0 || latestYearData[month].spendings > 0) ?? MONTHS[new Date().getMonth()] ?? "Jan";
   const latestMonthSummary = {
@@ -158,9 +189,31 @@ export async function GET(req: NextRequest) {
   const threeMonthAverageSpending = recentThreeMonths.reduce((sum, month) => sum + latestYearData[month].spendings, 0) / recentThreeMonths.length;
   const monthlySavingsEstimate = annualIncome > 0 ? (annualIncome - annualSpendings) / 12 : 0;
 
-  const goals = scope === "detailed"
-    ? await Goal.find({ userId: authenticatedUser.userId, completed: false }).sort({ createdAt: -1 }).limit(6)
-    : [];
+  const savingsRateByMonth = MONTHS.reduce((result, month) => {
+    const monthIncome = latestYearData[month].income;
+    const monthSpendings = latestYearData[month].spendings;
+    result[month] = monthIncome > 0 ? ((monthIncome - monthSpendings) / monthIncome) * 100 : 0;
+    return result;
+  }, {} as Record<string, number>);
+
+  const rollingThreeMonthAverageSpend = MONTHS.reduce((result, month, index) => {
+    const windowMonths = MONTHS.slice(Math.max(0, index - 2), index + 1);
+    result[month] = windowMonths.reduce((sum, currentMonth) => sum + latestYearData[currentMonth].spendings, 0) / windowMonths.length;
+    return result;
+  }, {} as Record<string, number>);
+
+  const forecastSpendingsByMonth = MONTHS.reduce((result, month, index) => {
+    if (index === 0) {
+      result[month] = latestYearData[month].spendings;
+      return result;
+    }
+
+    const windowMonths = MONTHS.slice(Math.max(0, index - 3), index);
+    result[month] = windowMonths.reduce((sum, currentMonth) => sum + latestYearData[currentMonth].spendings, 0) / windowMonths.length;
+    return result;
+  }, {} as Record<string, number>);
+
+  const goals = await Goal.find({ userId: authenticatedUser.userId, completed: false }).sort({ createdAt: -1 }).limit(scope === "detailed" ? 6 : 8);
   const goalEstimates = goals.map((goal) => {
     const remaining = Math.max(0, Number(goal.targetAmount) - Number(goal.savedAmount));
     const currentRateMonths = monthlySavingsEstimate > 0 ? remaining / monthlySavingsEstimate : null;
@@ -182,6 +235,11 @@ export async function GET(req: NextRequest) {
       manualContributionMonths,
     };
   });
+
+  const goalProgressComparison = goalEstimates.reduce((result, goal) => {
+    result[goal.title] = goal.targetAmount > 0 ? Number(((goal.savedAmount / goal.targetAmount) * 100).toFixed(1)) : 0;
+    return result;
+  }, {} as Record<string, number>);
 
   return NextResponse.json({
     planSlug: authenticatedUser.planSlug,
@@ -211,7 +269,14 @@ export async function GET(req: NextRequest) {
       monthlySpendings,
       categoryBreakdown,
       incomeSourceBreakdown,
+      incomeSourceBreakdownByMonth,
+      incomeSourceBreakdownByYear,
+      incomeSourceBreakdownByMonthByYear,
       savingsProgress: monthlySavingsProgress,
+      savingsRateByMonth,
+      rollingThreeMonthAverageSpend,
+      forecastSpendingsByMonth,
+      goalProgressComparison,
     },
   });
 }
