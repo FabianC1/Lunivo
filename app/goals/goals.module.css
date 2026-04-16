@@ -202,6 +202,30 @@
   background: color-mix(in srgb, var(--button-gradient-start) 14%, transparent);
 }
 
+.planButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: linear-gradient(90deg, var(--button-gradient-start) 0%, var(--button-gradient-end) 100%);
+  color: #fff;
+  border-radius: 0.55rem;
+  padding: 0.38rem 0.82rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.planButton:hover {
+  transform: translateY(-1px);
+}
+
+.planButton:active {
+  opacity: 0.92;
+  transform: translateY(0);
+}
+
 .editButton {
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--text-color) 22%, transparent);

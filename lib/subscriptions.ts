@@ -15,6 +15,7 @@ export type SubscriptionPlanSlug = "free" | "sync" | "scale";
 export type SubscriptionFeatureKey =
   | "bankSync"
   | "advancedDashboardInsights"
+  | "precisionEventPlanning"
   | "netFlowPerMonth"
   | "endOfMonthBalanceEstimate"
   | "monthlySavingsEstimate"
@@ -45,6 +46,7 @@ const PLAN_ORDER: SubscriptionPlanSlug[] = ["free", "sync", "scale"];
 const FEATURE_MINIMUM_PLAN: Record<SubscriptionFeatureKey, SubscriptionPlanSlug> = {
   bankSync: "sync",
   advancedDashboardInsights: "sync",
+  precisionEventPlanning: "scale",
   netFlowPerMonth: "sync",
   endOfMonthBalanceEstimate: "sync",
   monthlySavingsEstimate: "sync",
@@ -165,6 +167,7 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
       "Build your own dashboard visuals",
       "Create your own custom themes",
       "Save and reuse personal theme presets",
+      "Precision event planning workspace with image boards and Excel-ready exports",
     ],
   },
 ];
@@ -298,6 +301,26 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       {
         label: "Custom dashboard visuals",
         description: "Build and save your own extra charts from monthly metrics, categories, and month snapshots.",
+        values: { free: false, sync: false, scale: true },
+      },
+    ],
+  },
+  {
+    title: "Event Planning",
+    rows: [
+      {
+        label: "Precision event planning workspace",
+        description: "Plan weddings and other events with detailed guest, venue, meal, seating, cake, supplier, and contingency calculations.",
+        values: { free: false, sync: false, scale: true },
+      },
+      {
+        label: "Event moodboard and image previews",
+        description: "Upload venue, food, and inspiration images so the plan stays visual while you build costs.",
+        values: { free: false, sync: false, scale: true },
+      },
+      {
+        label: "Excel-ready event export",
+        description: "Export the full event budget model and calculations into an Excel-friendly planning file.",
         values: { free: false, sync: false, scale: true },
       },
     ],

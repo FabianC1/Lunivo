@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import DateInput from "../../components/DateInput";
 import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
 import styles from "./goals.module.css";
 import { formatCurrency } from "../../lib/utils";
-import { getSession } from "../../lib/auth";
+import { DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
+import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../lib/subscriptions";
 
 const DEMO_GOALS_SEED_KEY = "lunivo-goals-demo-seeded";
 
@@ -139,6 +141,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalItem[]>([]);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [usesDatabase, setUsesDatabase] = useState(false);
+  const [currentPlanSlug, setCurrentPlanSlug] = useState("free");
   const [tab, setTab] = useState<Tab>("active");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
@@ -153,7 +156,14 @@ export default function GoalsPage() {
     setSessionUserId(userId);
     setUsesDatabase(Boolean(userId));
 
+    if (session?.isDemo) {
+      setCurrentPlanSlug(DEMO_PLAN_SLUG);
+    }
+
     if (!userId) {
+      if (!session?.isDemo) {
+        setCurrentPlanSlug("free");
+      }
       setGoals(loadGoals());
       setIsLoading(false);
       return;
@@ -165,9 +175,21 @@ export default function GoalsPage() {
       try {
         setIsLoading(true);
         setError("");
-        const response = await fetch("/api/goals", {
-          cache: "no-store",
-        });
+        const [response, profileResponse] = await Promise.all([
+          fetch("/api/goals", {
+            cache: "no-store",
+          }),
+          fetch("/api/profile", {
+            cache: "no-store",
+          }),
+        ]);
+
+        if (profileResponse.ok) {
+          const profilePayload = await profileResponse.json() as { user?: { planSlug?: string } };
+          if (isMounted) {
+            setCurrentPlanSlug(profilePayload.user?.planSlug ?? "free");
+          }
+        }
 
         if (!response.ok) {
           throw new Error(await readApiError(response, "Failed to load goals."));
@@ -181,6 +203,7 @@ export default function GoalsPage() {
         if (isMounted) {
           setError(loadError instanceof Error ? loadError.message : "Failed to load goals.");
           setGoals([]);
+          setCurrentPlanSlug("free");
         }
       } finally {
         if (isMounted) {
@@ -230,13 +253,30 @@ export default function GoalsPage() {
   const completedGoals = useMemo(() => goals.filter((g) => g.completed), [goals]);
 
   const totals = useMemo(() => {
-    const target = activeGoals.reduce((s, g) => s + g.targetAmount, 0);
-    const saved = activeGoals.reduce((s, g) => s + g.savedAmount, 0);
+    const target = activeGoals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+    const saved = activeGoals.reduce((sum, goal) => sum + goal.savedAmount, 0);
     return { target, saved, remaining: Math.max(0, target - saved) };
   }, [activeGoals]);
 
   if (isLoading) {
     return <PageLoading message="Loading goals..." />;
+  }
+
+  const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
+  const canUsePrecisionEventPlanning = hasFeatureAccess(currentPlan.slug, "precisionEventPlanning");
+
+  function buildPlanningHref(goal: GoalItem) {
+    const params = new URLSearchParams({
+      goalId: goal.id,
+      goalTitle: goal.title,
+      goalKind: goal.kind,
+      goalTargetAmount: String(goal.targetAmount),
+      goalSavedAmount: String(goal.savedAmount),
+      goalTargetDate: goal.targetDate,
+      goalNotes: goal.notes,
+    });
+
+    return `/events?${params.toString()}`;
   }
 
   function resetForm() {
@@ -645,6 +685,11 @@ export default function GoalsPage() {
                   {goal.notes && <p className={styles.notes}>{goal.notes}</p>}
 
                   <div className={styles.cardActions}>
+                    {canUsePrecisionEventPlanning ? (
+                      <Link className={styles.planButton} href={buildPlanningHref(goal)}>
+                        Plan
+                      </Link>
+                    ) : null}
                     {!goal.completed && (
                       <button
                         className={styles.completeButton}

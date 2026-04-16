@@ -1084,7 +1084,7 @@ export default function Dashboard() {
                   {canCreateCustomDashboardVisuals ? (
                   <button
                     type="button"
-                    className={`${styles.panelToggleButton} ${showVisualBuilder ? styles.panelToggleButtonOpen : ""}`}
+                    className={`${styles.panelToggleButton} ${styles.proAccentCard} ${showVisualBuilder ? styles.panelToggleButtonOpen : ""}`}
                     onClick={() => setShowVisualBuilder((current) => !current)}
                     aria-expanded={showVisualBuilder}
                     aria-controls="custom-visuals-panel"
@@ -1205,7 +1205,7 @@ export default function Dashboard() {
                 ) : null}
 
                 {showVisualBuilder ? (
-                  <section id="custom-visuals-panel" className={styles.visualBuilderPanel}>
+                  <section id="custom-visuals-panel" className={`${styles.visualBuilderPanel} ${styles.proAccentCard}`}>
                     <div className={styles.layoutPanelHeader}>
                       <div>
                         <h2>Custom Dashboard Visuals</h2>

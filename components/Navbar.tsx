@@ -7,6 +7,7 @@ import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const isGoalsRoute = pathname === '/goals' || pathname === '/events';
 
   return (
     <nav className={styles.navbar}>
@@ -25,7 +26,7 @@ export default function Navbar() {
           <Link href="/spendings" className={pathname === '/spendings' || pathname === '/transactions' ? styles.active : ''}>Spendings</Link>
         </li>
         <li>
-          <Link href="/goals" className={pathname === '/goals' ? styles.active : ''}>Goals</Link>
+          <Link href="/goals" className={isGoalsRoute ? styles.active : ''}>Goals</Link>
         </li>
       </ul>
       <div className={styles.actions}>
