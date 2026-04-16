@@ -1066,7 +1066,7 @@ export default function Dashboard() {
                   {canReorderWidgets ? (
                   <button
                     type="button"
-                    className={`${styles.panelToggleButton} ${showLayoutControls ? styles.panelToggleButtonOpen : ""}`}
+                    className={`${styles.panelToggleButton} ${canToggleWidgets ? styles.proAccentCard : ""} ${showLayoutControls ? styles.panelToggleButtonOpen : ""}`}
                     onClick={() => setShowLayoutControls((current) => !current)}
                     aria-expanded={showLayoutControls}
                     aria-controls="workspace-layout-panel"
@@ -1099,7 +1099,7 @@ export default function Dashboard() {
                 </div>
 
                 {showLayoutControls ? (
-                  <section id="workspace-layout-panel" className={styles.layoutPanel}>
+                  <section id="workspace-layout-panel" className={`${styles.layoutPanel} ${canToggleWidgets ? styles.proAccentCard : ""}`}>
                     <div className={styles.layoutPanelHeader}>
                       <div>
                         <h2>Workspace Layout</h2>

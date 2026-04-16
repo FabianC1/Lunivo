@@ -255,12 +255,26 @@
 }
 
 .proToolCard {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--content-border);
   background: var(--content-surface);
   border-radius: 0.9rem;
   padding: 1rem;
   display: grid;
   gap: 0.55rem;
+}
+
+.paidFeatureCard::after {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0;
+  height: 0.22rem;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, var(--button-gradient-start) 0%, var(--button-gradient-end) 100%);
+  opacity: 0.92;
 }
 
 .proToolCard h3,

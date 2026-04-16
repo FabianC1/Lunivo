@@ -93,6 +93,20 @@
   font-weight: 600;
 }
 
+.field {
+  position: relative;
+}
+
+.fieldLabel {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.25rem;
+}
+
+.fieldControlWrap {
+  position: relative;
+}
+
 .form input,
 .form select,
 .form textarea {
@@ -110,6 +124,66 @@
   outline: none;
   border-color: color-mix(in srgb, var(--button-gradient-start) 70%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--button-gradient-end) 25%, transparent);
+}
+
+.fieldInvalid {
+  border-color: color-mix(in srgb, #ff735c 82%, var(--button-gradient-end) 18%) !important;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #ff735c 16%, transparent),
+    0 10px 24px color-mix(in srgb, #ff735c 10%, transparent);
+}
+
+.dateInputShell {
+  border-radius: 0.72rem;
+}
+
+.dateInputShellInvalid {
+  padding: 0.14rem;
+  border-radius: 0.72rem;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #ff735c 78%, var(--button-gradient-start) 22%),
+    color-mix(in srgb, #ff8e6e 70%, var(--button-gradient-end) 30%)
+  );
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #ff735c 14%, transparent),
+    0 12px 26px color-mix(in srgb, #ff735c 12%, transparent);
+}
+
+.validationBubble {
+  position: absolute;
+  bottom: calc(100% + 0.7rem);
+  left: 0;
+  z-index: 20;
+  max-width: min(100%, 18rem);
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, #ff8e6e 48%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--content-surface) 97%, #fff 3%),
+    color-mix(in srgb, var(--content-surface) 90%, var(--bg-color) 10%)
+  );
+  box-shadow:
+    0 18px 34px rgba(15, 23, 42, 0.18),
+    0 0 0 1px color-mix(in srgb, #ff8e6e 12%, transparent) inset;
+  color: color-mix(in srgb, #ff735c 88%, var(--text-color) 12%);
+  font-size: 0.77rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.validationBubble::before {
+  content: "";
+  position: absolute;
+  bottom: -0.42rem;
+  left: 1rem;
+  width: 0.78rem;
+  height: 0.78rem;
+  border-right: 1px solid color-mix(in srgb, #ff8e6e 48%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, #ff8e6e 48%, transparent);
+  background: color-mix(in srgb, var(--content-surface) 96%, #fff 4%);
+  transform: rotate(45deg);
 }
 
 .fullWidth {
@@ -438,6 +512,10 @@
 
   .form {
     grid-template-columns: 1fr;
+  }
+
+  .validationBubble {
+    max-width: 100%;
   }
 }
 

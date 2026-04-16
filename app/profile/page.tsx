@@ -890,7 +890,7 @@ export default function ProfilePage() {
           <div className={styles.panel}>
             <h1 className={styles.heading}>Appearance</h1>
             <p className={styles.subheading}>Theme controls for this account.</p>
-            <div className={styles.inlineCard}>
+            <div className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
               <h3 className={styles.sectionSubtitle}>Built-in Themes</h3>
               <p>Starter includes Lunivo Light and Lunivo Night. Smart unlocks the full built-in theme library. Pro adds custom theme creation and saved presets.</p>
               <div className={styles.themeGrid}>
@@ -925,7 +925,7 @@ export default function ProfilePage() {
             <div className={styles.divider} />
             {canCreateCustomThemes ? (
               <>
-                <div className={styles.inlineCard}>
+                <div className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
                   <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
                   <p>Pro can create and save personal theme presets.</p>
                   <div className={styles.themeBuilderLayout}>
@@ -1043,7 +1043,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className={styles.divider} />
-                <div className={styles.inlineCard}>
+                <div className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
                   <h3 className={styles.sectionSubtitle}>Saved Theme Presets</h3>
                   {customThemes.length === 0 ? (
                     <p>No saved custom presets yet.</p>
@@ -1071,7 +1071,7 @@ export default function ProfilePage() {
                 </div>
               </>
             ) : (
-              <div className={styles.inlineCard}>
+              <div className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
                 <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
                 <p>Pro unlocks custom theme creation, saved presets, and reusable personal themes.</p>
               </div>
@@ -1427,7 +1427,7 @@ export default function ProfilePage() {
             <h1 className={styles.heading}>Data & Export</h1>
             <p className={styles.subheading}>Export transactions, budgets, and analytics snapshots.</p>
 
-            <div className={styles.inlineCard}>
+            <div className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
               <h3 className={styles.sectionSubtitle}>Quick Export</h3>
               <p>Pro can export monthly summary and category breakdown CSV files. Other plans can see the controls here, but export stays locked.</p>
               <div className={styles.actionRow}>
@@ -1445,7 +1445,7 @@ export default function ProfilePage() {
             </div>
 
             <div className={styles.divider} />
-            <div className={styles.inlineCard}>
+            <div className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
               <h3 className={styles.sectionSubtitle}>Custom Categories</h3>
               {canManageDataControls ? (
                 <>

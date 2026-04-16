@@ -966,7 +966,7 @@ export default function EventsPage() {
             </div>
           </div>
 
-          <div className={styles.uploadRow}>
+          <div className={styles.visualBoardToolbar}>
             <label className={styles.uploadButton}>
               <input type="file" accept="image/*" multiple onChange={handleAssetUpload} />
               Add venue or supplier images
@@ -974,27 +974,29 @@ export default function EventsPage() {
             <span className={styles.uploadHint}>Local preview only in this workspace session.</span>
           </div>
 
-          {assets.length === 0 ? (
-            <div className={styles.emptyState}>
-              <strong>No visuals yet</strong>
-              <p>Add the venue, food, flowers, cake, or moodboard references you want to keep next to the budget.</p>
-            </div>
-          ) : (
-            <div className={styles.assetGrid}>
-              {assets.map((asset) => (
-                <figure key={asset.id} className={styles.assetCard}>
-                  <img src={asset.url} alt={asset.name} className={styles.assetImage} />
-                  <figcaption>
-                    <strong>{asset.name}</strong>
-                    <span>{asset.sizeLabel}</span>
-                  </figcaption>
-                  <button type="button" className={styles.removeButton} onClick={() => removeAsset(asset.id)}>
-                    Remove
-                  </button>
-                </figure>
-              ))}
-            </div>
-          )}
+          <div className={styles.visualBoardContent}>
+            {assets.length === 0 ? (
+              <div className={styles.emptyState}>
+                <strong>No visuals yet</strong>
+                <p>Add the venue, food, flowers, cake, or moodboard references you want to keep next to the budget.</p>
+              </div>
+            ) : (
+              <div className={styles.assetGrid}>
+                {assets.map((asset) => (
+                  <figure key={asset.id} className={styles.assetCard}>
+                    <img src={asset.url} alt={asset.name} className={styles.assetImage} />
+                    <figcaption>
+                      <strong>{asset.name}</strong>
+                      <span>{asset.sizeLabel}</span>
+                    </figcaption>
+                    <button type="button" className={styles.removeButton} onClick={() => removeAsset(asset.id)}>
+                      Remove
+                    </button>
+                  </figure>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </div>
 

@@ -486,12 +486,12 @@ export default function Transactions() {
         }}
       >
         <div className={styles.proToolsPanel}>
-          <div className={styles.proToolCard}>
+          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
             <h3>Transaction tags</h3>
             <p>Add tags in the transaction form to group entries like holiday or work.</p>
             {!canUseTags ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
           </div>
-          <div className={styles.proToolCard}>
+          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
             <h3>Bulk category update</h3>
             <div className={styles.inlineTools}>
               <select className={styles.filterSelect} value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} disabled={!canBulkEditCategories}>
@@ -504,7 +504,7 @@ export default function Transactions() {
             </div>
             {!canBulkEditCategories ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
           </div>
-          <div className={styles.proToolCard}>
+          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
             <h3>Merge categories</h3>
             <div className={styles.inlineTools}>
               <select className={styles.filterSelect} value={mergeFromCategory} onChange={(event) => setMergeFromCategory(event.target.value)} disabled={!canMergeCategories}>
@@ -521,7 +521,7 @@ export default function Transactions() {
             </div>
             {!canMergeCategories ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
           </div>
-          <div className={styles.proToolCard}>
+          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
             <h3>Custom categories</h3>
             <p>{canManageCustomCategories ? "Manage your custom categories from profile settings." : "Visible here, but category creation is locked until Pro."}</p>
           </div>

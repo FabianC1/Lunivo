@@ -137,6 +137,71 @@ const BLANK_FORM = {
   notes: "",
 };
 
+type GoalFormState = typeof BLANK_FORM;
+type GoalFormField = keyof GoalFormState;
+type ValidatedGoalFormField = Exclude<GoalFormField, "notes">;
+
+const GOAL_VALIDATION_FIELD_ORDER: ValidatedGoalFormField[] = [
+  "title",
+  "kind",
+  "targetAmount",
+  "savedAmount",
+  "targetDate",
+];
+
+function getGoalFieldError(field: ValidatedGoalFormField, form: GoalFormState): string | undefined {
+  const parsedTarget = Number(form.targetAmount.trim());
+  const parsedSaved = Number(form.savedAmount.trim());
+
+  if (field === "title") {
+    return form.title.trim() ? undefined : "Enter a goal title.";
+  }
+
+  if (field === "kind") {
+    return form.kind.trim() ? undefined : "Choose a category.";
+  }
+
+  if (field === "targetAmount") {
+    if (!form.targetAmount.trim()) {
+      return "Enter a target amount.";
+    }
+
+    if (!Number.isFinite(parsedTarget) || parsedTarget <= 0) {
+      return "Target amount must be greater than 0.";
+    }
+
+    return undefined;
+  }
+
+  if (field === "savedAmount") {
+    if (!form.savedAmount.trim()) {
+      return "Enter how much you have saved so far.";
+    }
+
+    if (!Number.isFinite(parsedSaved) || parsedSaved < 0) {
+      return "Saved so far must be 0 or more.";
+    }
+
+    return undefined;
+  }
+
+  if (field === "targetDate") {
+    return form.targetDate.trim() ? undefined : "Choose a target date.";
+  }
+
+  return undefined;
+}
+
+function getFirstInvalidGoalField(form: GoalFormState): ValidatedGoalFormField | null {
+  for (const field of GOAL_VALIDATION_FIELD_ORDER) {
+    if (getGoalFieldError(field, form)) {
+      return field;
+    }
+  }
+
+  return null;
+}
+
 export default function GoalsPage() {
   const [goals, setGoals] = useState<GoalItem[]>([]);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
@@ -145,6 +210,8 @@ export default function GoalsPage() {
   const [tab, setTab] = useState<Tab>("active");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
+  const [formError, setFormError] = useState("");
+  const [activeValidationField, setActiveValidationField] = useState<ValidatedGoalFormField | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -281,12 +348,16 @@ export default function GoalsPage() {
 
   function resetForm() {
     setForm(BLANK_FORM);
+    setFormError("");
+    setActiveValidationField(null);
     setEditingGoalId(null);
     setShowForm(false);
   }
 
   function startEditing(goal: GoalItem) {
     setError("");
+    setFormError("");
+    setActiveValidationField(null);
     setEditingGoalId(goal.id);
     setForm({
       title: goal.title,
@@ -299,18 +370,55 @@ export default function GoalsPage() {
     setShowForm(true);
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const parsedTarget = Number(form.targetAmount);
-    const parsedSaved = Number(form.savedAmount || "0");
-    if (
-      !form.title.trim() ||
-      !form.targetDate ||
-      !Number.isFinite(parsedTarget) ||
-      parsedTarget <= 0
-    ) {
+  function updateFormField<Field extends GoalFormField>(field: Field, value: GoalFormState[Field]) {
+    setForm((current) => {
+      const nextForm = { ...current, [field]: value };
+
+      if (activeValidationField === field) {
+        const nextError = getGoalFieldError(field as ValidatedGoalFormField, nextForm);
+        if (!nextError) {
+          setActiveValidationField(null);
+        }
+        setFormError("");
+      }
+
+      return nextForm;
+    });
+  }
+
+  function focusValidationField(field: ValidatedGoalFormField) {
+    if (typeof document === "undefined") {
       return;
     }
+
+    const root = document.querySelector<HTMLElement>(`[data-goal-field="${field}"]`);
+    const target = field === "targetDate"
+      ? root?.querySelector<HTMLElement>("button") ?? root
+      : root;
+
+    target?.focus();
+  }
+
+  function handleFieldBlur(field: ValidatedGoalFormField) {
+    const errorMessage = getGoalFieldError(field, form);
+    setActiveValidationField(errorMessage ? field : null);
+  }
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const firstInvalidField = getFirstInvalidGoalField(form);
+
+    if (firstInvalidField) {
+      setActiveValidationField(firstInvalidField);
+      focusValidationField(firstInvalidField);
+      return;
+    }
+
+    setActiveValidationField(null);
+    setFormError("");
+
+    const parsedTarget = Number(form.targetAmount.trim());
+    const parsedSaved = Number(form.savedAmount.trim());
 
     if (editingGoalId && sessionUserId) {
       try {
@@ -333,6 +441,13 @@ export default function GoalsPage() {
         }
 
         const payload = await response.json();
+          const activeValidationMessage = activeValidationField
+            ? getGoalFieldError(activeValidationField, form)
+            : undefined;
+
+          function isFieldInvalid(field: ValidatedGoalFormField) {
+            return activeValidationField === field && Boolean(activeValidationMessage);
+          }
         setGoals((prev) => prev.map((goal) => (goal.id === editingGoalId ? payload.goal : goal)));
         resetForm();
       } catch (saveError) {
@@ -513,80 +628,134 @@ export default function GoalsPage() {
       {showForm && (
         <section className={styles.panel}>
           <h2>{editingGoalId ? "Edit Goal" : "New Goal"}</h2>
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <label>
-              Title
-              <input
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="e.g. Buy an apartment"
-                required
-              />
+          {formError && <p className={styles.feedbackError}>{formError}</p>}
+          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Title</span>
+              <div className={styles.fieldControlWrap}>
+                <input
+                  data-goal-field="title"
+                  className={isFieldInvalid("title") ? styles.fieldInvalid : ""}
+                  value={form.title}
+                  onChange={(e) => updateFormField("title", e.target.value)}
+                  onBlur={() => handleFieldBlur("title")}
+                  placeholder="e.g. Buy an apartment"
+                  aria-invalid={isFieldInvalid("title")}
+                  aria-describedby={isFieldInvalid("title") ? "goal-title-error" : undefined}
+                />
+                {isFieldInvalid("title") && activeValidationMessage && (
+                  <span id="goal-title-error" className={styles.validationBubble} role="alert">
+                    {activeValidationMessage}
+                  </span>
+                )}
+              </div>
             </label>
 
-            <label>
-              Category
-              <select
-                value={form.kind}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, kind: e.target.value as GoalKind }))
-                }
-              >
-                <option value="Home">Home</option>
-                <option value="Holiday">Holiday</option>
-                <option value="Wedding">Wedding</option>
-                <option value="Education">Education</option>
-                <option value="Vehicle">Vehicle</option>
-                <option value="Emergency Fund">Emergency Fund</option>
-                <option value="Birthday">Birthday</option>
-                <option value="Other">Other</option>
-              </select>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Category</span>
+              <div className={styles.fieldControlWrap}>
+                <select
+                  data-goal-field="kind"
+                  className={isFieldInvalid("kind") ? styles.fieldInvalid : ""}
+                  value={form.kind}
+                  onChange={(e) => updateFormField("kind", e.target.value as GoalKind)}
+                  onBlur={() => handleFieldBlur("kind")}
+                  aria-invalid={isFieldInvalid("kind")}
+                  aria-describedby={isFieldInvalid("kind") ? "goal-kind-error" : undefined}
+                >
+                  <option value="Home">Home</option>
+                  <option value="Holiday">Holiday</option>
+                  <option value="Wedding">Wedding</option>
+                  <option value="Education">Education</option>
+                  <option value="Vehicle">Vehicle</option>
+                  <option value="Emergency Fund">Emergency Fund</option>
+                  <option value="Birthday">Birthday</option>
+                  <option value="Other">Other</option>
+                </select>
+                {isFieldInvalid("kind") && activeValidationMessage && (
+                  <span id="goal-kind-error" className={styles.validationBubble} role="alert">
+                    {activeValidationMessage}
+                  </span>
+                )}
+              </div>
             </label>
 
-            <label>
-              Target Amount
-              <input
-                type="number"
-                min="1"
-                step="0.01"
-                value={form.targetAmount}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, targetAmount: e.target.value }))
-                }
-                required
-              />
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Target Amount</span>
+              <div className={styles.fieldControlWrap}>
+                <input
+                  data-goal-field="targetAmount"
+                  className={isFieldInvalid("targetAmount") ? styles.fieldInvalid : ""}
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={form.targetAmount}
+                  onChange={(e) => updateFormField("targetAmount", e.target.value)}
+                  onBlur={() => handleFieldBlur("targetAmount")}
+                  aria-invalid={isFieldInvalid("targetAmount")}
+                  aria-describedby={isFieldInvalid("targetAmount") ? "goal-target-amount-error" : undefined}
+                />
+                {isFieldInvalid("targetAmount") && activeValidationMessage && (
+                  <span id="goal-target-amount-error" className={styles.validationBubble} role="alert">
+                    {activeValidationMessage}
+                  </span>
+                )}
+              </div>
             </label>
 
-            <label>
-              Saved So Far
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.savedAmount}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, savedAmount: e.target.value }))
-                }
-              />
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Saved So Far</span>
+              <div className={styles.fieldControlWrap}>
+                <input
+                  data-goal-field="savedAmount"
+                  className={isFieldInvalid("savedAmount") ? styles.fieldInvalid : ""}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.savedAmount}
+                  onChange={(e) => updateFormField("savedAmount", e.target.value)}
+                  onBlur={() => handleFieldBlur("savedAmount")}
+                  aria-invalid={isFieldInvalid("savedAmount")}
+                  aria-describedby={isFieldInvalid("savedAmount") ? "goal-saved-amount-error" : undefined}
+                />
+                {isFieldInvalid("savedAmount") && activeValidationMessage && (
+                  <span id="goal-saved-amount-error" className={styles.validationBubble} role="alert">
+                    {activeValidationMessage}
+                  </span>
+                )}
+              </div>
             </label>
 
-            <label>
-              Target Date
-              <DateInput
-                value={form.targetDate}
-                onChange={(value) => setForm((f) => ({ ...f, targetDate: value }))}
-                required
-              />
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Target Date</span>
+              <div className={styles.fieldControlWrap}>
+                <div
+                  data-goal-field="targetDate"
+                  className={isFieldInvalid("targetDate") ? styles.dateInputShellInvalid : styles.dateInputShell}
+                >
+                  <DateInput
+                    value={form.targetDate}
+                    onChange={(value) => updateFormField("targetDate", value)}
+                  />
+                </div>
+                {isFieldInvalid("targetDate") && activeValidationMessage && (
+                  <span id="goal-target-date-error" className={styles.validationBubble} role="alert">
+                    {activeValidationMessage}
+                  </span>
+                )}
+              </div>
             </label>
 
-            <label className={styles.fullWidth}>
-              Notes
-              <textarea
-                value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                placeholder="Optional notes"
-                rows={3}
-              />
+            <label className={`${styles.field} ${styles.fullWidth}`}>
+              <span className={styles.fieldLabel}>Notes</span>
+              <div className={styles.fieldControlWrap}>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => updateFormField("notes", e.target.value)}
+                  placeholder="Optional notes"
+                  rows={3}
+                />
+              </div>
             </label>
 
             <div className={styles.formActions}>
