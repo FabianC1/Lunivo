@@ -435,7 +435,7 @@ export default function Dashboard() {
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
   const canUseAdvancedInsights = hasFeatureAccess(currentPlan.slug, "advancedDashboardInsights");
   const canToggleWidgets = hasFeatureAccess(currentPlan.slug, "dashboardWidgetToggles");
-  const canReorderWidgets = true;
+  const canReorderWidgets = hasFeatureAccess(currentPlan.slug, "dashboardSectionReordering");
   const canCreateCustomDashboardVisuals = hasFeatureAccess(currentPlan.slug, "customDashboardVisuals");
   const canCustomizeDashboard = canToggleWidgets || canReorderWidgets || canUseAdvancedInsights;
 
@@ -1060,8 +1060,10 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {canReorderWidgets || canCreateCustomDashboardVisuals ? (
       <section className={styles.controlDock}>
                 <div className={styles.panelToggleRow}>
+                  {canReorderWidgets ? (
                   <button
                     type="button"
                     className={`${styles.panelToggleButton} ${showLayoutControls ? styles.panelToggleButtonOpen : ""}`}
@@ -1070,14 +1072,16 @@ export default function Dashboard() {
                     aria-controls="workspace-layout-panel"
                   >
                     <span className={styles.panelToggleEyebrow}>Workspace Layout</span>
-                    <strong>Arrange sections and visibility</strong>
+                    <strong>{canToggleWidgets ? "Arrange sections and visibility" : "Reorder sections"}</strong>
                     <span className={styles.panelToggleMeta}>
                       {canToggleWidgets
                         ? `${visibleOrderedWidgets.length} section${visibleOrderedWidgets.length === 1 ? "" : "s"} active`
-                        : "Reorder freely, upgrade for visibility controls"}
+                        : `${orderedWidgets.length} section${orderedWidgets.length === 1 ? "" : "s"} in your layout`}
                     </span>
                   </button>
+                  ) : null}
 
+                  {canCreateCustomDashboardVisuals ? (
                   <button
                     type="button"
                     className={`${styles.panelToggleButton} ${showVisualBuilder ? styles.panelToggleButtonOpen : ""}`}
@@ -1091,6 +1095,7 @@ export default function Dashboard() {
                       {dashboardSettings.customVisuals.length}/{CUSTOM_VISUAL_LIMIT} saved
                     </span>
                   </button>
+                  ) : null}
                 </div>
 
                 {showLayoutControls ? (
@@ -1177,15 +1182,19 @@ export default function Dashboard() {
                               <span>{details.description}</span>
                             </div>
                             <div className={styles.layoutItemMeta}>
+                              {canToggleWidgets ? (
                               <button
                                 type="button"
                                 className={`${styles.visibilityToggle} ${isVisible ? styles.visibilityToggleActive : ""}`}
                                 onClick={() => void toggleWidget(widget)}
-                                disabled={!canToggleWidgets || (isVisible && visibleCount === 1)}
+                                disabled={isVisible && visibleCount === 1}
                               >
                                 <span className={styles.visibilityToggleKnob} />
                                 <span>{isVisible ? "Visible" : "Hidden"}</span>
                               </button>
+                              ) : (
+                              <span className={styles.layoutHint}>Visible on Starter</span>
+                              )}
                               {canReorderWidgets ? <span className={styles.layoutHint}>Drag to reorder</span> : null}
                             </div>
                           </article>
@@ -1284,10 +1293,11 @@ export default function Dashboard() {
                   </section>
                 ) : null}
               </section>
+      ) : null}
 
       {visibleOrderedWidgets.map((widget) => renderDashboardWidget(widget))}
 
-      {dashboardSettings.customVisuals.length > 0 ? (
+      {canCreateCustomDashboardVisuals && dashboardSettings.customVisuals.length > 0 ? (
         <section className={styles.widgetStack}>
           <div className={styles.widgetHeader}>
             <h2>Custom Visuals</h2>

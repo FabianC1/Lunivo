@@ -22,10 +22,8 @@ export type SubscriptionFeatureKey =
   | "goalCompletionEstimate"
   | "dashboardWidgetToggles"
   | "dashboardSectionReordering"
-  | "defaultHomepageWidget"
   | "customDashboardVisuals"
   | "customThemeCreation"
-  | "savedThemePresets"
   | "customCategories"
   | "transactionTags"
   | "bulkCategoryUpdates"
@@ -54,10 +52,8 @@ const FEATURE_MINIMUM_PLAN: Record<SubscriptionFeatureKey, SubscriptionPlanSlug>
   goalCompletionEstimate: "sync",
   dashboardWidgetToggles: "sync",
   dashboardSectionReordering: "free",
-  defaultHomepageWidget: "sync",
   customDashboardVisuals: "scale",
   customThemeCreation: "scale",
-  savedThemePresets: "scale",
   customCategories: "scale",
   transactionTags: "scale",
   bulkCategoryUpdates: "scale",
@@ -169,7 +165,6 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
       "Build your own dashboard visuals",
       "Create your own custom themes",
       "Save and reuse personal theme presets",
-      "Early access to new features",
     ],
   },
 ];
@@ -287,12 +282,7 @@ export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] =
       },
       {
         label: "Custom theme creation",
-        description: "Create your own theme presets and save them for reuse.",
-        values: { free: false, sync: false, scale: true },
-      },
-      {
-        label: "Saved theme presets",
-        description: "Store and switch between personal visual presets.",
+        description: "Create your own theme presets, save them, and reuse them anytime.",
         values: { free: false, sync: false, scale: true },
       },
       {

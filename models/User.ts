@@ -108,7 +108,6 @@ const UserSchema: Schema<IUser> = new Schema(
         transactions: { type: Boolean, default: DEFAULT_DASHBOARD_SETTINGS.visibleWidgets.transactions },
       },
       widgetOrder: { type: [String], default: DEFAULT_DASHBOARD_SETTINGS.widgetOrder },
-      defaultWidget: { type: String, default: DEFAULT_DASHBOARD_SETTINGS.defaultWidget },
       customVisuals: { type: [DashboardVisualSchema], default: DEFAULT_DASHBOARD_SETTINGS.customVisuals },
     },
     customCategories: { type: [String], default: DEFAULT_CUSTOM_CATEGORIES },

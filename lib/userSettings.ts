@@ -51,7 +51,6 @@ export type AppearanceSettings = {
 export type DashboardSettings = {
   visibleWidgets: Record<DashboardWidgetKey, boolean>;
   widgetOrder: DashboardWidgetKey[];
-  defaultWidget: DashboardWidgetKey;
   customVisuals: DashboardVisual[];
 };
 
@@ -298,7 +297,6 @@ export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
     transactions: true,
   },
   widgetOrder: [...DASHBOARD_WIDGETS],
-  defaultWidget: "charts",
   customVisuals: [],
 };
 
@@ -367,9 +365,6 @@ export function sanitizeDashboardSettings(input: unknown): DashboardSettings {
     ? candidate.widgetOrder.filter((widget): widget is DashboardWidgetKey => DASHBOARD_WIDGETS.includes(widget as DashboardWidgetKey))
     : [];
   const orderedWidgets = [...widgetOrder, ...DASHBOARD_WIDGETS.filter((widget) => !widgetOrder.includes(widget))];
-  const defaultWidget = typeof candidate.defaultWidget === "string" && DASHBOARD_WIDGETS.includes(candidate.defaultWidget as DashboardWidgetKey)
-    ? candidate.defaultWidget as DashboardWidgetKey
-    : DEFAULT_DASHBOARD_SETTINGS.defaultWidget;
   const customVisuals = Array.isArray(candidate.customVisuals)
     ? candidate.customVisuals.filter(isDashboardVisual).map((visual) => ({
         id: visual.id,
@@ -391,17 +386,12 @@ export function sanitizeDashboardSettings(input: unknown): DashboardSettings {
 
   const hasAnyVisibleWidget = DASHBOARD_WIDGETS.some((widget) => normalizedVisibleWidgets[widget]);
   if (!hasAnyVisibleWidget) {
-    normalizedVisibleWidgets[defaultWidget] = true;
+    normalizedVisibleWidgets[DEFAULT_DASHBOARD_SETTINGS.widgetOrder[0]] = true;
   }
-
-  const resolvedDefaultWidget = normalizedVisibleWidgets[defaultWidget]
-    ? defaultWidget
-    : DASHBOARD_WIDGETS.find((widget) => normalizedVisibleWidgets[widget]) ?? DEFAULT_DASHBOARD_SETTINGS.defaultWidget;
 
   return {
     visibleWidgets: normalizedVisibleWidgets,
     widgetOrder: orderedWidgets,
-    defaultWidget: resolvedDefaultWidget,
     customVisuals,
   };
 }

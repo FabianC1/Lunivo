@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import PageLoading from "../../components/PageLoading";
@@ -163,6 +163,13 @@ export default function ProfilePage() {
     setSelectedThemeId,
     setCustomThemes,
   } = useTheme();
+  const selectedThemeIdRef = useRef(selectedThemeId);
+  const customThemesRef = useRef(customThemes);
+
+  useEffect(() => {
+    selectedThemeIdRef.current = selectedThemeId;
+    customThemesRef.current = customThemes;
+  }, [selectedThemeId, customThemes]);
 
   const tabFromUrl = searchParams?.get("tab");
   const [activeTab, setActiveTab] = useState<SettingsTab>(
@@ -278,7 +285,10 @@ export default function ProfilePage() {
         setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
         setDashboardSettings(payload.user.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
         setCustomCategories(sanitizeCustomCategories(payload.user.customCategories ?? DEFAULT_CUSTOM_CATEGORIES));
-        applyAppearanceSettings(payload.user.appearance ?? { selectedThemeId, customThemes });
+        applyAppearanceSettings(payload.user.appearance ?? {
+          selectedThemeId: selectedThemeIdRef.current,
+          customThemes: customThemesRef.current,
+        });
 
         if (
           currentSession && (
@@ -310,7 +320,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [applyAppearanceSettings, customThemes, selectedThemeId, session?.userId, session?.isDemo]);
+  }, [session?.userId, session?.isDemo]);
 
   useEffect(() => {
     const tab = searchParams?.get("tab");
@@ -913,151 +923,159 @@ export default function ProfilePage() {
             </div>
 
             <div className={styles.divider} />
-            <div className={styles.inlineCard}>
-              <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
-              <p>Pro can create and save personal theme presets. Other plans can preview the controls here, but saving is locked.</p>
-              <div className={styles.themeBuilderLayout}>
-                <div className={styles.themeBuilderGrid}>
-                  <label className={styles.fieldLabel} htmlFor="themeName">Theme name</label>
-                  <input id="themeName" className={styles.input} value={themeName} onChange={(event) => setThemeName(event.target.value)} />
+            {canCreateCustomThemes ? (
+              <>
+                <div className={styles.inlineCard}>
+                  <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
+                  <p>Pro can create and save personal theme presets.</p>
+                  <div className={styles.themeBuilderLayout}>
+                    <div className={styles.themeBuilderGrid}>
+                      <label className={styles.fieldLabel} htmlFor="themeName">Theme name</label>
+                      <input id="themeName" className={styles.input} value={themeName} onChange={(event) => setThemeName(event.target.value)} />
 
-                  <label className={styles.fieldLabel} htmlFor="themeMode">Base mode</label>
-                  <select id="themeMode" className={styles.input} value={themeMode} onChange={(event) => setThemeMode(event.target.value as ThemeMode)}>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                  </select>
+                      <label className={styles.fieldLabel} htmlFor="themeMode">Base mode</label>
+                      <select id="themeMode" className={styles.input} value={themeMode} onChange={(event) => setThemeMode(event.target.value as ThemeMode)}>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                      </select>
 
-                  <label className={styles.fieldLabel} htmlFor="themePrimary">Primary color</label>
-                  <label className={styles.colorPickerField} htmlFor="themePrimary">
-                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themePrimary }} />
-                    <span className={styles.colorPickerValue}>{themePrimary.toUpperCase()}</span>
-                    <input id="themePrimary" className={styles.colorPickerInput} type="color" value={themePrimary} onChange={(event) => setThemePrimary(event.target.value)} />
-                  </label>
+                      <label className={styles.fieldLabel} htmlFor="themePrimary">Primary color</label>
+                      <label className={styles.colorPickerField} htmlFor="themePrimary">
+                        <span className={styles.colorPickerSwatch} style={{ backgroundColor: themePrimary }} />
+                        <span className={styles.colorPickerValue}>{themePrimary.toUpperCase()}</span>
+                        <input id="themePrimary" className={styles.colorPickerInput} type="color" value={themePrimary} onChange={(event) => setThemePrimary(event.target.value)} />
+                      </label>
 
-                  <label className={styles.fieldLabel} htmlFor="themeAccent">Accent color</label>
-                  <label className={styles.colorPickerField} htmlFor="themeAccent">
-                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeAccent }} />
-                    <span className={styles.colorPickerValue}>{themeAccent.toUpperCase()}</span>
-                    <input id="themeAccent" className={styles.colorPickerInput} type="color" value={themeAccent} onChange={(event) => setThemeAccent(event.target.value)} />
-                  </label>
+                      <label className={styles.fieldLabel} htmlFor="themeAccent">Accent color</label>
+                      <label className={styles.colorPickerField} htmlFor="themeAccent">
+                        <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeAccent }} />
+                        <span className={styles.colorPickerValue}>{themeAccent.toUpperCase()}</span>
+                        <input id="themeAccent" className={styles.colorPickerInput} type="color" value={themeAccent} onChange={(event) => setThemeAccent(event.target.value)} />
+                      </label>
 
-                  <label className={styles.fieldLabel} htmlFor="themeBackground">Background color</label>
-                  <label className={styles.colorPickerField} htmlFor="themeBackground">
-                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeBackground }} />
-                    <span className={styles.colorPickerValue}>{themeBackground.toUpperCase()}</span>
-                    <input id="themeBackground" className={styles.colorPickerInput} type="color" value={themeBackground} onChange={(event) => setThemeBackground(event.target.value)} />
-                  </label>
+                      <label className={styles.fieldLabel} htmlFor="themeBackground">Background color</label>
+                      <label className={styles.colorPickerField} htmlFor="themeBackground">
+                        <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeBackground }} />
+                        <span className={styles.colorPickerValue}>{themeBackground.toUpperCase()}</span>
+                        <input id="themeBackground" className={styles.colorPickerInput} type="color" value={themeBackground} onChange={(event) => setThemeBackground(event.target.value)} />
+                      </label>
 
-                  <label className={styles.fieldLabel} htmlFor="themeText">Text color</label>
-                  <label className={styles.colorPickerField} htmlFor="themeText">
-                    <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeText }} />
-                    <span className={styles.colorPickerValue}>{themeText.toUpperCase()}</span>
-                    <input id="themeText" className={styles.colorPickerInput} type="color" value={themeText} onChange={(event) => setThemeText(event.target.value)} />
-                  </label>
-                </div>
-
-                <aside className={styles.themeBuilderPreviewCard}>
-                  <span className={styles.themeBuilderPreviewEyebrow}>{editingThemeId ? "Editing preset" : "Live preview"}</span>
-                  <div
-                    className={styles.themeBuilderPreviewFrame}
-                    style={{
-                      background: createBalancedGradient(
-                        themeGradientAngle,
-                        themeGradientInverted ? themeAccent : themeBackground,
-                        themeGradientInverted ? themeBackground : themeAccent,
-                      ),
-                      color: themeText,
-                      borderColor: themePrimary,
-                    }}
-                  >
-                    <div className={styles.themeBuilderPreviewTop}>
-                      <strong>{themeName || "Untitled theme"}</strong>
-                      <span
-                        className={styles.themeBuilderPreviewBadge}
-                        style={{ backgroundColor: themeAccent, color: themeMode === "dark" ? "#0F172A" : "#FFFFFF" }}
-                      >
-                        {themeMode}
-                      </span>
-                    </div>
-                    <div className={styles.themeBuilderPreviewPanel} style={{ backgroundColor: themeMode === "dark" ? "#1E293B" : "#FFFFFF" }}>
-                      <span className={styles.themeBuilderPreviewLabel}>Buttons</span>
-                      <div className={styles.themeBuilderPreviewActions}>
-                        <span className={styles.themeBuilderPreviewPrimary} style={{ backgroundColor: themePrimary, color: themeMode === "dark" ? "#F8FAFC" : "#FFFFFF" }}>Primary</span>
-                        <span className={styles.themeBuilderPreviewSecondary} style={{ borderColor: themeAccent, color: themeText }}>Accent</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.gradientControlCard}>
-                    <div className={styles.themeBuilderPreviewTop}>
-                      <span className={styles.themeBuilderPreviewLabel}>Gradient angle</span>
-                      <strong>{themeGradientAngle}deg</strong>
-                    </div>
-                    <input
-                      id="themeGradientAngle"
-                      className={styles.gradientRange}
-                      type="range"
-                      min="0"
-                      max="360"
-                      step="1"
-                      value={themeGradientAngle}
-                      onChange={(event) => setThemeGradientAngle(Number(event.target.value))}
-                    />
-                    <div className={styles.gradientControlFooter}>
-                      <label className={styles.gradientCheckboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={themeGradientInverted}
-                          onChange={(event) => setThemeGradientInverted(event.target.checked)}
-                        />
-                        Inverse gradient
+                      <label className={styles.fieldLabel} htmlFor="themeText">Text color</label>
+                      <label className={styles.colorPickerField} htmlFor="themeText">
+                        <span className={styles.colorPickerSwatch} style={{ backgroundColor: themeText }} />
+                        <span className={styles.colorPickerValue}>{themeText.toUpperCase()}</span>
+                        <input id="themeText" className={styles.colorPickerInput} type="color" value={themeText} onChange={(event) => setThemeText(event.target.value)} />
                       </label>
                     </div>
-                  </div>
-                </aside>
-              </div>
-              <div className={styles.actionRow}>
-                <button type="button" className={styles.primaryButton} onClick={() => void handleCreateCustomTheme()} disabled={!canCreateCustomThemes}>
-                  {editingThemeId ? "Save changes" : "Create theme preset"}
-                </button>
-                <button type="button" className={styles.secondaryButton} onClick={resetThemeBuilder}>
-                  Reset
-                </button>
-                {editingThemeId ? (
-                  <button type="button" className={styles.secondaryButton} onClick={resetThemeBuilder}>
-                    Cancel editing
-                  </button>
-                ) : null}
-                {!canCreateCustomThemes ? <span className={styles.hintText}>Available on Pro.</span> : null}
-              </div>
-            </div>
 
-            <div className={styles.divider} />
-            <div className={styles.inlineCard}>
-              <h3 className={styles.sectionSubtitle}>Saved Theme Presets</h3>
-              {customThemes.length === 0 ? (
-                <p>No saved custom presets yet.</p>
-              ) : (
-                <div className={styles.themeGrid}>
-                  {customThemes.map((theme) => (
-                    <div key={theme.id} className={styles.themeCardStatic}>
-                      <span className={styles.themePreview} style={{ background: theme.colors.bgGradient, borderColor: theme.colors.primaryColor }} />
-                      <strong>{theme.name}</strong>
-                      <div className={styles.actionRow}>
-                        <button type="button" className={styles.secondaryButton} onClick={() => void handleThemeSelection(theme.id)}>
-                          Apply
-                        </button>
-                        <button type="button" className={styles.secondaryButton} onClick={() => startEditingTheme(theme)} disabled={!canCreateCustomThemes}>
-                          Edit
-                        </button>
-                        <button type="button" className={styles.secondaryButton} onClick={() => void handleDeleteCustomTheme(theme.id)} disabled={!canCreateCustomThemes}>
-                          Delete
-                        </button>
+                    <aside className={styles.themeBuilderPreviewCard}>
+                      <span className={styles.themeBuilderPreviewEyebrow}>{editingThemeId ? "Editing preset" : "Live preview"}</span>
+                      <div
+                        className={styles.themeBuilderPreviewFrame}
+                        style={{
+                          background: createBalancedGradient(
+                            themeGradientAngle,
+                            themeGradientInverted ? themeAccent : themeBackground,
+                            themeGradientInverted ? themeBackground : themeAccent,
+                          ),
+                          color: themeText,
+                          borderColor: themePrimary,
+                        }}
+                      >
+                        <div className={styles.themeBuilderPreviewTop}>
+                          <strong>{themeName || "Untitled theme"}</strong>
+                          <span
+                            className={styles.themeBuilderPreviewBadge}
+                            style={{ backgroundColor: themeAccent, color: themeMode === "dark" ? "#0F172A" : "#FFFFFF" }}
+                          >
+                            {themeMode}
+                          </span>
+                        </div>
+                        <div className={styles.themeBuilderPreviewPanel} style={{ backgroundColor: themeMode === "dark" ? "#1E293B" : "#FFFFFF" }}>
+                          <span className={styles.themeBuilderPreviewLabel}>Buttons</span>
+                          <div className={styles.themeBuilderPreviewActions}>
+                            <span className={styles.themeBuilderPreviewPrimary} style={{ backgroundColor: themePrimary, color: themeMode === "dark" ? "#F8FAFC" : "#FFFFFF" }}>Primary</span>
+                            <span className={styles.themeBuilderPreviewSecondary} style={{ borderColor: themeAccent, color: themeText }}>Accent</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                      <div className={styles.gradientControlCard}>
+                        <div className={styles.themeBuilderPreviewTop}>
+                          <span className={styles.themeBuilderPreviewLabel}>Gradient angle</span>
+                          <strong>{themeGradientAngle}deg</strong>
+                        </div>
+                        <input
+                          id="themeGradientAngle"
+                          className={styles.gradientRange}
+                          type="range"
+                          min="0"
+                          max="360"
+                          step="1"
+                          value={themeGradientAngle}
+                          onChange={(event) => setThemeGradientAngle(Number(event.target.value))}
+                        />
+                        <div className={styles.gradientControlFooter}>
+                          <label className={styles.gradientCheckboxLabel}>
+                            <input
+                              type="checkbox"
+                              checked={themeGradientInverted}
+                              onChange={(event) => setThemeGradientInverted(event.target.checked)}
+                            />
+                            Inverse gradient
+                          </label>
+                        </div>
+                      </div>
+                    </aside>
+                  </div>
+                  <div className={styles.actionRow}>
+                    <button type="button" className={styles.primaryButton} onClick={() => void handleCreateCustomTheme()}>
+                      {editingThemeId ? "Save changes" : "Create theme preset"}
+                    </button>
+                    <button type="button" className={styles.secondaryButton} onClick={resetThemeBuilder}>
+                      Reset
+                    </button>
+                    {editingThemeId ? (
+                      <button type="button" className={styles.secondaryButton} onClick={resetThemeBuilder}>
+                        Cancel editing
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <div className={styles.divider} />
+                <div className={styles.inlineCard}>
+                  <h3 className={styles.sectionSubtitle}>Saved Theme Presets</h3>
+                  {customThemes.length === 0 ? (
+                    <p>No saved custom presets yet.</p>
+                  ) : (
+                    <div className={styles.themeGrid}>
+                      {customThemes.map((theme) => (
+                        <div key={theme.id} className={styles.themeCardStatic}>
+                          <span className={styles.themePreview} style={{ background: theme.colors.bgGradient, borderColor: theme.colors.primaryColor }} />
+                          <strong>{theme.name}</strong>
+                          <div className={styles.actionRow}>
+                            <button type="button" className={styles.secondaryButton} onClick={() => void handleThemeSelection(theme.id)}>
+                              Apply
+                            </button>
+                            <button type="button" className={styles.secondaryButton} onClick={() => startEditingTheme(theme)}>
+                              Edit
+                            </button>
+                            <button type="button" className={styles.secondaryButton} onClick={() => void handleDeleteCustomTheme(theme.id)}>
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className={styles.inlineCard}>
+                <h3 className={styles.sectionSubtitle}>Custom Theme Builder</h3>
+                <p>Pro unlocks custom theme creation, saved presets, and reusable personal themes.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -1429,30 +1447,34 @@ export default function ProfilePage() {
             <div className={styles.divider} />
             <div className={styles.inlineCard}>
               <h3 className={styles.sectionSubtitle}>Custom Categories</h3>
-              <p>Pro can create, remove, and reuse custom transaction categories.</p>
-              <div className={styles.actionRow}>
-                <input
-                  className={styles.input}
-                  value={newCategoryName}
-                  onChange={(event) => setNewCategoryName(event.target.value)}
-                  placeholder="Add a category"
-                  disabled={!canManageDataControls}
-                />
-                <button type="button" className={styles.primaryButton} onClick={() => void addCustomCategory()} disabled={!canManageDataControls}>
-                  Add category
-                </button>
-              </div>
-              <div className={styles.tagList}>
-                {customCategories.map((category) => (
-                  <span key={category} className={styles.tagPill}>
-                    {category}
-                    <button type="button" className={styles.inlineRemoveButton} onClick={() => void removeCustomCategory(category)} disabled={!canManageDataControls || DEFAULT_CUSTOM_CATEGORIES.includes(category)}>
-                      Remove
+              {canManageDataControls ? (
+                <>
+                  <p>Pro can create, remove, and reuse custom transaction categories.</p>
+                  <div className={styles.actionRow}>
+                    <input
+                      className={styles.input}
+                      value={newCategoryName}
+                      onChange={(event) => setNewCategoryName(event.target.value)}
+                      placeholder="Add a category"
+                    />
+                    <button type="button" className={styles.primaryButton} onClick={() => void addCustomCategory()}>
+                      Add category
                     </button>
-                  </span>
-                ))}
-              </div>
-              {!canManageDataControls ? <p className={styles.hintText}>Custom categories, transaction tags, bulk edits, and category merging are available on Pro.</p> : null}
+                  </div>
+                  <div className={styles.tagList}>
+                    {customCategories.map((category) => (
+                      <span key={category} className={styles.tagPill}>
+                        {category}
+                        <button type="button" className={styles.inlineRemoveButton} onClick={() => void removeCustomCategory(category)} disabled={DEFAULT_CUSTOM_CATEGORIES.includes(category)}>
+                          Remove
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p>Pro unlocks custom categories, transaction tags, bulk edits, and category merging.</p>
+              )}
             </div>
 
             <div className={styles.divider} />

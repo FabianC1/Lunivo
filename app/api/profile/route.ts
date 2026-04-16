@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedApiUser, unauthorizedResponse } from "../../../lib/apiAuth";
+import { forbiddenResponse, getAuthenticatedApiUser, unauthorizedResponse } from "../../../lib/apiAuth";
 import { connectToDatabase } from "../../../lib/mongodb";
 import User from "../../../models/User";
 import {
+  BUILT_IN_THEME_PRESETS,
   DEFAULT_APPEARANCE_SETTINGS,
   DEFAULT_CUSTOM_CATEGORIES,
   DEFAULT_DASHBOARD_SETTINGS,
@@ -10,6 +11,7 @@ import {
   sanitizeCustomCategories,
   sanitizeDashboardSettings,
 } from "../../../lib/userSettings";
+import { getAvailableBuiltInThemeCount, hasFeatureAccess } from "../../../lib/subscriptions";
 
 export async function GET(req: NextRequest) {
   const authenticatedUser = await getAuthenticatedApiUser();
@@ -100,23 +102,91 @@ export async function PUT(req: NextRequest) {
     };
   }
 
-  if (appearance !== undefined) {
-    updates.appearance = sanitizeAppearanceSettings(appearance);
-  }
+  const hasAppearanceUpdate = appearance !== undefined;
+  const hasDashboardUpdate = dashboard !== undefined;
+  const hasCustomCategoriesUpdate = customCategories !== undefined;
 
-  if (dashboard !== undefined) {
-    updates.dashboard = sanitizeDashboardSettings(dashboard);
-  }
-
-  if (customCategories !== undefined) {
-    updates.customCategories = sanitizeCustomCategories(customCategories);
-  }
-
-  if (Object.keys(updates).length === 0) {
+  if (Object.keys(updates).length === 0 && !hasAppearanceUpdate && !hasDashboardUpdate && !hasCustomCategoriesUpdate) {
     return NextResponse.json({ error: "No changes provided" }, { status: 400 });
   }
 
   await connectToDatabase();
+  const existingUser = await User.findById(authenticatedUser.userId).select("name email planSlug backupEmail phone preferences notifications appearance dashboard customCategories");
+
+  if (!existingUser) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  const currentAppearance = sanitizeAppearanceSettings(existingUser.appearance ?? DEFAULT_APPEARANCE_SETTINGS);
+  const currentDashboard = sanitizeDashboardSettings(existingUser.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
+  const currentCustomCategories = sanitizeCustomCategories(existingUser.customCategories ?? DEFAULT_CUSTOM_CATEGORIES);
+
+  if (hasAppearanceUpdate) {
+    const sanitizedAppearance = sanitizeAppearanceSettings(appearance);
+    const canCreateCustomThemes = hasFeatureAccess(authenticatedUser.planSlug, "customThemeCreation");
+    const allowedBuiltInThemeIds = BUILT_IN_THEME_PRESETS
+      .slice(0, getAvailableBuiltInThemeCount(authenticatedUser.planSlug))
+      .map((theme) => theme.id);
+    const selectedThemeId = sanitizedAppearance.selectedThemeId;
+    const selectedThemeIsBuiltIn = BUILT_IN_THEME_PRESETS.some((theme) => theme.id === selectedThemeId);
+
+    if (!allowedBuiltInThemeIds.includes(selectedThemeId)) {
+      if (selectedThemeIsBuiltIn) {
+        return forbiddenResponse("Your current plan does not include this built-in theme.");
+      }
+
+      if (!canCreateCustomThemes) {
+        return forbiddenResponse("Custom theme creation is available on the Pro plan.");
+      }
+    }
+
+    if (!canCreateCustomThemes) {
+      const requestedThemeInventoryChanged = JSON.stringify(sanitizedAppearance.customThemes) !== JSON.stringify(currentAppearance.customThemes);
+      if (requestedThemeInventoryChanged) {
+        return forbiddenResponse("Custom theme creation is available on the Pro plan.");
+      }
+
+      updates.appearance = {
+        selectedThemeId,
+        customThemes: currentAppearance.customThemes,
+      };
+    } else {
+      updates.appearance = sanitizedAppearance;
+    }
+  }
+
+  if (hasDashboardUpdate) {
+    const sanitizedDashboard = sanitizeDashboardSettings(dashboard);
+    const canToggleWidgets = hasFeatureAccess(authenticatedUser.planSlug, "dashboardWidgetToggles");
+    const canCreateCustomDashboardVisuals = hasFeatureAccess(authenticatedUser.planSlug, "customDashboardVisuals");
+
+    if (!canToggleWidgets && JSON.stringify(sanitizedDashboard.visibleWidgets) !== JSON.stringify(currentDashboard.visibleWidgets)) {
+      return forbiddenResponse("Dashboard widget toggles are available on the Smart plan.");
+    }
+
+    if (!canCreateCustomDashboardVisuals && JSON.stringify(sanitizedDashboard.customVisuals) !== JSON.stringify(currentDashboard.customVisuals)) {
+      return forbiddenResponse("Custom dashboard visuals are available on the Pro plan.");
+    }
+
+    updates.dashboard = {
+      visibleWidgets: canToggleWidgets ? sanitizedDashboard.visibleWidgets : currentDashboard.visibleWidgets,
+      widgetOrder: sanitizedDashboard.widgetOrder,
+      customVisuals: canCreateCustomDashboardVisuals ? sanitizedDashboard.customVisuals : currentDashboard.customVisuals,
+    };
+  }
+
+  if (hasCustomCategoriesUpdate) {
+    const sanitizedCategories = sanitizeCustomCategories(customCategories);
+
+    if (!hasFeatureAccess(authenticatedUser.planSlug, "customCategories") && JSON.stringify(sanitizedCategories) !== JSON.stringify(currentCustomCategories)) {
+      return forbiddenResponse("Custom categories are available on the Pro plan.");
+    }
+
+    updates.customCategories = hasFeatureAccess(authenticatedUser.planSlug, "customCategories")
+      ? sanitizedCategories
+      : currentCustomCategories;
+  }
+
   const user = await User.findByIdAndUpdate(
     authenticatedUser.userId,
     updates,
