@@ -989,6 +989,79 @@ select.input option {
   color: color-mix(in srgb, var(--button-gradient-start) 88%, transparent);
 }
 
+.bankPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.bankStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bankStatusActive {
+  background: color-mix(in srgb, #22c55e 14%, transparent);
+  color: #15803d;
+  border: 1px solid color-mix(in srgb, #22c55e 34%, transparent);
+}
+
+.bankStatusIdle {
+  background: color-mix(in srgb, var(--text-color) 10%, transparent);
+  color: color-mix(in srgb, var(--text-color) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+}
+
+.bankInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.bankInfoCard {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+}
+
+.bankInfoCard strong {
+  font-size: 0.98rem;
+}
+
+.bankInfoCard span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--button-gradient-start) 88%, transparent);
+  word-break: break-word;
+}
+
+.bankInfoCard p {
+  margin: 0;
+  color: color-mix(in srgb, var(--text-color) 70%, transparent);
+}
+
+.bankConnectionSummary {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--button-gradient-start) 18%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--button-gradient-start) 8%, transparent), color-mix(in srgb, var(--surface-color) 94%, transparent));
+}
+
+.bankConnectionSummary p {
+  margin: 0;
+}
+
 @media (max-width: 1024px) {
   .page {
     grid-template-columns: 1fr;
@@ -1055,6 +1128,12 @@ select.input option {
 
   .billingSectionGrid {
     grid-template-columns: 1fr;
+  }
+
+  .bankPanelHeader,
+  .bankInfoGrid {
+    grid-template-columns: 1fr;
+    display: grid;
   }
 
   .billingInvoiceRow {

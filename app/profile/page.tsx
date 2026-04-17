@@ -51,6 +51,31 @@ type ProfilePayload = {
   };
 };
 
+type BankConnectionPayload = {
+  configured: boolean;
+  config: {
+    institutionId: string;
+    institutionCountryCode: string;
+    redirectUrl: string;
+  } | null;
+  connection: {
+    id: string;
+    provider: string;
+    status: string;
+    institutionId: string;
+    institutionCountryCode: string;
+    hostedUrl: string;
+    lastError: string;
+    connectedAt: string | null;
+    authorizationExpiresAt: string | null;
+    lastSyncAt: string | null;
+    lastSyncStatus: string | null;
+    lastSyncAccountCount: number;
+    lastSyncTransactionCount: number;
+    syncedAccountCount: number;
+  } | null;
+};
+
 function mixColors(colorA: string, colorB: string, weight = 0.5) {
   const normalize = (value: string) => value.replace("#", "").trim();
   const a = normalize(colorA);
@@ -231,6 +256,12 @@ export default function ProfilePage() {
 
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [bankStatus, setBankStatus] = useState<BankConnectionPayload | null>(null);
+  const [isBankLoading, setIsBankLoading] = useState(false);
+  const [isBankConnecting, setIsBankConnecting] = useState(false);
+  const [isBankSyncing, setIsBankSyncing] = useState(false);
+  const [bankMessage, setBankMessage] = useState("");
+  const [bankError, setBankError] = useState("");
 
   useEffect(() => {
     const current = getSession();
@@ -328,6 +359,64 @@ export default function ProfilePage() {
       setActiveTab(tab as SettingsTab);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const bankMode = searchParams?.get("bank");
+    const message = searchParams?.get("bankMessage");
+    if (!bankMode || !message) {
+      return;
+    }
+
+    if (bankMode === "success") {
+      setBankMessage(message);
+      setBankError("");
+    } else {
+      setBankError(message);
+      setBankMessage("");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!session || session.isDemo || !session.userId) {
+      setBankStatus(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadBankStatus() {
+      try {
+        setIsBankLoading(true);
+        const response = await fetch("/api/bank/status", { cache: "no-store" });
+        if (!response.ok) {
+          const message = await readApiError(response, "Unable to load bank sync status.");
+          if (isMounted) {
+            setBankError(message);
+          }
+          return;
+        }
+
+        const payload = (await response.json()) as BankConnectionPayload;
+        if (isMounted) {
+          setBankStatus(payload);
+        }
+      } catch {
+        if (isMounted) {
+          setBankError("Unable to load bank sync status.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsBankLoading(false);
+        }
+      }
+    }
+
+    void loadBankStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.userId, session?.isDemo]);
 
   const initials = useMemo(() => getInitials(name || session?.name || "User"), [name, session?.name]);
 
@@ -769,6 +858,79 @@ export default function ProfilePage() {
     }, 900);
   }
 
+  async function refreshBankStatus() {
+    if (!session || session.isDemo || !session.userId) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/bank/status", { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Unable to refresh bank sync status."));
+      }
+      const payload = (await response.json()) as BankConnectionPayload;
+      setBankStatus(payload);
+    } catch (error) {
+      setBankError(error instanceof Error ? error.message : "Unable to refresh bank sync status.");
+    }
+  }
+
+  async function handleBankConnect() {
+    setBankError("");
+    setBankMessage("");
+    setIsBankConnecting(true);
+
+    try {
+      const response = await fetch("/api/bank/connect", { method: "POST" });
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Unable to start the Yapily bank connection."));
+      }
+
+      const payload = (await response.json()) as { hostedUrl?: string };
+      if (!payload.hostedUrl) {
+        throw new Error("Yapily did not return a hosted consent URL.");
+      }
+
+      window.location.assign(payload.hostedUrl);
+    } catch (error) {
+      setBankError(error instanceof Error ? error.message : "Unable to start the Yapily bank connection.");
+      setIsBankConnecting(false);
+    }
+  }
+
+  async function handleBankSync() {
+    setBankError("");
+    setBankMessage("");
+    setIsBankSyncing(true);
+
+    try {
+      const response = await fetch("/api/bank/sync", { method: "POST" });
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Unable to sync bank data right now."));
+      }
+
+      const payload = (await response.json()) as {
+        summary?: {
+          importedAccounts: number;
+          importedTransactions: number;
+          updatedTransactions: number;
+        };
+      };
+
+      const summary = payload.summary;
+      setBankMessage(
+        summary
+          ? `Sync complete. ${summary.importedAccounts} accounts refreshed, ${summary.importedTransactions} new transactions imported, ${summary.updatedTransactions} existing transactions updated.`
+          : "Sync complete.",
+      );
+      await refreshBankStatus();
+    } catch (error) {
+      setBankError(error instanceof Error ? error.message : "Unable to sync bank data right now.");
+    } finally {
+      setIsBankSyncing(false);
+    }
+  }
+
   if (!session) {
     return null;
   }
@@ -782,6 +944,13 @@ export default function ProfilePage() {
   const canCreateCustomThemes = hasFeatureAccess(currentPlan.slug, "customThemeCreation");
   const canManageDataControls = hasFeatureAccess(currentPlan.slug, "customCategories");
   const canExportCsv = hasFeatureAccess(currentPlan.slug, "csvExport");
+  const canUseBankSync = hasFeatureAccess(currentPlan.slug, "bankSync");
+  const formattedBankConnectedAt = bankStatus?.connection?.connectedAt
+    ? new Date(bankStatus.connection.connectedAt).toLocaleString()
+    : null;
+  const formattedBankLastSyncAt = bankStatus?.connection?.lastSyncAt
+    ? new Date(bankStatus.connection.lastSyncAt).toLocaleString()
+    : null;
 
   return (
     <main className={styles.page}>
@@ -883,6 +1052,115 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+
+            <div className={styles.divider} />
+
+            <section className={`${styles.inlineCard} ${styles.paidFeatureCard}`}>
+              <div className={styles.bankPanelHeader}>
+                <div>
+                  <h3 className={styles.sectionSubtitle}>Bank Sync</h3>
+                  <p>
+                    Connect Yapily sandbox banking to pull accounts and transactions into Lunivo automatically.
+                  </p>
+                </div>
+                <span className={`${styles.bankStatusBadge} ${bankStatus?.connection ? styles.bankStatusActive : styles.bankStatusIdle}`}>
+                  {session.isDemo
+                    ? "Local session"
+                    : !canUseBankSync
+                      ? "Upgrade required"
+                      : bankStatus?.connection?.status ?? "Not connected"}
+                </span>
+              </div>
+
+              {session.isDemo ? (
+                <p className={styles.hintText}>Bank sync is disabled for local demo sessions because the callback must be tied to a real database-backed user.</p>
+              ) : !canUseBankSync ? (
+                <p className={styles.hintText}>Your current plan does not include bank sync. Upgrade to Smart to enable Yapily-connected imports.</p>
+              ) : isBankLoading ? (
+                <p className={styles.hintText}>Loading bank connection status...</p>
+              ) : !bankStatus?.configured ? (
+                <div className={styles.bankInfoGrid}>
+                  <article className={styles.bankInfoCard}>
+                    <strong>Yapily not configured</strong>
+                    <p>Add the Yapily environment variables in .env.local before starting the sandbox connection flow.</p>
+                  </article>
+                  <article className={styles.bankInfoCard}>
+                    <strong>Expected redirect</strong>
+                    <p>Set YAPILY_REDIRECT_URL to your public /api/bank/callback endpoint so Hosted Consent can return to Lunivo.</p>
+                  </article>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.bankInfoGrid}>
+                    <article className={styles.bankInfoCard}>
+                      <strong>Institution</strong>
+                      <span>{bankStatus.config?.institutionId ?? "modelo-sandbox"}</span>
+                      <p>{bankStatus.config?.institutionCountryCode ?? "GB"} sandbox institution configured for the current environment.</p>
+                    </article>
+                    <article className={styles.bankInfoCard}>
+                      <strong>Redirect URL</strong>
+                      <span>{bankStatus.config?.redirectUrl ?? "Not configured"}</span>
+                      <p>Hosted Consent redirects back here after bank authorisation.</p>
+                    </article>
+                    <article className={styles.bankInfoCard}>
+                      <strong>Synced accounts</strong>
+                      <span>{bankStatus.connection?.syncedAccountCount ?? 0}</span>
+                      <p>Imported bank accounts currently active in Lunivo.</p>
+                    </article>
+                    <article className={styles.bankInfoCard}>
+                      <strong>Last sync</strong>
+                      <span>{formattedBankLastSyncAt ?? "Not synced yet"}</span>
+                      <p>
+                        {bankStatus.connection?.lastSyncStatus === "failed"
+                          ? "The previous sync failed. Re-run it after checking the error below."
+                          : bankStatus.connection
+                            ? `Imported ${bankStatus.connection.lastSyncTransactionCount} transactions on the last run.`
+                            : "No bank connection has been created yet."}
+                      </p>
+                    </article>
+                  </div>
+
+                  {bankStatus.connection ? (
+                    <div className={styles.bankConnectionSummary}>
+                      <p><strong>Connected:</strong> {formattedBankConnectedAt ?? "Pending completion"}</p>
+                      <p><strong>Status:</strong> {bankStatus.connection.status}</p>
+                    </div>
+                  ) : null}
+
+                  <div className={styles.actionRow}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => void handleBankConnect()}
+                      disabled={isBankConnecting}
+                    >
+                      {isBankConnecting ? "Opening Yapily..." : bankStatus.connection ? "Reconnect bank" : "Connect bank"}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => void handleBankSync()}
+                      disabled={isBankSyncing || !bankStatus.connection}
+                    >
+                      {isBankSyncing ? "Syncing..." : "Sync now"}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => void refreshBankStatus()}
+                      disabled={isBankLoading}
+                    >
+                      Refresh status
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {bankError || bankStatus?.connection?.lastError ? (
+                <p className={styles.errorText}>{bankError || bankStatus?.connection?.lastError}</p>
+              ) : null}
+              {bankMessage ? <p className={styles.successText}>{bankMessage}</p> : null}
+            </section>
           </div>
         )}
 
