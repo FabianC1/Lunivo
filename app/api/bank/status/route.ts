@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedApiUser, unauthorizedResponse, forbiddenResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { hasFeatureAccess } from "../../../../lib/subscriptions";
+import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
 import { getYapilyConfig, isYapilyConfigured } from "../../../../lib/yapily";
 import BankConnection from "../../../../models/BankConnection";
 import Account from "../../../../models/Account";
@@ -12,8 +12,8 @@ export async function GET() {
     return unauthorizedResponse();
   }
 
-  if (!hasFeatureAccess(authenticatedUser.planSlug, "bankSync")) {
-    return forbiddenResponse("Bank sync is available on the Smart plan.");
+  if (!canUseBankSyncForSandboxTesting(authenticatedUser.planSlug)) {
+    return forbiddenResponse("Bank sync is available on the Smart plan unless sandbox testing is explicitly enabled for all plans.");
   }
 
   await connectToDatabase();
@@ -22,6 +22,7 @@ export async function GET() {
   const syncedAccountCount = await Account.countDocuments({ userId: authenticatedUser.userId, syncStatus: "synced", provider: "yapily", isArchived: false });
 
   return NextResponse.json({
+    accessGranted: true,
     configured: isYapilyConfigured(),
     config: isYapilyConfigured()
       ? {

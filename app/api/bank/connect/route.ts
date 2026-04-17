@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { forbiddenResponse, getAuthenticatedApiUser, unauthorizedResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { hasFeatureAccess } from "../../../../lib/subscriptions";
+import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
 import { buildYapilyCallbackUrl, createHostedConsentRequest, getYapilyConfig } from "../../../../lib/yapily";
 import BankConnection from "../../../../models/BankConnection";
 
@@ -12,8 +12,8 @@ export async function POST() {
     return unauthorizedResponse();
   }
 
-  if (!hasFeatureAccess(authenticatedUser.planSlug, "bankSync")) {
-    return forbiddenResponse("Bank sync is available on the Smart plan.");
+  if (!canUseBankSyncForSandboxTesting(authenticatedUser.planSlug)) {
+    return forbiddenResponse("Bank sync is available on the Smart plan unless sandbox testing is explicitly enabled for all plans.");
   }
 
   const config = getYapilyConfig();

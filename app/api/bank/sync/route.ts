@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { forbiddenResponse, getAuthenticatedApiUser, unauthorizedResponse } from "../../../../lib/apiAuth";
 import { syncBankConnection } from "../../../../lib/bankSync";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { hasFeatureAccess } from "../../../../lib/subscriptions";
+import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
 import BankConnection from "../../../../models/BankConnection";
 
 export async function POST() {
@@ -11,8 +11,8 @@ export async function POST() {
     return unauthorizedResponse();
   }
 
-  if (!hasFeatureAccess(authenticatedUser.planSlug, "bankSync")) {
-    return forbiddenResponse("Bank sync is available on the Smart plan.");
+  if (!canUseBankSyncForSandboxTesting(authenticatedUser.planSlug)) {
+    return forbiddenResponse("Bank sync is available on the Smart plan unless sandbox testing is explicitly enabled for all plans.");
   }
 
   await connectToDatabase();

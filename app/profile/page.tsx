@@ -18,6 +18,7 @@ import {
 } from "../../lib/subscriptions";
 import {
   BUILT_IN_THEME_PRESETS,
+  DEFAULT_APPEARANCE_SETTINGS,
   DEFAULT_CUSTOM_CATEGORIES,
   DEFAULT_DASHBOARD_SETTINGS,
   sanitizeCustomCategories,
@@ -52,6 +53,7 @@ type ProfilePayload = {
 };
 
 type BankConnectionPayload = {
+  accessGranted?: boolean;
   configured: boolean;
   config: {
     institutionId: string;
@@ -316,10 +318,18 @@ export default function ProfilePage() {
         setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
         setDashboardSettings(payload.user.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
         setCustomCategories(sanitizeCustomCategories(payload.user.customCategories ?? DEFAULT_CUSTOM_CATEGORIES));
-        applyAppearanceSettings(payload.user.appearance ?? {
-          selectedThemeId: selectedThemeIdRef.current,
-          customThemes: customThemesRef.current,
-        });
+
+        const serverAppearance = payload.user.appearance ?? DEFAULT_APPEARANCE_SETTINGS;
+        const serverLooksUntouched =
+          serverAppearance.selectedThemeId === DEFAULT_APPEARANCE_SETTINGS.selectedThemeId
+          && serverAppearance.customThemes.length === DEFAULT_APPEARANCE_SETTINGS.customThemes.length;
+        const clientHasNonDefaultTheme =
+          selectedThemeIdRef.current !== DEFAULT_APPEARANCE_SETTINGS.selectedThemeId
+          || customThemesRef.current.length > DEFAULT_APPEARANCE_SETTINGS.customThemes.length;
+
+        if (!(serverLooksUntouched && clientHasNonDefaultTheme)) {
+          applyAppearanceSettings(serverAppearance);
+        }
 
         if (
           currentSession && (
@@ -944,7 +954,9 @@ export default function ProfilePage() {
   const canCreateCustomThemes = hasFeatureAccess(currentPlan.slug, "customThemeCreation");
   const canManageDataControls = hasFeatureAccess(currentPlan.slug, "customCategories");
   const canExportCsv = hasFeatureAccess(currentPlan.slug, "csvExport");
-  const canUseBankSync = hasFeatureAccess(currentPlan.slug, "bankSync");
+  const canUseBankSync = session.isDemo
+    ? false
+    : Boolean(bankStatus?.accessGranted ?? hasFeatureAccess(currentPlan.slug, "bankSync"));
   const formattedBankConnectedAt = bankStatus?.connection?.connectedAt
     ? new Date(bankStatus.connection.connectedAt).toLocaleString()
     : null;
@@ -1074,10 +1086,10 @@ export default function ProfilePage() {
 
               {session.isDemo ? (
                 <p className={styles.hintText}>Bank sync is disabled for local demo sessions because the callback must be tied to a real database-backed user.</p>
-              ) : !canUseBankSync ? (
-                <p className={styles.hintText}>Your current plan does not include bank sync. Upgrade to Smart to enable Yapily-connected imports.</p>
               ) : isBankLoading ? (
                 <p className={styles.hintText}>Loading bank connection status...</p>
+              ) : !canUseBankSync ? (
+                <p className={styles.hintText}>Your current plan does not include bank sync. Upgrade to Smart, or enable the sandbox override for all plans in development.</p>
               ) : !bankStatus?.configured ? (
                 <div className={styles.bankInfoGrid}>
                   <article className={styles.bankInfoCard}>

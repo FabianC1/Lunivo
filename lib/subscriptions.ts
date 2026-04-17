@@ -385,6 +385,14 @@ export function hasFeatureAccess(currentPlan: string | null | undefined, feature
   return hasPlanAccess(currentPlan, getMinimumPlanForFeature(feature));
 }
 
+export function canUseBankSyncForSandboxTesting(currentPlan: string | null | undefined) {
+  if (hasFeatureAccess(currentPlan, "bankSync")) {
+    return true;
+  }
+
+  return process.env.YAPILY_SANDBOX_ALLOW_ALL_PLANS === "true";
+}
+
 export function getAvailableBuiltInThemeCount(currentPlan: string | null | undefined) {
   const normalizedPlan = normalizePlanSlug(currentPlan);
   return normalizedPlan === "free" ? 2 : 12;
