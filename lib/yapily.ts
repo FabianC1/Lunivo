@@ -72,6 +72,22 @@ function extractErrorMessage(payload: unknown, fallbackMessage: string) {
     return fallbackMessage;
   }
 
+  const nestedError = (payload as { error?: unknown }).error;
+  if (nestedError && typeof nestedError === "object") {
+    const nestedCandidates = [
+      (nestedError as { message?: unknown }).message,
+      (nestedError as { errorMessage?: unknown }).errorMessage,
+      (nestedError as { detail?: unknown }).detail,
+      (nestedError as { status?: unknown }).status,
+    ];
+
+    for (const candidate of nestedCandidates) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+  }
+
   const candidates = [
     (payload as { error?: unknown }).error,
     (payload as { message?: unknown }).message,
@@ -86,6 +102,24 @@ function extractErrorMessage(payload: unknown, fallbackMessage: string) {
   }
 
   return fallbackMessage;
+}
+
+function formatYapilyError(path: string, status: number, payload: unknown) {
+  const fallbackMessage = `Yapily request failed with status ${status}.`;
+  const errorMessage = extractErrorMessage(payload, fallbackMessage);
+  const normalizedMessage = errorMessage.toLowerCase();
+
+  if (status === 403 && normalizedMessage.includes("right scope")) {
+    if (path.startsWith("/hosted/consent-requests")) {
+      return "Yapily authenticated successfully, but this application is not allowed to create Hosted Consent requests. Enable the Yapily Data and Hosted Consent scopes for this application, or switch to sandbox credentials that include them.";
+    }
+
+    if (path === "/accounts" || path.startsWith("/accounts/")) {
+      return "Yapily rejected the current consent for account data access. Reconnect the bank with an application that has ACCOUNTS, ACCOUNT_BALANCES, and ACCOUNT_TRANSACTIONS access enabled.";
+    }
+  }
+
+  return errorMessage;
 }
 
 export async function yapilyRequest<T>(path: string, options: YapilyRequestOptions = {}): Promise<T> {
@@ -110,7 +144,7 @@ export async function yapilyRequest<T>(path: string, options: YapilyRequestOptio
 
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(extractErrorMessage(payload, `Yapily request failed with status ${response.status}.`));
+    throw new Error(formatYapilyError(path, response.status, payload));
   }
 
   return payload as T;

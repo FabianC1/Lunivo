@@ -43,26 +43,34 @@ export async function POST() {
     await connection.save();
   }
 
-  const redirectUrl = buildYapilyCallbackUrl(String(connection._id), callbackState);
-  const hostedConsentRequest = await createHostedConsentRequest({
-    applicationUserId: authenticatedUser.userId,
-    institutionId: config.institutionId,
-    institutionCountryCode: config.institutionCountryCode,
-    redirectUrl,
-  });
+  try {
+    const redirectUrl = buildYapilyCallbackUrl(String(connection._id), callbackState);
+    const hostedConsentRequest = await createHostedConsentRequest({
+      applicationUserId: authenticatedUser.userId,
+      institutionId: config.institutionId,
+      institutionCountryCode: config.institutionCountryCode,
+      redirectUrl,
+    });
 
-  connection.status = "authorizing";
-  connection.redirectUrl = redirectUrl;
-  connection.hostedUrl = typeof hostedConsentRequest.hostedUrl === "string" ? hostedConsentRequest.hostedUrl : "";
-  connection.consentRequestId = typeof hostedConsentRequest.consentRequestId === "string" ? hostedConsentRequest.consentRequestId : undefined;
-  connection.authorizationExpiresAt = hostedConsentRequest.authorisationExpiresAt
-    ? new Date(String(hostedConsentRequest.authorisationExpiresAt))
-    : undefined;
-  connection.lastError = "";
-  await connection.save();
+    connection.status = "authorizing";
+    connection.redirectUrl = redirectUrl;
+    connection.hostedUrl = typeof hostedConsentRequest.hostedUrl === "string" ? hostedConsentRequest.hostedUrl : "";
+    connection.consentRequestId = typeof hostedConsentRequest.consentRequestId === "string" ? hostedConsentRequest.consentRequestId : undefined;
+    connection.authorizationExpiresAt = hostedConsentRequest.authorisationExpiresAt
+      ? new Date(String(hostedConsentRequest.authorisationExpiresAt))
+      : undefined;
+    connection.lastError = "";
+    await connection.save();
 
-  return NextResponse.json({
-    hostedUrl: connection.hostedUrl,
-    consentRequestId: connection.consentRequestId,
-  });
+    return NextResponse.json({
+      hostedUrl: connection.hostedUrl,
+      consentRequestId: connection.consentRequestId,
+    });
+  } catch (error) {
+    connection.status = "failed";
+    connection.lastError = error instanceof Error ? error.message : "Unable to start the Yapily bank connection.";
+    await connection.save();
+
+    return NextResponse.json({ error: connection.lastError }, { status: 500 });
+  }
 }
