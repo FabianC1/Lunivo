@@ -501,7 +501,7 @@ function buildExcelWorkbook(planner: EventPlannerState, lineItems: CostLineItem[
     ["Total estimate", summary.totalEstimate.toFixed(2)],
     ["Cost per guest", summary.perGuestCost.toFixed(2)],
     ["Remaining balance", summary.remainingBalance.toFixed(2)],
-    ["Budget difference", summary.budgetDifference.toFixed(2)],
+    ["Budget gap", summary.budgetDifference.toFixed(2)],
     ["Target coverage rate", summary.targetCoverageRate.toFixed(2)],
     ["Planner notes", planner.notes || ""],
   ];
@@ -671,6 +671,7 @@ export default function EventsPage() {
   const perGuestCost = planner.guestCount > 0 ? totalEstimate / planner.guestCount : 0;
   const remainingBalance = Math.max(totalEstimate - planner.depositPaid, 0);
   const budgetDifference = planner.budgetTarget - totalEstimate;
+  const isOverBudget = budgetDifference < 0;
   const targetCoverageRate = planner.budgetTarget > 0 ? (planner.depositPaid / planner.budgetTarget) * 100 : 0;
   const activeCostLines = lineItems.filter((item) => item.value > 0).length;
   const recommendedBuffer = Math.ceil(Math.max(planner.guestCount, 1) * 0.08);
@@ -787,9 +788,13 @@ export default function EventsPage() {
           <span>{planner.guestCount} {plannerProfile.unitLabel.toLowerCase()} in the current model</span>
         </article>
         <article className={styles.kpiCard}>
-          <p>Budget position</p>
-          <h2 className={budgetDifference >= 0 ? styles.positiveValue : styles.negativeValue}>{formatSignedCurrency(budgetDifference)}</h2>
-          <span>{budgetDifference >= 0 ? "Under target" : "Over target"} against {formatCurrency(planner.budgetTarget)}</span>
+          <p>Budget gap</p>
+          <h2 className={isOverBudget ? styles.negativeValue : styles.positiveValue}>{formatSignedCurrency(budgetDifference)}</h2>
+          <span>
+            {isOverBudget
+              ? `${formatCurrency(Math.abs(budgetDifference))} over your ${formatCurrency(planner.budgetTarget)} target`
+              : `${formatCurrency(budgetDifference)} left within your ${formatCurrency(planner.budgetTarget)} target`}
+          </span>
         </article>
         <article className={styles.kpiCard}>
           <p>Remaining balance</p>

@@ -5,7 +5,7 @@ import styles from "./dashboard.module.css";
 import Chart from "../../components/Chart";
 import PageLoading from "../../components/PageLoading";
 import { readApiError } from "../../lib/apiClient";
-import { DEMO_EMAIL, DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
+import { DEMO_PLAN_SLUG, getSession } from "../../lib/auth";
 import { initialBudgets } from "../../lib/budgets";
 import { FREE_PLAN, getSubscriptionPlanBySlug, hasFeatureAccess } from "../../lib/subscriptions";
 import {
@@ -342,8 +342,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const session = getSession();
-    const normalizedEmail = session?.email.trim().toLowerCase() ?? "";
-    const shouldUseSampleData = session?.isDemo || normalizedEmail === DEMO_EMAIL;
+    const shouldUseSampleData = Boolean(session?.isDemo);
     setSessionUserId(session?.isDemo ? null : session?.userId ?? null);
     setUsesSampleData(Boolean(shouldUseSampleData));
 
@@ -1060,10 +1059,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {canReorderWidgets || canCreateCustomDashboardVisuals ? (
+      {canToggleWidgets || canCreateCustomDashboardVisuals ? (
       <section className={styles.controlDock}>
                 <div className={styles.panelToggleRow}>
-                  {canReorderWidgets ? (
+                  {canToggleWidgets ? (
                   <button
                     type="button"
                     className={`${styles.panelToggleButton} ${canToggleWidgets ? styles.proAccentCard : ""} ${showLayoutControls ? styles.panelToggleButtonOpen : ""}`}
@@ -1098,7 +1097,7 @@ export default function Dashboard() {
                   ) : null}
                 </div>
 
-                {showLayoutControls ? (
+                {showLayoutControls && canToggleWidgets ? (
                   <section id="workspace-layout-panel" className={`${styles.layoutPanel} ${canToggleWidgets ? styles.proAccentCard : ""}`}>
                     <div className={styles.layoutPanelHeader}>
                       <div>

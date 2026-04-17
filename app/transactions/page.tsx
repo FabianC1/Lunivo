@@ -160,6 +160,7 @@ export default function Transactions() {
   const canBulkEditCategories = hasFeatureAccess(currentPlan.slug, "bulkCategoryUpdates");
   const canMergeCategories = hasFeatureAccess(currentPlan.slug, "mergeCategories");
   const canManageCustomCategories = hasFeatureAccess(currentPlan.slug, "customCategories");
+  const canUseProTransactionTools = canUseTags || canBulkEditCategories || canMergeCategories || canManageCustomCategories;
 
   async function saveTransaction(data: Omit<Transaction, "id">) {
     if (editingTransactionId) {
@@ -485,47 +486,46 @@ export default function Transactions() {
           }
         }}
       >
-        <div className={styles.proToolsPanel}>
-          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
-            <h3>Transaction tags</h3>
-            <p>Add tags in the transaction form to group entries like holiday or work.</p>
-            {!canUseTags ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
-          </div>
-          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
-            <h3>Bulk category update</h3>
-            <div className={styles.inlineTools}>
-              <select className={styles.filterSelect} value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} disabled={!canBulkEditCategories}>
-                <option value="">Move selected rows to...</option>
-                {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
-              </select>
-              <button type="button" className={styles.secondaryActionButton} onClick={() => void bulkUpdateSelectedCategory()} disabled={!canBulkEditCategories || selectedTransactionIds.length === 0 || !bulkCategory}>
-                Update {selectedTransactionIds.length > 0 ? `(${selectedTransactionIds.length})` : ""}
-              </button>
+        {canUseProTransactionTools ? (
+          <div className={styles.proToolsPanel}>
+            <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
+              <h3>Transaction tags</h3>
+              <p>Add tags in the transaction form to group entries like holiday or work.</p>
             </div>
-            {!canBulkEditCategories ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
-          </div>
-          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
-            <h3>Merge categories</h3>
-            <div className={styles.inlineTools}>
-              <select className={styles.filterSelect} value={mergeFromCategory} onChange={(event) => setMergeFromCategory(event.target.value)} disabled={!canMergeCategories}>
-                <option value="">From category</option>
-                {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
-              </select>
-              <select className={styles.filterSelect} value={mergeToCategory} onChange={(event) => setMergeToCategory(event.target.value)} disabled={!canMergeCategories}>
-                <option value="">Into category</option>
-                {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
-              </select>
-              <button type="button" className={styles.secondaryActionButton} onClick={() => void mergeSelectedCategories()} disabled={!canMergeCategories || !mergeFromCategory || !mergeToCategory || mergeFromCategory === mergeToCategory}>
-                Merge
-              </button>
+            <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
+              <h3>Bulk category update</h3>
+              <div className={styles.inlineTools}>
+                <select className={styles.filterSelect} value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} disabled={!canBulkEditCategories}>
+                  <option value="">Move selected rows to...</option>
+                  {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <button type="button" className={styles.secondaryActionButton} onClick={() => void bulkUpdateSelectedCategory()} disabled={!canBulkEditCategories || selectedTransactionIds.length === 0 || !bulkCategory}>
+                  Update {selectedTransactionIds.length > 0 ? `(${selectedTransactionIds.length})` : ""}
+                </button>
+              </div>
             </div>
-            {!canMergeCategories ? <p className={styles.lockedMessage}>Available on Pro.</p> : null}
+            <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
+              <h3>Merge categories</h3>
+              <div className={styles.inlineTools}>
+                <select className={styles.filterSelect} value={mergeFromCategory} onChange={(event) => setMergeFromCategory(event.target.value)} disabled={!canMergeCategories}>
+                  <option value="">From category</option>
+                  {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <select className={styles.filterSelect} value={mergeToCategory} onChange={(event) => setMergeToCategory(event.target.value)} disabled={!canMergeCategories}>
+                  <option value="">Into category</option>
+                  {spendingCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <button type="button" className={styles.secondaryActionButton} onClick={() => void mergeSelectedCategories()} disabled={!canMergeCategories || !mergeFromCategory || !mergeToCategory || mergeFromCategory === mergeToCategory}>
+                  Merge
+                </button>
+              </div>
+            </div>
+            <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
+              <h3>Custom categories</h3>
+              <p>Manage your custom categories from profile settings.</p>
+            </div>
           </div>
-          <div className={`${styles.proToolCard} ${styles.paidFeatureCard}`}>
-            <h3>Custom categories</h3>
-            <p>{canManageCustomCategories ? "Manage your custom categories from profile settings." : "Visible here, but category creation is locked until Pro."}</p>
-          </div>
-        </div>
+        ) : null}
 
         <div className={styles.tableHeader}>
           <div>

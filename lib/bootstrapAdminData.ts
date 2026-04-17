@@ -125,6 +125,94 @@ const ADMIN_EXPENSE_SEED = [
   },
 ];
 
+type AdminGoalSeedEntry = {
+  title: string;
+  kind: string;
+  targetAmount: number;
+  savedAmount: number;
+  targetDate: string;
+  notes: string;
+  completed: boolean;
+  completedAt?: string;
+};
+
+const ADMIN_GOAL_SEED: AdminGoalSeedEntry[] = [
+  {
+    title: "Buy an apartment",
+    kind: "Home",
+    targetAmount: 150000,
+    savedAmount: 42500,
+    targetDate: "2027-12-31",
+    notes: "First-time buyer. Need to save for down payment and closing costs.",
+    completed: false,
+  },
+  {
+    title: "Amalfi coast escape",
+    kind: "Holiday",
+    targetAmount: 6400,
+    savedAmount: 2150,
+    targetDate: "2026-10-05",
+    notes: "Flights, hotels, rail passes, and a food budget.",
+    completed: false,
+  },
+  {
+    title: "Summer wedding in Portugal",
+    kind: "Wedding",
+    targetAmount: 25000,
+    savedAmount: 18900,
+    targetDate: "2026-07-20",
+    notes: "Ceremony, reception, and travel for 80 guests.",
+    completed: false,
+  },
+  {
+    title: "Product design course",
+    kind: "Education",
+    targetAmount: 3200,
+    savedAmount: 975,
+    targetDate: "2026-09-12",
+    notes: "Course fees, books, and software subscriptions.",
+    completed: false,
+  },
+  {
+    title: "New car deposit",
+    kind: "Vehicle",
+    targetAmount: 8000,
+    savedAmount: 8000,
+    targetDate: "2026-03-18",
+    notes: "Deposit saved for a hybrid upgrade before the end of spring.",
+    completed: true,
+    completedAt: "2026-03-12",
+  },
+  {
+    title: "Emergency fund top-up",
+    kind: "Emergency Fund",
+    targetAmount: 15000,
+    savedAmount: 9200,
+    targetDate: "2026-11-30",
+    notes: "Build out six months of runway before year end.",
+    completed: false,
+  },
+  {
+    title: "Birthday weekend",
+    kind: "Birthday",
+    targetAmount: 1100,
+    savedAmount: 420,
+    targetDate: "2026-06-18",
+    notes: "Dinner, hotel, and a small surprise budget.",
+    completed: false,
+  },
+  {
+    title: "Studio gear refresh",
+    kind: "Other",
+    targetAmount: 1800,
+    savedAmount: 1800,
+    targetDate: "2026-02-28",
+    notes: "Camera lens and audio kit.",
+    completed: true,
+    completedAt: "2026-02-20",
+  },
+];
+
 function startOfDay(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
 }
@@ -144,10 +232,9 @@ export async function bootstrapAdminData(userId: string, email: string) {
     await user.save();
   }
 
-  const [accountCount, budgetCount, goalCount] = await Promise.all([
+  const [accountCount, budgetCount] = await Promise.all([
     Account.countDocuments({ userId }),
     Budget.countDocuments({ userId }),
-    Goal.countDocuments({ userId }),
   ]);
 
   if (accountCount === 0) {
@@ -183,40 +270,31 @@ export async function bootstrapAdminData(userId: string, email: string) {
     });
   }
 
-  if (goalCount === 0) {
-    await Goal.insertMany([
-      {
-        userId,
-        title: "Emergency fund top-up",
-        kind: "Emergency Fund",
-        targetAmount: 15000,
-        savedAmount: 9200,
-        targetDate: startOfDay("2026-11-30"),
-        notes: "Build out six months of runway before year end.",
-        completed: false,
-      },
-      {
-        userId,
-        title: "Portugal working holiday",
-        kind: "Holiday",
-        targetAmount: 3200,
-        savedAmount: 1180,
-        targetDate: startOfDay("2026-08-15"),
-        notes: "Flights, apartment, and spending buffer.",
-        completed: false,
-      },
-      {
-        userId,
-        title: "Studio gear refresh",
-        kind: "Other",
-        targetAmount: 1800,
-        savedAmount: 1800,
-        targetDate: startOfDay("2026-02-28"),
-        notes: "Camera lens and audio kit.",
-        completed: true,
-        completedAt: startOfDay("2026-02-20"),
-      },
-    ]);
+  const seededGoalTitles = new Set(
+    (
+      await Goal.find(
+        { userId, title: { $in: ADMIN_GOAL_SEED.map((entry) => entry.title) } },
+        { title: 1 }
+      ).lean()
+    ).map((entry) => entry.title)
+  );
+
+  const missingGoals = ADMIN_GOAL_SEED
+    .filter((entry) => !seededGoalTitles.has(entry.title))
+    .map((entry) => ({
+      userId,
+      title: entry.title,
+      kind: entry.kind,
+      targetAmount: entry.targetAmount,
+      savedAmount: entry.savedAmount,
+      targetDate: startOfDay(entry.targetDate),
+      notes: entry.notes,
+      completed: entry.completed,
+      completedAt: entry.completedAt ? startOfDay(entry.completedAt) : undefined,
+    }));
+
+  if (missingGoals.length > 0) {
+    await Goal.insertMany(missingGoals);
   }
 
   const seededDescriptions = new Set(

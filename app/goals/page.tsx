@@ -77,6 +77,17 @@ function getInitialGoals(): GoalItem[] {
     },
     {
       id: crypto.randomUUID(),
+      title: "Amalfi coast escape",
+      kind: "Holiday",
+      targetAmount: 6400,
+      savedAmount: 2150,
+      targetDate: "2026-10-05",
+      notes: "Flights, hotels, rail passes, and a food budget.",
+      completed: false,
+      createdAt: new Date("2026-02-08").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
       title: "Summer wedding in Portugal",
       kind: "Wedding",
       targetAmount: 25000,
@@ -88,14 +99,14 @@ function getInitialGoals(): GoalItem[] {
     },
     {
       id: crypto.randomUUID(),
-      title: "Japan anniversary trip",
-      kind: "Holiday",
-      targetAmount: 6400,
-      savedAmount: 2150,
-      targetDate: "2026-10-05",
-      notes: "Flights, rail passes, hotels, and a bit of shopping money.",
+      title: "Product design course",
+      kind: "Education",
+      targetAmount: 3200,
+      savedAmount: 975,
+      targetDate: "2026-09-12",
+      notes: "Course fees, books, and software subscriptions.",
       completed: false,
-      createdAt: new Date("2026-02-08").toISOString(),
+      createdAt: new Date("2026-01-29").toISOString(),
     },
     {
       id: crypto.randomUUID(),
@@ -107,6 +118,29 @@ function getInitialGoals(): GoalItem[] {
       notes: "Keep six months of essential costs parked and untouched.",
       completed: false,
       createdAt: new Date("2025-08-01").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "Birthday weekend",
+      kind: "Birthday",
+      targetAmount: 1100,
+      savedAmount: 420,
+      targetDate: "2026-06-18",
+      notes: "Dinner, hotel, and a small surprise budget.",
+      completed: false,
+      createdAt: new Date("2026-03-04").toISOString(),
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "Studio gear refresh",
+      kind: "Other",
+      targetAmount: 1800,
+      savedAmount: 1800,
+      targetDate: "2026-02-28",
+      notes: "Camera lens and audio kit.",
+      completed: true,
+      completedAt: new Date("2026-02-20").toISOString(),
+      createdAt: new Date("2025-11-21").toISOString(),
     },
     {
       id: crypto.randomUUID(),
@@ -302,7 +336,7 @@ export default function GoalsPage() {
     }
 
     const session = getSession();
-    if (!session?.isDemo || goals.length > 0 || localStorage.getItem(seedKey())) {
+    if (!session?.isDemo) {
       return;
     }
 
@@ -311,10 +345,21 @@ export default function GoalsPage() {
       return;
     }
 
-    setGoals(seededGoals);
+    const existingTitles = new Set(goals.map((goal) => goal.title));
+    const missingGoals = seededGoals.filter((goal) => !existingTitles.has(goal.title));
+    const nextGoals = goals.length === 0 ? seededGoals : missingGoals.length > 0 ? [...goals, ...missingGoals] : goals;
+
+    if (nextGoals === goals && localStorage.getItem(seedKey())) {
+      return;
+    }
+
+    if (nextGoals !== goals) {
+      setGoals(nextGoals);
+    }
+
     localStorage.setItem(seedKey(), "true");
-    localStorage.setItem(storageKey(), JSON.stringify(seededGoals));
-  }, [goals.length, usesDatabase]);
+    localStorage.setItem(storageKey(), JSON.stringify(nextGoals));
+  }, [goals, usesDatabase]);
 
   const activeGoals = useMemo(() => goals.filter((g) => !g.completed), [goals]);
   const completedGoals = useMemo(() => goals.filter((g) => g.completed), [goals]);
@@ -331,6 +376,13 @@ export default function GoalsPage() {
 
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
   const canUsePrecisionEventPlanning = hasFeatureAccess(currentPlan.slug, "precisionEventPlanning");
+  const activeValidationMessage = activeValidationField
+    ? getGoalFieldError(activeValidationField, form)
+    : undefined;
+
+  function isFieldInvalid(field: ValidatedGoalFormField) {
+    return activeValidationField === field && Boolean(activeValidationMessage);
+  }
 
   function buildPlanningHref(goal: GoalItem) {
     const params = new URLSearchParams({
@@ -441,13 +493,6 @@ export default function GoalsPage() {
         }
 
         const payload = await response.json();
-          const activeValidationMessage = activeValidationField
-            ? getGoalFieldError(activeValidationField, form)
-            : undefined;
-
-          function isFieldInvalid(field: ValidatedGoalFormField) {
-            return activeValidationField === field && Boolean(activeValidationMessage);
-          }
         setGoals((prev) => prev.map((goal) => (goal.id === editingGoalId ? payload.goal : goal)));
         resetForm();
       } catch (saveError) {
