@@ -32,6 +32,7 @@ export interface IUser extends Document {
   dashboard?: DashboardSettings;
   customCategories?: string[];
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const ThemePresetSchema = new Schema<ThemePreset>(

@@ -8,6 +8,7 @@ import styles from "./register.module.css";
 import { readApiError } from "../../lib/apiClient";
 import { clearLogoutPending, getSession, setSession } from "../../lib/auth";
 import { getSubscriptionPlanBySlug } from "../../lib/subscriptions";
+import LunivoLogo from "../../components/LunivoLogo";
 
 function getStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: "", color: "" };
@@ -125,8 +126,7 @@ export default function Register() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <div className={styles.logo}>L</div>
-          <span className={styles.brandName}>Lunivo</span>
+          <LunivoLogo size="auth" />
         </div>
 
         <h1 className={styles.title}>Create your account</h1>

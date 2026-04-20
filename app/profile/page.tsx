@@ -151,13 +151,12 @@ function createThemeDraft(
   };
 }
 
-type SettingsTab = "account" | "appearance" | "preferences" | "notifications" | "billing" | "security" | "data" | "privacy" | "help" | "danger";
+type SettingsTab = "account" | "appearance" | "preferences" | "billing" | "security" | "data" | "privacy" | "help" | "danger";
 
 const TAB_ITEMS: Array<{ id: SettingsTab; label: string }> = [
   { id: "account", label: "Account" },
   { id: "appearance", label: "Appearance" },
   { id: "preferences", label: "Preferences" },
-  { id: "notifications", label: "Notifications" },
   { id: "billing", label: "Billing" },
   { id: "security", label: "Security" },
   { id: "data", label: "Data & Export" },
@@ -220,11 +219,6 @@ export default function ProfilePage() {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [budgetAlerts, setBudgetAlerts] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(false);
-  const [notifMessage, setNotifMessage] = useState("");
-
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("GBP");
   const [country, setCountry] = useState("");
@@ -247,6 +241,8 @@ export default function ProfilePage() {
   const [contactMessage, setContactMessage] = useState("");
   const [billingMessage, setBillingMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
+  const [dataError, setDataError] = useState("");
+  const [isExporting, setIsExporting] = useState<null | "csv" | "json" | "backup">(null);
   const [deleteError, setDeleteError] = useState("");
   const [deleteMessage, setDeleteMessage] = useState("");
   const [signedOutSessions, setSignedOutSessions] = useState<number[]>([]);
@@ -313,9 +309,6 @@ export default function ProfilePage() {
         setLanguage(payload.user.preferences?.language ?? "en");
         setCurrency(payload.user.preferences?.currency ?? "GBP");
         setCountry(payload.user.preferences?.country ?? "");
-        setEmailNotifications(payload.user.notifications?.emailNotifications ?? true);
-        setBudgetAlerts(payload.user.notifications?.budgetAlerts ?? true);
-        setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
         setDashboardSettings(payload.user.dashboard ?? DEFAULT_DASHBOARD_SETTINGS);
         setCustomCategories(sanitizeCustomCategories(payload.user.customCategories ?? DEFAULT_CUSTOM_CATEGORIES));
 
@@ -570,46 +563,6 @@ export default function ProfilePage() {
     }
   }
 
-  async function saveNotificationPrefs() {
-    if (!session) {
-      return;
-    }
-
-    if (session.isDemo || !session.userId) {
-      setNotifMessage("Notification preferences saved for this local session.");
-      window.setTimeout(() => setNotifMessage(""), 2000);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          notifications: {
-            emailNotifications,
-            budgetAlerts,
-            weeklyDigest,
-          },
-        }),
-      });
-
-      const payload = (await response.json()) as (ProfilePayload & { error?: string });
-      if (!response.ok || !payload.user) {
-        setNotifMessage(payload.error ?? "Unable to save notification settings.");
-      } else {
-        setEmailNotifications(payload.user.notifications?.emailNotifications ?? true);
-        setBudgetAlerts(payload.user.notifications?.budgetAlerts ?? true);
-        setWeeklyDigest(payload.user.notifications?.weeklyDigest ?? false);
-        setNotifMessage("Notification settings saved.");
-      }
-    } catch {
-      setNotifMessage("Unable to save notification settings right now.");
-    }
-
-    window.setTimeout(() => setNotifMessage(""), 2200);
-  }
-
   async function savePreferences() {
     if (!session) {
       return;
@@ -830,15 +783,176 @@ export default function ProfilePage() {
     window.setTimeout(() => setPasswordMessage(""), 2200);
   }
 
-  function requestExport(type: "csv" | "json" | "backup") {
-    if (type === "csv" && canExportCsv) {
-      router.push("/reports");
+  function downloadFile(blob: Blob, filename: string) {
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(objectUrl);
+  }
+
+  function buildClientCsv(rows: Array<Record<string, unknown>>) {
+    if (rows.length === 0) {
+      return "recordType,label,value\n";
+    }
+
+    const headers = Object.keys(rows[0]);
+    const escape = (value: unknown) => {
+      const normalized = value === null || value === undefined
+        ? ""
+        : typeof value === "object"
+          ? JSON.stringify(value)
+          : String(value);
+      return `"${normalized.replace(/"/g, '""')}"`;
+    };
+
+    return [
+      headers.join(","),
+      ...rows.map((row) => headers.map((header) => escape(row[header])).join(",")),
+    ].join("\n");
+  }
+
+  function buildLocalExportSnapshot() {
+    const storageIdentity = session?.userId ?? session?.email ?? "guest";
+    const parseStored = <T,>(key: string, fallback: T): T => {
+      if (typeof window === "undefined") {
+        return fallback;
+      }
+
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw ? (JSON.parse(raw) as T) : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    const budgets = parseStored<Record<string, number> | null>("lunivo-budgets", null);
+    const goals = parseStored<Array<Record<string, unknown>>>(`lunivo-goals-${storageIdentity}`, []);
+    const planner = parseStored<Record<string, unknown> | null>(`lunivo-event-planner-${storageIdentity}`, null);
+    const dashboard = parseStored<Record<string, unknown>>(`lunivo-dashboard-settings-${storageIdentity}`, dashboardSettings);
+
+    return {
+      exportedAt: new Date().toISOString(),
+      source: session?.isDemo || !session?.userId ? "local-session" : "local-session-fallback",
+      note: session?.userId
+        ? "This export was generated from browser data because the secure server auth cookie is missing. Sign out and back in to export server-backed account data."
+        : "This export was generated from browser data for a demo/local session.",
+      user: {
+        id: session?.userId ?? null,
+        name: name || session?.name || "",
+        email: session?.email ?? "",
+        planSlug: currentPlanSlug,
+        backupEmail,
+        phone,
+        preferences: {
+          language,
+          currency,
+          country,
+        },
+        appearance: {
+          selectedThemeId,
+          customThemes,
+        },
+        dashboard,
+        customCategories,
+      },
+      budgets,
+      goals,
+      planner,
+    };
+  }
+
+  function exportLocalSnapshot(type: "csv" | "json" | "backup") {
+    const snapshot = buildLocalExportSnapshot();
+
+    if (type === "csv") {
+      const budgetRows = Object.entries(snapshot.budgets ?? {}).map(([category, amount]) => ({
+        recordType: "budget",
+        label: category,
+        value: amount,
+        targetDate: "",
+        status: "",
+      }));
+      const goalRows = snapshot.goals.map((goal) => ({
+        recordType: "goal",
+        label: String(goal.title ?? "Untitled goal"),
+        value: Number(goal.savedAmount ?? 0),
+        targetDate: String(goal.targetDate ?? ""),
+        status: Boolean(goal.completed) ? "completed" : "active",
+      }));
+      const csv = buildClientCsv([...budgetRows, ...goalRows]);
+      downloadFile(new Blob([csv], { type: "text/csv;charset=utf-8" }), "lunivo-local-export.csv");
       return;
     }
 
-    const label = type === "backup" ? "Secure backup requested" : `${type.toUpperCase()} export requested`;
-    setDataMessage(`${label}. We'll notify you when it's ready.`);
-    window.setTimeout(() => setDataMessage(""), 2600);
+    downloadFile(
+      new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json;charset=utf-8" }),
+      `lunivo-${type === "backup" ? "local-backup" : "local-export"}.json`,
+    );
+  }
+
+  async function requestExport(type: "csv" | "json" | "backup") {
+    if (type === "csv" && !canExportCsv) {
+      return;
+    }
+
+    setIsExporting(type);
+    setDataMessage("");
+    setDataError("");
+
+    if (session?.isDemo || !session?.userId) {
+      try {
+        exportLocalSnapshot(type);
+        setDataMessage(type === "csv" ? "Local CSV export downloaded." : "Local data export downloaded.");
+      } catch {
+        setDataError("Unable to generate the local export.");
+      } finally {
+        setIsExporting(null);
+        window.setTimeout(() => {
+          setDataMessage("");
+          setDataError("");
+        }, 3200);
+      }
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/profile/export?format=${type}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (response.status === 401) {
+        exportLocalSnapshot(type);
+        setDataMessage("Downloaded a local snapshot. Sign out and back in if you want the full server-backed export.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(await readApiError(response, "Unable to prepare export."));
+      }
+
+      const disposition = response.headers.get("content-disposition") ?? "";
+      const filenameMatch = disposition.match(/filename="?([^\"]+)"?/i);
+      const filename = filenameMatch?.[1] ?? `lunivo-${type}-export.${type === "csv" ? "csv" : "json"}`;
+      const blob = await response.blob();
+      downloadFile(blob, filename);
+
+      setDataMessage(type === "backup" ? "Full backup downloaded." : `${type.toUpperCase()} export downloaded.`);
+    } catch (error) {
+      setDataError(error instanceof Error ? error.message : "Unable to prepare export.");
+    } finally {
+      setIsExporting(null);
+      window.setTimeout(() => {
+        setDataMessage("");
+        setDataError("");
+      }, 3200);
+    }
   }
 
   function manageBilling(action: "portal" | "cancel" | "resume") {
@@ -1460,47 +1574,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {activeTab === "notifications" && (
-          <div className={styles.panel}>
-            <h1 className={styles.heading}>Notifications</h1>
-            <p className={styles.subheading}>Control what updates Lunivo sends you.</p>
-
-            <div className={styles.optionList}>
-              <label className={styles.optionRow}>
-                <span>Email notifications</span>
-                <input
-                  type="checkbox"
-                  checked={emailNotifications}
-                  onChange={(e) => setEmailNotifications(e.target.checked)}
-                />
-              </label>
-
-              <label className={styles.optionRow}>
-                <span>Budget limit alerts</span>
-                <input
-                  type="checkbox"
-                  checked={budgetAlerts}
-                  onChange={(e) => setBudgetAlerts(e.target.checked)}
-                />
-              </label>
-
-              <label className={styles.optionRow}>
-                <span>Weekly digest summary</span>
-                <input
-                  type="checkbox"
-                  checked={weeklyDigest}
-                  onChange={(e) => setWeeklyDigest(e.target.checked)}
-                />
-              </label>
-            </div>
-
-            {notifMessage && <p className={styles.successText}>{notifMessage}</p>}
-            <button type="button" className={styles.primaryButton} onClick={saveNotificationPrefs}>
-              Save notification settings
-            </button>
-          </div>
-        )}
-
         {activeTab === "billing" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Billing</h1>
@@ -1721,17 +1794,18 @@ export default function ProfilePage() {
               <h3 className={styles.sectionSubtitle}>Quick Export</h3>
               <p>Pro can export monthly summary and category breakdown CSV files. Other plans can see the controls here, but export stays locked.</p>
               <div className={styles.actionRow}>
-                <button type="button" className={styles.secondaryButton} onClick={() => requestExport("csv")} disabled={!canExportCsv}>
-                  Export CSV
+                <button type="button" className={styles.secondaryButton} onClick={() => void requestExport("csv")} disabled={!canExportCsv || isExporting !== null}>
+                  {isExporting === "csv" ? "Exporting..." : "Export CSV"}
                 </button>
-                <button type="button" className={styles.secondaryButton} onClick={() => requestExport("json")}>
-                  Export JSON
+                <button type="button" className={styles.secondaryButton} onClick={() => void requestExport("json")} disabled={isExporting !== null}>
+                  {isExporting === "json" ? "Exporting..." : "Export JSON"}
                 </button>
-                <button type="button" className={styles.primaryButton} onClick={() => requestExport("backup")}>
-                  Request full backup
+                <button type="button" className={styles.primaryButton} onClick={() => void requestExport("backup")} disabled={isExporting !== null}>
+                  {isExporting === "backup" ? "Exporting..." : "Download full backup"}
                 </button>
               </div>
               {dataMessage && <p className={styles.successText}>{dataMessage}</p>}
+              {dataError && <p className={styles.errorText}>{dataError}</p>}
             </div>
 
             <div className={styles.divider} />

@@ -7,6 +7,7 @@ import { signIn } from "next-auth/react";
 import styles from "./login.module.css";
 import { readApiError } from "../../lib/apiClient";
 import { clearLogoutPending, getSession, setSession, DEMO_EMAIL, DEMO_PASSWORD, DEMO_NAME } from "../../lib/auth";
+import LunivoLogo from "../../components/LunivoLogo";
 
 export default function Login() {
   const router = useRouter();
@@ -90,8 +91,7 @@ export default function Login() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <div className={styles.logo}>L</div>
-          <span className={styles.brandName}>Lunivo</span>
+          <LunivoLogo size="auth" />
         </div>
 
         <h1 className={styles.title}>Welcome back</h1>

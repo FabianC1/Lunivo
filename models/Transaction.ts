@@ -16,6 +16,8 @@ export interface ITransaction extends Document {
   providerTransactionId?: string;
   providerConnectionId?: mongoose.Types.ObjectId;
   lastSyncedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const TransactionSchema: Schema<ITransaction> = new Schema(

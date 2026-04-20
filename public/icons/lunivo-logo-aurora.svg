@@ -1,0 +1,18 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lunivo-bg-aurora" x1="120" y1="96" x2="912" y2="912" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F172A"/>
+      <stop offset="0.52" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="lunivo-bars-aurora" x1="360" y1="360" x2="676" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F172A" stop-opacity="0.88"/>
+      <stop offset="1" stop-color="#1E293B" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="288" fill="url(#lunivo-bg-aurora)"/>
+  <path d="M377.06 219.999C271.243 276.004 200 386.581 200 514.456C200 705.298 354.703 860 545.544 860C669.682 860 779.239 794.026 837.288 694.343C786.439 727.845 726.021 747.37 660.978 747.37C484.632 747.37 341.67 604.408 341.67 428.062C341.67 351.643 368.544 281.503 413.341 226.538C400.868 220.795 388.852 218.87 377.06 219.999Z" fill="#F8FAFC" fill-opacity="0.96"/>
+  <rect x="372" y="500" width="104" height="196" rx="52" fill="url(#lunivo-bars-aurora)"/>
+  <rect x="510" y="404" width="104" height="292" rx="52" fill="url(#lunivo-bars-aurora)"/>
+  <rect x="648" y="308" width="104" height="388" rx="52" fill="url(#lunivo-bars-aurora)"/>
+</svg>

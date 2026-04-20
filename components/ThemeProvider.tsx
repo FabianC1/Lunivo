@@ -16,6 +16,7 @@ interface ThemeContextType {
   selectedThemeId: string;
   customThemes: ThemePreset[];
   availableThemes: ThemePreset[];
+  activeThemePreset: ThemePreset;
   toggleTheme: () => void;
   applyAppearanceSettings: (settings: AppearanceSettings) => void;
   setSelectedThemeId: (themeId: string) => void;
@@ -52,6 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [selectedThemeId, setSelectedThemeIdState] = useState(DEFAULT_APPEARANCE_SETTINGS.selectedThemeId);
   const [customThemes, setCustomThemesState] = useState<ThemePreset[]>(DEFAULT_APPEARANCE_SETTINGS.customThemes);
   const [mounted, setMounted] = useState(false);
+  const activeThemePreset = findThemePreset(selectedThemeId, customThemes);
 
   useEffect(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -109,6 +111,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         selectedThemeId,
         customThemes,
         availableThemes: [...BUILT_IN_THEME_PRESETS, ...customThemes],
+        activeThemePreset,
         toggleTheme,
         applyAppearanceSettings,
         setSelectedThemeId,

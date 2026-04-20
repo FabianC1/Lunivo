@@ -6,6 +6,8 @@ export interface IBudget extends Document {
   userId: mongoose.Types.ObjectId;
   categories: Map<string, number>;
   period: string; // e.g. 'monthly'
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const BudgetSchema: Schema<IBudget> = new Schema(

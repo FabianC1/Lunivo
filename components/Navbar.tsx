@@ -4,6 +4,7 @@ import Link from "next/link";
 import styles from "./Navbar.module.css";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
+import LunivoLogo from "./LunivoLogo";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -11,7 +12,9 @@ export default function Navbar() {
 
   return (
     <nav className={styles.navbar}>
-      <div className={styles.logo}>Lunivo</div>
+      <Link href="/dashboard" className={styles.logo} aria-label="Lunivo dashboard">
+        <LunivoLogo size="nav" />
+      </Link>
       <ul className={styles.links}>
         <li>
           <Link href="/dashboard" className={pathname === '/dashboard' ? styles.active : ''}>Dashboard</Link>
