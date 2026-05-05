@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import PageLoading from "../../components/PageLoading";
@@ -254,7 +254,7 @@ function getInitials(name: string) {
   return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
 }
 
-export default function ProfilePage() {
+function ProfilePageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1246,26 +1246,23 @@ export default function ProfilePage() {
 
   return (
     <main className={styles.page}>
-      {!session && <PageLoading />}
-      {session && (
-        <>
-          <aside className={styles.sidebar}>
-            <h2 className={styles.sidebarTitle}>Settings</h2>
-            <nav className={styles.menu} aria-label="Profile settings sections">
-              {TAB_ITEMS.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setTab(tab.id)}
-                  className={`${styles.menuButton} ${activeTab === tab.id ? styles.menuButtonActive : ""}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </aside>
+      <aside className={styles.sidebar}>
+        <h2 className={styles.sidebarTitle}>Settings</h2>
+        <nav className={styles.menu} aria-label="Profile settings sections">
+          {TAB_ITEMS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setTab(tab.id)}
+              className={`${styles.menuButton} ${activeTab === tab.id ? styles.menuButtonActive : ""}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-          <section className={styles.content}>
+      <section className={styles.content}>
         {activeTab === "account" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Account</h1>
@@ -2122,8 +2119,14 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
-        </>
-      )}
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <ProfilePageInner />
+    </Suspense>
   );
 }
