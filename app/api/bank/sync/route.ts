@@ -17,13 +17,13 @@ export async function POST() {
 
   await connectToDatabase();
 
-  const connection = await BankConnection.findOne({ userId: authenticatedUser.userId, provider: "yapily" });
+  const connection = await BankConnection.findOne({ userId: authenticatedUser.userId, provider: "plaid" });
   if (!connection) {
     return NextResponse.json({ error: "Connect a bank before starting a sync." }, { status: 404 });
   }
 
-  if (!connection.consentToken && !connection.authToken) {
-    return NextResponse.json({ error: "The current bank connection is missing a Yapily consent token. Reconnect the bank first." }, { status: 409 });
+  if (!connection.accessToken) {
+    return NextResponse.json({ error: "The current bank connection is missing a Plaid access token. Reconnect the bank first." }, { status: 409 });
   }
 
   try {

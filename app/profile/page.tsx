@@ -56,17 +56,20 @@ type BankConnectionPayload = {
   accessGranted?: boolean;
   configured: boolean;
   config: {
-    institutionId: string;
-    institutionCountryCode: string;
-    redirectUrl: string;
+    environment?: string;
+    countryCodes?: string[];
+    products?: string[];
+    redirectUri?: string | null;
   } | null;
   connection: {
     id: string;
     provider: string;
     status: string;
     institutionId: string;
+    institutionName: string;
     institutionCountryCode: string;
-    hostedUrl: string;
+    itemId: string;
+    linkSessionId: string;
     lastError: string;
     connectedAt: string | null;
     authorizationExpiresAt: string | null;
@@ -77,6 +80,80 @@ type BankConnectionPayload = {
     syncedAccountCount: number;
   } | null;
 };
+
+type PlaidLinkHandler = {
+  open: () => void;
+  destroy?: () => void;
+};
+
+type PlaidLinkSuccessMetadata = {
+  institution?: {
+    institution_id?: string | null;
+    name?: string | null;
+  } | null;
+  link_session_id?: string | null;
+};
+
+type PlaidLinkExitMetadata = {
+  status?: string | null;
+  request_id?: string | null;
+  link_session_id?: string | null;
+};
+
+type PlaidLinkError = {
+  error_code?: string | null;
+  error_message?: string | null;
+  error_type?: string | null;
+  display_message?: string | null;
+};
+
+declare global {
+  interface Window {
+    Plaid?: {
+      create: (config: {
+        token: string;
+        onSuccess: (publicToken: string, metadata: PlaidLinkSuccessMetadata) => void;
+        onExit: (error: PlaidLinkError | null, metadata: PlaidLinkExitMetadata) => void;
+        receivedRedirectUri?: string;
+      }) => PlaidLinkHandler;
+    };
+  }
+}
+
+let plaidScriptPromise: Promise<void> | null = null;
+
+function loadPlaidScript() {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Plaid Link can only load in the browser."));
+  }
+
+  if (window.Plaid) {
+    return Promise.resolve();
+  }
+
+  if (plaidScriptPromise) {
+    return plaidScriptPromise;
+  }
+
+  plaidScriptPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-plaid-link="true"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Unable to load Plaid Link.")), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
+    script.async = true;
+    script.dataset.plaidLink = "true";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Unable to load Plaid Link."));
+    document.head.appendChild(script);
+  });
+
+  return plaidScriptPromise;
+}
 
 function mixColors(colorA: string, colorB: string, weight = 0.5) {
   const normalize = (value: string) => value.replace("#", "").trim();
@@ -191,6 +268,8 @@ export default function ProfilePage() {
   } = useTheme();
   const selectedThemeIdRef = useRef(selectedThemeId);
   const customThemesRef = useRef(customThemes);
+  const plaidHandlerRef = useRef<PlaidLinkHandler | null>(null);
+  const handledOauthRedirectRef = useRef<string | null>(null);
 
   useEffect(() => {
     selectedThemeIdRef.current = selectedThemeId;
@@ -378,6 +457,12 @@ export default function ProfilePage() {
       setBankMessage("");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    return () => {
+      plaidHandlerRef.current?.destroy?.();
+    };
+  }, []);
 
   useEffect(() => {
     if (!session || session.isDemo || !session.userId) {
@@ -999,7 +1084,7 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleBankConnect() {
+  async function handleBankConnect(receivedRedirectUri?: string) {
     setBankError("");
     setBankMessage("");
     setIsBankConnecting(true);
@@ -1007,17 +1092,79 @@ export default function ProfilePage() {
     try {
       const response = await fetch("/api/bank/connect", { method: "POST" });
       if (!response.ok) {
-        throw new Error(await readApiError(response, "Unable to start the Yapily bank connection."));
+        throw new Error(await readApiError(response, "Unable to start the Plaid bank connection."));
       }
 
-      const payload = (await response.json()) as { hostedUrl?: string };
-      if (!payload.hostedUrl) {
-        throw new Error("Yapily did not return a hosted consent URL.");
+      const payload = (await response.json()) as { linkToken?: string };
+      if (!payload.linkToken) {
+        throw new Error("Plaid did not return a link token.");
       }
 
-      window.location.assign(payload.hostedUrl);
+      await loadPlaidScript();
+      if (!window.Plaid) {
+        throw new Error("Plaid Link did not finish loading.");
+      }
+
+      plaidHandlerRef.current?.destroy?.();
+      const handler = window.Plaid.create({
+        token: payload.linkToken,
+        ...(receivedRedirectUri ? { receivedRedirectUri } : {}),
+        onSuccess: (publicToken, metadata) => {
+          void (async () => {
+            try {
+              const exchangeResponse = await fetch("/api/bank/exchange", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  publicToken,
+                  institutionId: metadata.institution?.institution_id,
+                  institutionName: metadata.institution?.name,
+                  linkSessionId: metadata.link_session_id,
+                }),
+              });
+
+              if (!exchangeResponse.ok) {
+                throw new Error(await readApiError(exchangeResponse, "Unable to complete the Plaid connection."));
+              }
+
+              const exchangePayload = (await exchangeResponse.json()) as {
+                summary?: {
+                  importedAccounts: number;
+                  importedTransactions: number;
+                  updatedTransactions: number;
+                };
+              };
+
+              const summary = exchangePayload.summary;
+              setBankMessage(
+                summary
+                  ? `Bank connected. ${summary.importedAccounts} accounts refreshed, ${summary.importedTransactions} new transactions imported, ${summary.updatedTransactions} transactions updated.`
+                  : "Bank connected.",
+              );
+              await refreshBankStatus();
+            } catch (error) {
+              setBankError(error instanceof Error ? error.message : "Unable to complete the Plaid connection.");
+            } finally {
+              setIsBankConnecting(false);
+            }
+          })();
+        },
+        onExit: (error, metadata) => {
+          if (error?.error_message || error?.display_message) {
+            setBankError(error.display_message || error.error_message || "Plaid Link exited before the connection finished.");
+          } else if (metadata?.status === "requires_credentials") {
+            setBankError("Plaid Link closed before credentials were submitted. In sandbox use user_transactions_dynamic / asdf / 1234.");
+          }
+          setIsBankConnecting(false);
+        },
+      });
+
+      plaidHandlerRef.current = handler;
+      handler.open();
     } catch (error) {
-      setBankError(error instanceof Error ? error.message : "Unable to start the Yapily bank connection.");
+      setBankError(error instanceof Error ? error.message : "Unable to start the Plaid bank connection.");
       setIsBankConnecting(false);
     }
   }
@@ -1077,6 +1224,25 @@ export default function ProfilePage() {
   const formattedBankLastSyncAt = bankStatus?.connection?.lastSyncAt
     ? new Date(bankStatus.connection.lastSyncAt).toLocaleString()
     : null;
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const oauthStateId = searchParams?.get("oauth_state_id");
+    if (!oauthStateId || !session?.userId || session.isDemo) {
+      return;
+    }
+
+    const redirectUrl = window.location.href;
+    if (handledOauthRedirectRef.current === redirectUrl) {
+      return;
+    }
+
+    handledOauthRedirectRef.current = redirectUrl;
+    void handleBankConnect(redirectUrl);
+  }, [searchParams, session?.userId, session?.isDemo]);
 
   return (
     <main className={styles.page}>
@@ -1186,7 +1352,7 @@ export default function ProfilePage() {
                 <div>
                   <h3 className={styles.sectionSubtitle}>Bank Sync</h3>
                   <p>
-                    Connect Yapily sandbox banking to pull accounts and transactions into Lunivo automatically.
+                    Connect Plaid to pull accounts and transactions into Lunivo automatically instead of entering income and spendings by hand.
                   </p>
                 </div>
                 <span className={`${styles.bankStatusBadge} ${bankStatus?.connection ? styles.bankStatusActive : styles.bankStatusIdle}`}>
@@ -1199,7 +1365,7 @@ export default function ProfilePage() {
               </div>
 
               {session.isDemo ? (
-                <p className={styles.hintText}>Bank sync is disabled for local demo sessions because the callback must be tied to a real database-backed user.</p>
+                <p className={styles.hintText}>Bank sync is disabled for local demo sessions because Plaid access tokens must be tied to a real database-backed user.</p>
               ) : isBankLoading ? (
                 <p className={styles.hintText}>Loading bank connection status...</p>
               ) : !canUseBankSync ? (
@@ -1207,26 +1373,26 @@ export default function ProfilePage() {
               ) : !bankStatus?.configured ? (
                 <div className={styles.bankInfoGrid}>
                   <article className={styles.bankInfoCard}>
-                    <strong>Yapily not configured</strong>
-                    <p>Add the Yapily environment variables in .env.local before starting the sandbox connection flow.</p>
+                    <strong>Plaid not configured</strong>
+                    <p>Add PLAID_CLIENT_ID, PLAID_SECRET, and PLAID_ENV to .env.local before starting the bank connection flow.</p>
                   </article>
                   <article className={styles.bankInfoCard}>
-                    <strong>Expected redirect</strong>
-                    <p>Set YAPILY_REDIRECT_URL to your public /api/bank/callback endpoint so Hosted Consent can return to Lunivo.</p>
+                    <strong>Live OAuth prep</strong>
+                    <p>Set PLAID_REDIRECT_URI to your public profile settings URL if you later enable OAuth institutions in development or production.</p>
                   </article>
                 </div>
               ) : (
                 <>
                   <div className={styles.bankInfoGrid}>
                     <article className={styles.bankInfoCard}>
-                      <strong>Institution</strong>
-                      <span>{bankStatus.config?.institutionId ?? "modelo-sandbox"}</span>
-                      <p>{bankStatus.config?.institutionCountryCode ?? "GB"} sandbox institution configured for the current environment.</p>
+                      <strong>Environment</strong>
+                      <span>{bankStatus.config?.environment ?? "sandbox"}</span>
+                      <p>{(bankStatus.config?.countryCodes ?? ["US", "GB"]).join(", ")} enabled for Plaid Link.</p>
                     </article>
                     <article className={styles.bankInfoCard}>
-                      <strong>Redirect URL</strong>
-                      <span>{bankStatus.config?.redirectUrl ?? "Not configured"}</span>
-                      <p>Hosted Consent redirects back here after bank authorisation.</p>
+                      <strong>Products</strong>
+                      <span>{(bankStatus.config?.products ?? ["transactions"]).join(", ")}</span>
+                      <p>{bankStatus.config?.redirectUri ? `Redirect URI: ${bankStatus.config.redirectUri}` : "No redirect URI configured yet. This is fine for sandbox and non-OAuth institutions."}</p>
                     </article>
                     <article className={styles.bankInfoCard}>
                       <strong>Synced accounts</strong>
@@ -1244,12 +1410,20 @@ export default function ProfilePage() {
                             : "No bank connection has been created yet."}
                       </p>
                     </article>
+                    {bankStatus.config?.environment === "sandbox" ? (
+                      <article className={styles.bankInfoCard}>
+                        <strong>Sandbox login</strong>
+                        <span>user_transactions_dynamic</span>
+                        <p>Password: asdf. MFA: 1234. Use this when Plaid Link prompts for sandbox credentials.</p>
+                      </article>
+                    ) : null}
                   </div>
 
                   {bankStatus.connection ? (
                     <div className={styles.bankConnectionSummary}>
                       <p><strong>Connected:</strong> {formattedBankConnectedAt ?? "Pending completion"}</p>
                       <p><strong>Status:</strong> {bankStatus.connection.status}</p>
+                      <p><strong>Institution:</strong> {bankStatus.connection.institutionName || bankStatus.connection.institutionId}</p>
                     </div>
                   ) : null}
 
@@ -1260,7 +1434,7 @@ export default function ProfilePage() {
                       onClick={() => void handleBankConnect()}
                       disabled={isBankConnecting}
                     >
-                      {isBankConnecting ? "Opening Yapily..." : bankStatus.connection ? "Reconnect bank" : "Connect bank"}
+                      {isBankConnecting ? "Opening Plaid..." : bankStatus.connection ? "Reconnect bank" : "Connect bank"}
                     </button>
                     <button
                       type="button"

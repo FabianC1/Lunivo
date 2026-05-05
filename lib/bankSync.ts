@@ -2,14 +2,7 @@ import mongoose from "mongoose";
 import BankConnection, { type IBankConnection } from "../models/BankConnection";
 import Account from "../models/Account";
 import Transaction from "../models/Transaction";
-import {
-  extractFirstArray,
-  extractFirstNumber,
-  extractFirstString,
-  getAccountTransactions,
-  getAccounts,
-  getYapilyConfig,
-} from "./yapily";
+import { getPlaidAccounts, syncPlaidTransactions } from "./plaid";
 
 type SyncSummary = {
   importedAccounts: number;
@@ -64,98 +57,63 @@ function pickNumber(source: Record<string, unknown> | null, keys: string[]) {
 }
 
 function normalizeAccountName(rawAccount: Record<string, unknown>, providerAccountId: string) {
-  const directName = pickString(rawAccount, ["nickname", "name", "displayName", "accountName"]);
-  const accountNames = Array.isArray(rawAccount.accountNames) ? rawAccount.accountNames : [];
-  const namedEntry = accountNames.find((entry) => asRecord(entry)?.name);
-  const nestedName = namedEntry ? pickString(asRecord(namedEntry), ["name"]) : undefined;
-  const baseName = directName || nestedName || "Synced account";
-  const suffix = providerAccountId.slice(-4).padStart(4, "0");
+  const baseName = pickString(rawAccount, ["name", "official_name", "displayName", "accountName"]) || "Synced account";
+  const suffix = pickString(rawAccount, ["mask"]) || providerAccountId.slice(-4).padStart(4, "0");
   return `${baseName} · ${suffix}`;
 }
 
 function normalizeAccountBalance(rawAccount: Record<string, unknown>) {
-  const directBalance = pickNumber(rawAccount, ["balance"]);
-  if (typeof directBalance === "number") {
-    return directBalance;
-  }
-
-  const balances = Array.isArray(rawAccount.balances) ? rawAccount.balances : [];
-  for (const entry of balances) {
-    const record = asRecord(entry);
-    const amountRecord = asRecord(record?.balanceAmount);
-    const amount = pickNumber(amountRecord, ["amount"]);
-    if (typeof amount === "number") {
-      return amount;
-    }
-  }
-
-  return 0;
+  const balances = asRecord(rawAccount.balances);
+  return pickNumber(balances, ["current", "available", "limit"]) ?? 0;
 }
 
 function normalizeAccountCurrency(rawAccount: Record<string, unknown>) {
-  const directCurrency = pickString(rawAccount, ["currency", "isoCurrencyCode"]);
-  if (directCurrency) {
-    return directCurrency.toUpperCase();
-  }
-
-  const balances = Array.isArray(rawAccount.balances) ? rawAccount.balances : [];
-  for (const entry of balances) {
-    const record = asRecord(entry);
-    const amountRecord = asRecord(record?.balanceAmount);
-    const currency = pickString(amountRecord, ["currency"]);
-    if (currency) {
-      return currency.toUpperCase();
-    }
-  }
-
-  return "GBP";
+  const balances = asRecord(rawAccount.balances);
+  const currency = pickString(balances, ["iso_currency_code", "unofficial_currency_code", "currency"]);
+  return currency ? currency.toUpperCase() : "GBP";
 }
 
 function normalizeTransactionKind(rawTransaction: Record<string, unknown>, amount: number): "income" | "expense" {
-  const indicator = pickString(rawTransaction, ["creditDebitIndicator", "type"]);
-  if (indicator?.toUpperCase().includes("CREDIT")) {
-    return "income";
+  const pendingType = pickString(rawTransaction, ["payment_channel", "transaction_type"]);
+  if (pendingType?.toLowerCase().includes("special") || pendingType?.toLowerCase().includes("place")) {
+    return amount < 0 ? "income" : "expense";
   }
-  if (indicator?.toUpperCase().includes("DEBIT")) {
-    return "expense";
-  }
-  return amount < 0 ? "expense" : "income";
+
+  return amount < 0 ? "income" : "expense";
 }
 
 function normalizeTransactionDate(rawTransaction: Record<string, unknown>) {
-  const rawDate = pickString(rawTransaction, ["date", "bookingDateTime", "bookingDate", "valueDateTime", "valueDate"]);
+  const rawDate = pickString(rawTransaction, ["date", "datetime", "authorized_date", "authorized_datetime"]);
   const date = rawDate ? new Date(rawDate) : new Date();
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
 function normalizeTransactionDescription(rawTransaction: Record<string, unknown>) {
-  return pickString(rawTransaction, ["description", "reference", "merchantName", "payeeName", "title"]) || "Bank synced transaction";
+  return pickString(rawTransaction, ["merchant_name", "name", "original_description", "authorized_merchant_name"]) || "Bank synced transaction";
 }
 
 function normalizeTransactionCategory(rawTransaction: Record<string, unknown>, kind: "income" | "expense") {
-  const category = pickString(rawTransaction, ["category", "transactionCategory", "type"]);
-  if (category) {
-    return category;
+  const personalFinance = asRecord(rawTransaction.personal_finance_category);
+  const category = pickString(personalFinance, ["detailed", "primary"]) || pickString(rawTransaction, ["personal_finance_category_icon_url"]);
+  if (category && !category.startsWith("http")) {
+    return category.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (match) => match.toUpperCase());
   }
   return kind === "income" ? "Bank income" : "Bank spending";
 }
 
 function normalizeTransactionAmount(rawTransaction: Record<string, unknown>) {
-  const amountRecord = asRecord(rawTransaction.transactionAmount);
-  const amount = pickNumber(amountRecord, ["amount"]) ?? pickNumber(rawTransaction, ["amount"]);
+  const amount = pickNumber(rawTransaction, ["amount"]);
   return typeof amount === "number" ? amount : undefined;
 }
 
-function getAccountsFromPayload(payload: Record<string, unknown>) {
-  const directAccounts = extractFirstArray(payload, ["accounts", "data"]);
-  return directAccounts
+function getAccountsFromPayload(payload: { accounts?: Array<Record<string, unknown>> }) {
+  return (payload.accounts ?? [])
     .map((entry) => asRecord(entry))
     .filter((entry): entry is Record<string, unknown> => Boolean(entry));
 }
 
-function getTransactionsFromPayload(payload: Record<string, unknown>) {
-  const directTransactions = extractFirstArray(payload, ["transactions", "data"]);
-  return directTransactions
+function getTransactionsFromPayload(payload: Array<Record<string, unknown>> | undefined) {
+  return (payload ?? [])
     .map((entry) => asRecord(entry))
     .filter((entry): entry is Record<string, unknown> => Boolean(entry));
 }
@@ -168,19 +126,18 @@ function buildFallbackTransactionId(rawTransaction: Record<string, unknown>, pro
 }
 
 export async function syncBankConnection(connection: IBankConnection): Promise<SyncSummary> {
-  const consentToken = connection.consentToken || connection.authToken;
-  if (!consentToken) {
-    throw new Error("The bank connection is missing a Yapily consent token.");
+  if (connection.provider !== "plaid") {
+    throw new Error("This bank sync flow now expects a Plaid connection.");
+  }
+
+  const accessToken = connection.accessToken;
+  if (!accessToken) {
+    throw new Error("The bank connection is missing a Plaid access token.");
   }
 
   const userId = toObjectId(connection.userId);
   const now = new Date();
-  const config = getYapilyConfig();
-  const syncFrom = connection.lastSyncAt
-    ? new Date(connection.lastSyncAt)
-    : new Date(now.getTime() - (config.transactionDays * 24 * 60 * 60 * 1000));
-
-  const accountsPayload = await getAccounts(consentToken);
+  const accountsPayload = await getPlaidAccounts(accessToken);
   const remoteAccounts = getAccountsFromPayload(accountsPayload);
 
   let importedAccounts = 0;
@@ -188,9 +145,7 @@ export async function syncBankConnection(connection: IBankConnection): Promise<S
   let updatedTransactions = 0;
 
   for (const rawAccount of remoteAccounts) {
-    const providerAccountId =
-      pickString(rawAccount, ["id", "accountId"]) ||
-      extractFirstString(rawAccount, ["id", "accountId"]);
+    const providerAccountId = pickString(rawAccount, ["account_id", "id"]);
 
     if (!providerAccountId) {
       continue;
@@ -199,17 +154,17 @@ export async function syncBankConnection(connection: IBankConnection): Promise<S
     const account = await Account.findOneAndUpdate(
       {
         userId,
-        provider: "yapily",
+        provider: "plaid",
         providerAccountId,
       },
       {
         $set: {
           name: normalizeAccountName(rawAccount, providerAccountId),
-          type: pickString(rawAccount, ["accountType", "type"]) || "checking",
+          type: pickString(rawAccount, ["subtype", "type"]) || "checking",
           balance: normalizeAccountBalance(rawAccount),
           currency: normalizeAccountCurrency(rawAccount),
           syncStatus: "synced",
-          provider: "yapily",
+          provider: "plaid",
           providerAccountId,
           providerConnectionId: connection._id,
           lastSyncedAt: now,
@@ -231,58 +186,133 @@ export async function syncBankConnection(connection: IBankConnection): Promise<S
     }
 
     importedAccounts += 1;
+  }
 
-    const transactionsPayload = await getAccountTransactions(
-      consentToken,
-      providerAccountId,
-      syncFrom.toISOString(),
-      now.toISOString(),
-    );
+  let cursor = connection.syncCursor ?? null;
+  let hasMore = true;
+  const removedTransactionIds: string[] = [];
 
-    const rawTransactions = getTransactionsFromPayload(transactionsPayload);
-    for (const [index, rawTransaction] of rawTransactions.entries()) {
+  while (hasMore) {
+    const transactionsPayload = await syncPlaidTransactions(accessToken, cursor);
+    const nextCursor = typeof transactionsPayload.next_cursor === "string" ? transactionsPayload.next_cursor : cursor;
+
+    for (const rawTransaction of getTransactionsFromPayload(transactionsPayload.added)) {
+      const providerAccountId = pickString(rawTransaction, ["account_id"]);
+      if (!providerAccountId) {
+        continue;
+      }
+
+      const account = await Account.findOne({
+        userId,
+        provider: "plaid",
+        providerAccountId,
+      }).select("_id");
+      if (!account) {
+        continue;
+      }
+
       const rawAmount = normalizeTransactionAmount(rawTransaction);
       if (typeof rawAmount !== "number" || rawAmount === 0) {
         continue;
       }
 
       const kind = normalizeTransactionKind(rawTransaction, rawAmount);
-      const providerTransactionId =
-        pickString(rawTransaction, ["id", "transactionId"]) ||
-        buildFallbackTransactionId(rawTransaction, providerAccountId, index);
+      const providerTransactionId = pickString(rawTransaction, ["transaction_id", "pending_transaction_id"])
+        || buildFallbackTransactionId(rawTransaction, providerAccountId, importedTransactions);
 
-      const payload = {
-        accountId: account._id,
-        date: normalizeTransactionDate(rawTransaction),
-        amount: Math.abs(rawAmount),
-        kind,
-        category: normalizeTransactionCategory(rawTransaction, kind),
-        description: normalizeTransactionDescription(rawTransaction),
-        source: "bank-sync",
-        provider: "yapily",
-        providerTransactionId,
-        providerConnectionId: connection._id,
-        lastSyncedAt: now,
-      };
-
-      const existingTransaction = await Transaction.findOne({
-        userId,
-        provider: "yapily",
-        providerTransactionId,
-      }).select("_id");
-
-      if (existingTransaction) {
-        await Transaction.updateOne({ _id: existingTransaction._id }, { $set: payload });
-        updatedTransactions += 1;
-      } else {
-        await Transaction.create({
+      await Transaction.updateOne(
+        {
           userId,
-          ...payload,
-          tags: [],
-        });
-        importedTransactions += 1;
+          provider: "plaid",
+          providerTransactionId,
+        },
+        {
+          $setOnInsert: {
+            userId,
+            tags: [],
+          },
+          $set: {
+            accountId: account._id,
+            date: normalizeTransactionDate(rawTransaction),
+            amount: Math.abs(rawAmount),
+            kind,
+            category: normalizeTransactionCategory(rawTransaction, kind),
+            description: normalizeTransactionDescription(rawTransaction),
+            source: "bank-sync",
+            provider: "plaid",
+            providerTransactionId,
+            providerConnectionId: connection._id,
+            lastSyncedAt: now,
+          },
+        },
+        { upsert: true }
+      );
+
+      importedTransactions += 1;
+    }
+
+    for (const rawTransaction of getTransactionsFromPayload(transactionsPayload.modified)) {
+      const providerTransactionId = pickString(rawTransaction, ["transaction_id", "pending_transaction_id"]);
+      const providerAccountId = pickString(rawTransaction, ["account_id"]);
+      if (!providerTransactionId || !providerAccountId) {
+        continue;
+      }
+
+      const account = await Account.findOne({
+        userId,
+        provider: "plaid",
+        providerAccountId,
+      }).select("_id");
+      if (!account) {
+        continue;
+      }
+
+      const rawAmount = normalizeTransactionAmount(rawTransaction);
+      if (typeof rawAmount !== "number" || rawAmount === 0) {
+        continue;
+      }
+
+      const kind = normalizeTransactionKind(rawTransaction, rawAmount);
+      await Transaction.updateOne(
+        {
+          userId,
+          provider: "plaid",
+          providerTransactionId,
+        },
+        {
+          $set: {
+            accountId: account._id,
+            date: normalizeTransactionDate(rawTransaction),
+            amount: Math.abs(rawAmount),
+            kind,
+            category: normalizeTransactionCategory(rawTransaction, kind),
+            description: normalizeTransactionDescription(rawTransaction),
+            source: "bank-sync",
+            provider: "plaid",
+            providerConnectionId: connection._id,
+            lastSyncedAt: now,
+          },
+        }
+      );
+      updatedTransactions += 1;
+    }
+
+    for (const removed of transactionsPayload.removed ?? []) {
+      if (typeof removed.transaction_id === "string" && removed.transaction_id.trim()) {
+        removedTransactionIds.push(removed.transaction_id.trim());
       }
     }
+
+    cursor = nextCursor;
+    hasMore = Boolean(transactionsPayload.has_more);
+  }
+
+  if (removedTransactionIds.length > 0) {
+    await Transaction.deleteMany({
+      userId,
+      provider: "plaid",
+      providerTransactionId: { $in: removedTransactionIds },
+    });
   }
 
   await BankConnection.updateOne(
@@ -295,6 +325,7 @@ export async function syncBankConnection(connection: IBankConnection): Promise<S
         lastSyncStatus: "success",
         lastSyncAccountCount: importedAccounts,
         lastSyncTransactionCount: importedTransactions,
+        syncCursor: cursor ?? undefined,
         lastError: "",
       },
     }

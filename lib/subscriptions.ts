@@ -390,7 +390,7 @@ export function canUseBankSyncForSandboxTesting(currentPlan: string | null | und
     return true;
   }
 
-  return process.env.YAPILY_SANDBOX_ALLOW_ALL_PLANS === "true";
+  return process.env.PLAID_SANDBOX_ALLOW_ALL_PLANS === "true";
 }
 
 export function getAvailableBuiltInThemeCount(currentPlan: string | null | undefined) {

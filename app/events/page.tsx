@@ -1,7 +1,9 @@
 "use client";
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import DateInput from "../../components/DateInput";
 import PageLoading from "../../components/PageLoading";
 import SubscriptionGate from "../../components/SubscriptionGate";
 import { readApiError } from "../../lib/apiClient";
@@ -71,6 +73,19 @@ type CostLineItem = {
   type: "perGuest" | "fixed";
 };
 
+type WorkspaceView = "overview" | "budget" | "visuals";
+
+type BudgetClusterId = "core" | "people" | "experience" | "logistics" | "buffer";
+
+type BudgetCluster = {
+  id: BudgetClusterId;
+  title: string;
+  description: string;
+  accent: string;
+  fields: PlannerLineItemKey[];
+  total: number;
+};
+
 const EVENT_STORAGE_PREFIX = "lunivo-event-planner";
 
 type PlannerLineItemKey =
@@ -92,6 +107,7 @@ type PlannerLineItemKey =
 type PlannerProfile = {
   workspaceTitle: string;
   workspaceDescription: string;
+  heroLabel: string;
   hostLabel: string;
   entityLabel: string;
   entityLocationLabel: string;
@@ -107,6 +123,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Wedding: {
     workspaceTitle: "Wedding Planning",
     workspaceDescription: "Model venues, guests, food, decor, suppliers, and export the full wedding plan.",
+    heroLabel: "Ceremony + reception budget",
     hostLabel: "Couple or host",
     entityLabel: "Venue name",
     entityLocationLabel: "Venue location",
@@ -135,6 +152,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Holiday: {
     workspaceTitle: "Holiday Planning",
     workspaceDescription: "Plan travel spend, accommodation, activities, and trip-level budgeting in one workspace.",
+    heroLabel: "Trip budget and itinerary frame",
     hostLabel: "Lead traveler",
     entityLabel: "Destination or hotel",
     entityLocationLabel: "Region or country",
@@ -163,6 +181,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Home: {
     workspaceTitle: "Home Purchase Planning",
     workspaceDescription: "Break down the home goal into deposit, fees, furnishing, and monthly affordability planning.",
+    heroLabel: "Deposit, fees, and move-in costs",
     hostLabel: "Buyer name",
     entityLabel: "Property or development",
     entityLocationLabel: "Area or city",
@@ -191,6 +210,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Vehicle: {
     workspaceTitle: "Vehicle Purchase Planning",
     workspaceDescription: "Model deposit, finance term, insurance, running costs, and the full purchase budget.",
+    heroLabel: "Purchase and ownership model",
     hostLabel: "Buyer name",
     entityLabel: "Vehicle or dealership",
     entityLocationLabel: "Dealer location",
@@ -219,6 +239,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Education: {
     workspaceTitle: "Education Planning",
     workspaceDescription: "Plan tuition, study materials, living costs, and the true total of an education goal.",
+    heroLabel: "Tuition and study-living budget",
     hostLabel: "Student name",
     entityLabel: "School or provider",
     entityLocationLabel: "Campus or city",
@@ -247,6 +268,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   "Emergency Fund": {
     workspaceTitle: "Emergency Fund Planning",
     workspaceDescription: "Translate the safety-net goal into monthly essentials, reserve targets, and coverage planning.",
+    heroLabel: "Essentials coverage model",
     hostLabel: "Account holder",
     entityLabel: "Reserve account",
     entityLocationLabel: "Bank or provider",
@@ -275,6 +297,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Birthday: {
     workspaceTitle: "Celebration Planning",
     workspaceDescription: "Model venue, guests, food, styling, and supplier costs for a detailed celebration plan.",
+    heroLabel: "Guest-led celebration budget",
     hostLabel: "Host name",
     entityLabel: "Venue or restaurant",
     entityLocationLabel: "Venue location",
@@ -303,6 +326,7 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
   Other: {
     workspaceTitle: "Custom Goal Planning",
     workspaceDescription: "Use a flexible planning board to model the budget and moving parts behind any custom goal.",
+    heroLabel: "Flexible custom budget model",
     hostLabel: "Owner or organizer",
     entityLabel: "Main item or venue",
     entityLocationLabel: "Location",
@@ -329,6 +353,108 @@ const PLANNER_PROFILES: Record<GoalPlanningCategory, PlannerProfile> = {
     },
   },
 };
+
+type PlannerVisualProfile = {
+  headline: string;
+  summary: string;
+  highlights: string[];
+  sceneLabel: string;
+  sceneAccent: string;
+  sceneGradient: string;
+};
+
+const PLANNER_VISUALS: Record<GoalPlanningCategory, PlannerVisualProfile> = {
+  Wedding: {
+    headline: "Build the day around the moments that cost the most.",
+    summary: "Balance venue, catering, photography, styling, and guest count before locking suppliers.",
+    highlights: ["Venue", "Guests", "Food", "Photos"],
+    sceneLabel: "Wedding scene",
+    sceneAccent: "#F472B6",
+    sceneGradient: "linear-gradient(135deg, #FFF1F7 0%, #F5F3FF 100%)",
+  },
+  Holiday: {
+    headline: "See the trip before you spend on it.",
+    summary: "Keep flights, stays, activities, and daily spending in one budget view.",
+    highlights: ["Flights", "Stay", "Activities", "Transfers"],
+    sceneLabel: "Trip scene",
+    sceneAccent: "#06B6D4",
+    sceneGradient: "linear-gradient(135deg, #E0F2FE 0%, #ECFEFF 100%)",
+  },
+  Home: {
+    headline: "Model the purchase, not just the deposit.",
+    summary: "Account for legal fees, furnishing, buffers, and the first months after the move.",
+    highlights: ["Deposit", "Fees", "Furniture", "Buffer"],
+    sceneLabel: "Home scene",
+    sceneAccent: "#10B981",
+    sceneGradient: "linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)",
+  },
+  Vehicle: {
+    headline: "Price the ownership journey, not only the keys.",
+    summary: "Plan deposit, financing, insurance, repairs, and running costs together.",
+    highlights: ["Deposit", "Finance", "Insurance", "Fuel"],
+    sceneLabel: "Vehicle scene",
+    sceneAccent: "#F97316",
+    sceneGradient: "linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%)",
+  },
+  Education: {
+    headline: "Turn tuition into a full study plan.",
+    summary: "Budget for tuition, books, software, transport, and living support without losing the long-term view.",
+    highlights: ["Tuition", "Books", "Software", "Living"],
+    sceneLabel: "Education scene",
+    sceneAccent: "#8B5CF6",
+    sceneGradient: "linear-gradient(135deg, #F5F3FF 0%, #EFF6FF 100%)",
+  },
+  "Emergency Fund": {
+    headline: "Stress-test the months you need to cover.",
+    summary: "Model essentials only and see how much reserve you really need to stay safe.",
+    highlights: ["Rent", "Food", "Utilities", "Reserve"],
+    sceneLabel: "Safety net scene",
+    sceneAccent: "#22C55E",
+    sceneGradient: "linear-gradient(135deg, #F0FDF4 0%, #ECFCCB 100%)",
+  },
+  Birthday: {
+    headline: "Design the atmosphere and the budget together.",
+    summary: "Keep guest count, catering, styling, and entertainment aligned from the start.",
+    highlights: ["Venue", "Guests", "Decor", "Music"],
+    sceneLabel: "Celebration scene",
+    sceneAccent: "#F43F5E",
+    sceneGradient: "linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 100%)",
+  },
+  Other: {
+    headline: "Shape any milestone into a clear financial plan.",
+    summary: "Use a flexible template to mix recurring costs, fixed fees, and planning notes in one place.",
+    highlights: ["Scope", "Costs", "Notes", "Buffer"],
+    sceneLabel: "Custom plan scene",
+    sceneAccent: "#6366F1",
+    sceneGradient: "linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 100%)",
+  },
+};
+
+const SCALED_COST_FIELDS: PlannerLineItemKey[] = [
+  "mealCostPerGuest",
+  "seatingCostPerGuest",
+  "cakeCostPerGuest",
+  "drinksCostPerGuest",
+];
+
+const FIXED_COST_FIELDS: PlannerLineItemKey[] = [
+  "venueCost",
+  "decorCost",
+  "floristCost",
+  "photographyCost",
+  "musicCost",
+  "transportCost",
+  "attireCost",
+  "plannerFee",
+  "accommodationCost",
+  "stationeryCost",
+];
+
+const WORKSPACE_VIEWS: Array<{ id: WorkspaceView; label: string; description: string }> = [
+  { id: "overview", label: "Overview", description: "Story, milestones, and quick plan setup" },
+  { id: "budget", label: "Budget", description: "Interactive cost clusters and live totals" },
+  { id: "visuals", label: "Visuals", description: "Moodboard, references, and inspiration" },
+];
 
 const DEFAULT_PLANNER: EventPlannerState = {
   planningCategory: "Wedding",
@@ -431,6 +557,10 @@ function normalizePlanningCategory(value: string | null | undefined): GoalPlanni
 
 function getPlannerProfile(category: GoalPlanningCategory) {
   return PLANNER_PROFILES[category] ?? PLANNER_PROFILES.Other;
+}
+
+function getPlannerVisualProfile(category: GoalPlanningCategory) {
+  return PLANNER_VISUALS[category] ?? PLANNER_VISUALS.Other;
 }
 
 function sanitizeFileName(value: string) {
@@ -560,6 +690,170 @@ function triggerDownload(filename: string, content: BlobPart, type: string) {
   URL.revokeObjectURL(url);
 }
 
+function formatCompactDate(value: string) {
+  if (!value) {
+    return "No date set";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getFieldDisplayValue(planner: EventPlannerState, field: PlannerLineItemKey) {
+  if (SCALED_COST_FIELDS.includes(field)) {
+    return planner.guestCount * planner[field];
+  }
+
+  return planner[field];
+}
+
+function createBudgetClusters(planner: EventPlannerState, profile: PlannerProfile): BudgetCluster[] {
+  const clusters: Array<Omit<BudgetCluster, "total">> = [
+    {
+      id: "core",
+      title: "Core booking",
+      description: "The biggest locked-in commitments at the centre of the plan.",
+      accent: "#8B5CF6",
+      fields: ["venueCost", "accommodationCost", "plannerFee"],
+    },
+    {
+      id: "people",
+      title: "People costs",
+      description: `Costs that scale with your ${profile.unitLabel.toLowerCase()}.`,
+      accent: "#0EA5E9",
+      fields: ["mealCostPerGuest", "seatingCostPerGuest", "cakeCostPerGuest", "drinksCostPerGuest"],
+    },
+    {
+      id: "experience",
+      title: "Experience and styling",
+      description: "Everything shaping the look, feel, and finish of the plan.",
+      accent: "#F43F5E",
+      fields: ["decorCost", "floristCost", "photographyCost", "musicCost", "attireCost"],
+    },
+    {
+      id: "logistics",
+      title: "Logistics and extras",
+      description: "Transport, admin, and practical costs that keep the plan moving.",
+      accent: "#10B981",
+      fields: ["transportCost", "stationeryCost"],
+    },
+    {
+      id: "buffer",
+      title: "Safety buffer",
+      description: "Reserve space for uncertainty before you commit to the final total.",
+      accent: "#F97316",
+      fields: [],
+    },
+  ];
+
+  return clusters.map((cluster) => ({
+    ...cluster,
+    total: cluster.id === "buffer"
+      ? linearlyRound((planner.contingencyPercent / 100) * ([...FIXED_COST_FIELDS, ...SCALED_COST_FIELDS].reduce((sum, field) => sum + getFieldDisplayValue(planner, field), 0)))
+      : cluster.fields.reduce((sum, field) => sum + getFieldDisplayValue(planner, field), 0),
+  }));
+}
+
+function linearlyRound(value: number) {
+  return Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+}
+
+type PlannerSelectOption = {
+  value: string;
+  label: string;
+  description?: string;
+};
+
+function PlannerSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: PlannerSelectOption[];
+  onChange: (nextValue: string) => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className={styles.selectField} ref={rootRef}>
+      <span className={styles.fieldLabel}>{label}</span>
+      <button
+        type="button"
+        className={styles.selectButton}
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+      >
+        <span className={styles.selectButtonText}>
+          <strong>{selected?.label ?? value}</strong>
+          {selected?.description ? <small>{selected.description}</small> : null}
+        </span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3.5 6L8 10.5L12.5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {isOpen ? (
+        <div className={styles.selectMenu} role="listbox" aria-label={label}>
+          {options.map((option) => {
+            const selectedOption = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={`${styles.selectOption} ${selectedOption ? styles.selectOptionActive : ""}`}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+              >
+                <strong>{option.label}</strong>
+                {option.description ? <span>{option.description}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function EventsPage() {
   const searchParams = useSearchParams();
   const [session, setSessionState] = useState<AuthSession | null>(null);
@@ -568,6 +862,8 @@ export default function EventsPage() {
   const [planner, setPlanner] = useState<EventPlannerState>(DEFAULT_PLANNER);
   const [assets, setAssets] = useState<PlannerAsset[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
+  const [activeView, setActiveView] = useState<WorkspaceView>("overview");
+  const [activeClusterId, setActiveClusterId] = useState<BudgetClusterId>("core");
   const assetUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -643,6 +939,7 @@ export default function EventsPage() {
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
   const canUsePrecisionEventPlanning = hasFeatureAccess(currentPlan.slug, "precisionEventPlanning");
   const plannerProfile = getPlannerProfile(planner.planningCategory);
+  const visualProfile = getPlannerVisualProfile(planner.planningCategory);
 
   const lineItems = useMemo<CostLineItem[]>(() => {
     const unitCount = planner.guestCount;
@@ -675,6 +972,41 @@ export default function EventsPage() {
   const targetCoverageRate = planner.budgetTarget > 0 ? (planner.depositPaid / planner.budgetTarget) * 100 : 0;
   const activeCostLines = lineItems.filter((item) => item.value > 0).length;
   const recommendedBuffer = Math.ceil(Math.max(planner.guestCount, 1) * 0.08);
+  const planningCategoryOptions = Object.keys(PLANNER_PROFILES).map((category) => ({
+    value: category,
+    label: category,
+    description: getPlannerProfile(category as GoalPlanningCategory).heroLabel,
+  }));
+  const planTypeOptions = plannerProfile.typeOptions.map((option) => ({
+    value: option,
+    label: option,
+    description: `${planner.planningCategory} format`,
+  }));
+  const budgetClusters = useMemo(() => createBudgetClusters(planner, plannerProfile), [planner, plannerProfile]);
+  const activeCluster = budgetClusters.find((cluster) => cluster.id === activeClusterId) ?? budgetClusters[0];
+  const topCostDrivers = [...lineItems].sort((left, right) => right.value - left.value).slice(0, 4);
+  const milestoneCards = [
+    {
+      title: "Scope locked",
+      detail: `${plannerProfile.unitLabel}: ${planner.guestCount}`,
+      tone: "neutral",
+    },
+    {
+      title: "Target date",
+      detail: formatCompactDate(planner.eventDate),
+      tone: "neutral",
+    },
+    {
+      title: isOverBudget ? "Over target" : "Within target",
+      detail: formatSignedCurrency(budgetDifference),
+      tone: isOverBudget ? "warning" : "positive",
+    },
+    {
+      title: "Saved so far",
+      detail: formatCurrency(planner.depositPaid),
+      tone: "positive",
+    },
+  ];
 
   function updateTextField(field: PlannerField, value: string) {
     setPlanner((current) => ({
@@ -730,7 +1062,7 @@ export default function EventsPage() {
     });
 
     triggerDownload(`${sanitizeFileName(planner.eventName)}-plan.xls`, workbook, "application/vnd.ms-excel");
-    setStatusMessage("Excel-ready event workbook exported.");
+    setStatusMessage("Planning workbook exported.");
   }
 
   function exportJsonSnapshot() {
@@ -739,11 +1071,11 @@ export default function EventsPage() {
       JSON.stringify({ planner, lineItems, subtotal, contingencyAmount, totalEstimate, perGuestCost, remainingBalance, budgetDifference }, null, 2),
       "application/json",
     );
-    setStatusMessage("Event planning snapshot exported.");
+    setStatusMessage("Planning snapshot exported.");
   }
 
   if (isLoading) {
-    return <PageLoading message="Loading event planning workspace..." />;
+    return <PageLoading message="Loading planning workspace..." />;
   }
 
   if (!canUsePrecisionEventPlanning) {
@@ -752,9 +1084,12 @@ export default function EventsPage() {
         <SubscriptionGate
           currentPlanSlug={currentPlan.slug}
           feature="precisionEventPlanning"
-          title="Precision Event Planning"
-          description="Pro unlocks a dedicated event planning workspace with detailed guest, venue, supplier, image, and Excel-ready budget modeling."
+          title="Precision Planning Workspace"
+          description="Pro unlocks a dedicated goal-planning workspace with detailed templates, cost modeling, visual references, and Excel-ready exports."
         />
+        <div className={styles.gateBackRow}>
+          <Link href="/goals" className={styles.secondaryButton}>Back to goals</Link>
+        </div>
       </div>
     );
   }
@@ -762,17 +1097,47 @@ export default function EventsPage() {
   return (
     <div className={styles.pageShell}>
       <section className={styles.hero}>
-        <div>
-          <span className={styles.eyebrow}>Pro Workspace</span>
-          <h1 className={styles.title}>{plannerProfile.workspaceTitle}</h1>
-          <p className={styles.subtitle}>
-            {plannerProfile.workspaceDescription}
-          </p>
+        <div className={styles.heroTopRow}>
+          <div>
+            <span className={styles.eyebrow}>Pro Planning Workspace</span>
+            <h1 className={styles.title}>{plannerProfile.workspaceTitle}</h1>
+            <p className={styles.subtitle}>
+              {plannerProfile.workspaceDescription}
+            </p>
+          </div>
+          <Link href="/goals" className={styles.secondaryButton}>Back to goals</Link>
         </div>
-        <div className={styles.heroMeta}>
-          <span>{currentPlan.name} active</span>
-          <span>{planner.planningCategory} template</span>
-          <span>{assets.length} visual reference{assets.length === 1 ? "" : "s"}</span>
+        <div className={styles.heroShowcase}>
+          <div className={styles.heroStory}>
+            <p className={styles.heroLead}>{visualProfile.headline}</p>
+            <div className={styles.heroMeta}>
+              <span>{currentPlan.name} active</span>
+              <span>{planner.planningCategory} template</span>
+              <span>{formatCompactDate(planner.eventDate)}</span>
+            </div>
+            <div className={styles.highlightList}>
+              {visualProfile.highlights.map((item) => (
+                <span key={item} className={styles.highlightPill}>{item}</span>
+              ))}
+            </div>
+          </div>
+          <div className={styles.visualSceneCard} style={{ background: visualProfile.sceneGradient } as React.CSSProperties}>
+            <div className={styles.visualSceneTop}>
+              <span className={styles.visualSceneLabel}>{visualProfile.sceneLabel}</span>
+              <span className={styles.visualSceneAccent} style={{ backgroundColor: visualProfile.sceneAccent }} />
+            </div>
+            <div className={styles.visualSceneCanvas}>
+              <div className={styles.sceneOrb} style={{ backgroundColor: visualProfile.sceneAccent }} />
+              <div className={styles.sceneCardLarge} />
+              <div className={styles.sceneCardSmall} />
+              <div className={styles.sceneRail}>
+                {visualProfile.highlights.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+            </div>
+            <p className={styles.visualSceneSummary}>{visualProfile.summary}</p>
+          </div>
         </div>
       </section>
 
@@ -803,207 +1168,323 @@ export default function EventsPage() {
         </article>
       </section>
 
-      <div className={styles.mainGrid}>
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>Event blueprint</h2>
-              <p>Set the goal template and core plan details before refining cost assumptions.</p>
-            </div>
-          </div>
+      <section className={styles.workspaceNav}>
+        {WORKSPACE_VIEWS.map((view) => {
+          const isActive = activeView === view.id;
+          return (
+            <button
+              key={view.id}
+              type="button"
+              className={`${styles.workspaceTab} ${isActive ? styles.workspaceTabActive : ""}`}
+              onClick={() => setActiveView(view.id)}
+            >
+              <strong>{view.label}</strong>
+              <span>{view.description}</span>
+            </button>
+          );
+        })}
+      </section>
 
-          <div className={styles.formGrid}>
-            <label>
-              <span>Goal template</span>
-              <select
-                value={planner.planningCategory}
-                onChange={(event) => {
-                  const nextCategory = normalizePlanningCategory(event.target.value);
-                  const nextProfile = getPlannerProfile(nextCategory);
-                  setPlanner((current) => ({
-                    ...current,
-                    planningCategory: nextCategory,
-                    eventType: nextProfile.typeOptions.includes(current.eventType)
-                      ? current.eventType
-                      : nextProfile.typeOptions[0] ?? current.eventType,
-                  }));
-                }}
-              >
-                {Object.keys(PLANNER_PROFILES).map((category) => (
-                  <option key={category} value={category}>{category}</option>
+      {activeView === "overview" ? (
+        <div className={styles.workspaceGrid}>
+          <div className={styles.primaryColumn}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>Plan storyboard</h2>
+                  <p>Start with the story of the plan before going into line-by-line edits.</p>
+                </div>
+              </div>
+
+              <div className={styles.milestoneGrid}>
+                {milestoneCards.map((card) => (
+                  <article key={card.title} className={`${styles.milestoneCard} ${card.tone === "warning" ? styles.milestoneWarning : card.tone === "positive" ? styles.milestonePositive : ""}`}>
+                    <span>{card.title}</span>
+                    <strong>{card.detail}</strong>
+                  </article>
                 ))}
-              </select>
-            </label>
-            <label>
-              <span>Plan name</span>
-              <input value={planner.eventName} onChange={(event) => updateTextField("eventName", event.target.value)} />
-            </label>
-            <label>
-              <span>Plan type</span>
-              <select value={planner.eventType} onChange={(event) => updateTextField("eventType", event.target.value)}>
-                {plannerProfile.typeOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+              </div>
+
+              <div className={styles.overviewSetupRow}>
+                <PlannerSelect
+                  label="Goal template"
+                  value={planner.planningCategory}
+                  options={planningCategoryOptions}
+                  onChange={(nextValue) => {
+                    const nextCategory = normalizePlanningCategory(nextValue);
+                    const nextProfile = getPlannerProfile(nextCategory);
+                    setPlanner((current) => ({
+                      ...current,
+                      planningCategory: nextCategory,
+                      eventType: nextProfile.typeOptions.includes(current.eventType)
+                        ? current.eventType
+                        : nextProfile.typeOptions[0] ?? current.eventType,
+                    }));
+                  }}
+                />
+                <PlannerSelect
+                  label="Plan type"
+                  value={planner.eventType}
+                  options={planTypeOptions}
+                  onChange={(nextValue) => updateTextField("eventType", nextValue)}
+                />
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>Date</span>
+                  <DateInput value={planner.eventDate} onChange={(nextValue) => updateTextField("eventDate", nextValue)} />
+                </label>
+              </div>
+
+              <div className={styles.storyboardCard}>
+                <div>
+                  <strong>{planner.eventName}</strong>
+                  <p>{planner.notes || "Add planner notes to define the mood, constraints, and decision-making rules."}</p>
+                </div>
+                <div className={styles.storyboardMeta}>
+                  <span>{planner.venueName || plannerProfile.entityLabel}</span>
+                  <span>{planner.venueLocation || plannerProfile.entityLocationLabel}</span>
+                  <span>{planner.hostName || plannerProfile.hostLabel}</span>
+                </div>
+              </div>
+            </section>
+
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>Top cost drivers</h2>
+                  <p>The biggest items in the current plan, ranked by impact.</p>
+                </div>
+                <button type="button" className={styles.secondaryButton} onClick={() => setActiveView("budget")}>Open budget workbench</button>
+              </div>
+              <div className={styles.driverList}>
+                {topCostDrivers.map((item) => {
+                  const share = totalEstimate > 0 ? (item.value / totalEstimate) * 100 : 0;
+                  return (
+                    <button key={item.label} type="button" className={styles.driverCard} onClick={() => setActiveView("budget")}> 
+                      <div>
+                        <strong>{item.label}</strong>
+                        <p>{item.type === "perGuest" ? "Scales with scope" : "Fixed commitment"}</p>
+                      </div>
+                      <div className={styles.driverMeta}>
+                        <span>{formatCurrency(item.value)}</span>
+                        <small>{formatPercentage(share)}</small>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          <div className={styles.secondaryColumn}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>Quick plan setup</h2>
+                  <p>Only the essentials here. Full editing lives in the dedicated budget view.</p>
+                </div>
+              </div>
+
+              <div className={styles.setupGrid}>
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>Plan name</span>
+                  <input value={planner.eventName} onChange={(event) => updateTextField("eventName", event.target.value)} />
+                </label>
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>{plannerProfile.hostLabel}</span>
+                  <input value={planner.hostName} onChange={(event) => updateTextField("hostName", event.target.value)} placeholder="Who owns this plan?" />
+                </label>
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>{plannerProfile.entityLabel}</span>
+                  <input value={planner.venueName} onChange={(event) => updateTextField("venueName", event.target.value)} />
+                </label>
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>{plannerProfile.entityLocationLabel}</span>
+                  <input value={planner.venueLocation} onChange={(event) => updateTextField("venueLocation", event.target.value)} />
+                </label>
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>{plannerProfile.unitLabel}</span>
+                  <input type="number" min="0" value={planner.guestCount} onChange={(event) => updateNumberField("guestCount", event.target.value)} />
+                </label>
+                <label className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>Budget target</span>
+                  <input type="number" min="0" value={planner.budgetTarget} onChange={(event) => updateNumberField("budgetTarget", event.target.value)} />
+                </label>
+                <label className={`${styles.fieldBlock} ${styles.fullSpan}`}>
+                  <span className={styles.fieldLabel}>Planner notes</span>
+                  <textarea rows={4} value={planner.notes} onChange={(event) => updateTextField("notes", event.target.value)} />
+                </label>
+              </div>
+            </section>
+
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>Visual highlights</h2>
+                  <p>Each plan type keeps a few anchor areas front and center.</p>
+                </div>
+                <button type="button" className={styles.secondaryButton} onClick={() => setActiveView("visuals")}>Open visuals</button>
+              </div>
+              <div className={styles.referenceStrip}>
+                {visualProfile.highlights.map((item) => (
+                  <article key={item} className={styles.referenceCard}>
+                    <strong>{item}</strong>
+                    <p>{planner.planningCategory} focus area</p>
+                  </article>
                 ))}
-              </select>
-            </label>
-            <label>
-              <span>Date</span>
-              <input type="date" value={planner.eventDate} onChange={(event) => updateTextField("eventDate", event.target.value)} />
-            </label>
-            <label>
-              <span>{plannerProfile.hostLabel}</span>
-              <input value={planner.hostName} onChange={(event) => updateTextField("hostName", event.target.value)} placeholder="Who owns this plan?" />
-            </label>
-            <label>
-              <span>{plannerProfile.entityLabel}</span>
-              <input value={planner.venueName} onChange={(event) => updateTextField("venueName", event.target.value)} />
-            </label>
-            <label>
-              <span>{plannerProfile.entityLocationLabel}</span>
-              <input value={planner.venueLocation} onChange={(event) => updateTextField("venueLocation", event.target.value)} />
-            </label>
-            <label>
-              <span>{plannerProfile.unitLabel}</span>
-              <input type="number" min="0" value={planner.guestCount} onChange={(event) => updateNumberField("guestCount", event.target.value)} />
-            </label>
-            <label>
-              <span>{plannerProfile.capacityLabel}</span>
-              <input type="number" min="0" value={planner.venueCapacity} onChange={(event) => updateNumberField("venueCapacity", event.target.value)} />
-            </label>
-            <label>
-              <span>{plannerProfile.scaleLabel}</span>
-              <input type="number" min="0" value={planner.venueSizeSqm} onChange={(event) => updateNumberField("venueSizeSqm", event.target.value)} />
-            </label>
-            <label>
-              <span>Budget target</span>
-              <input type="number" min="0" value={planner.budgetTarget} onChange={(event) => updateNumberField("budgetTarget", event.target.value)} />
-            </label>
-            <label>
-              <span>Deposit already paid</span>
-              <input type="number" min="0" value={planner.depositPaid} onChange={(event) => updateNumberField("depositPaid", event.target.value)} />
-            </label>
-            <label className={styles.fullWidth}>
-              <span>Planner notes</span>
-              <textarea rows={4} value={planner.notes} onChange={(event) => updateTextField("notes", event.target.value)} />
-            </label>
+              </div>
+            </section>
           </div>
-        </section>
+        </div>
+      ) : null}
 
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>Cost engine</h2>
-              <p>Model fixed fees and unit-driven costs in the same plan.</p>
-            </div>
-          </div>
-
-          <div className={styles.formGrid}>
-            <label><span>{plannerProfile.lineItemLabels.venueCost}</span><input type="number" min="0" value={planner.venueCost} onChange={(event) => updateNumberField("venueCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.mealCostPerGuest}</span><input type="number" min="0" value={planner.mealCostPerGuest} onChange={(event) => updateNumberField("mealCostPerGuest", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.seatingCostPerGuest}</span><input type="number" min="0" value={planner.seatingCostPerGuest} onChange={(event) => updateNumberField("seatingCostPerGuest", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.cakeCostPerGuest}</span><input type="number" min="0" value={planner.cakeCostPerGuest} onChange={(event) => updateNumberField("cakeCostPerGuest", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.drinksCostPerGuest}</span><input type="number" min="0" value={planner.drinksCostPerGuest} onChange={(event) => updateNumberField("drinksCostPerGuest", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.decorCost}</span><input type="number" min="0" value={planner.decorCost} onChange={(event) => updateNumberField("decorCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.floristCost}</span><input type="number" min="0" value={planner.floristCost} onChange={(event) => updateNumberField("floristCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.photographyCost}</span><input type="number" min="0" value={planner.photographyCost} onChange={(event) => updateNumberField("photographyCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.musicCost}</span><input type="number" min="0" value={planner.musicCost} onChange={(event) => updateNumberField("musicCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.transportCost}</span><input type="number" min="0" value={planner.transportCost} onChange={(event) => updateNumberField("transportCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.attireCost}</span><input type="number" min="0" value={planner.attireCost} onChange={(event) => updateNumberField("attireCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.plannerFee}</span><input type="number" min="0" value={planner.plannerFee} onChange={(event) => updateNumberField("plannerFee", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.accommodationCost}</span><input type="number" min="0" value={planner.accommodationCost} onChange={(event) => updateNumberField("accommodationCost", event.target.value)} /></label>
-            <label><span>{plannerProfile.lineItemLabels.stationeryCost}</span><input type="number" min="0" value={planner.stationeryCost} onChange={(event) => updateNumberField("stationeryCost", event.target.value)} /></label>
-            <label><span>Contingency %</span><input type="number" min="0" value={planner.contingencyPercent} onChange={(event) => updateNumberField("contingencyPercent", event.target.value)} /></label>
-          </div>
-        </section>
-      </div>
-
-      <div className={styles.secondaryGrid}>
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>Budget intelligence</h2>
-              <p>See where the plan stretches, compresses, or needs more room.</p>
-            </div>
-          </div>
-
-          <div className={styles.insightGrid}>
-            <article className={styles.insightCard}>
-              <strong>Target coverage</strong>
-              <span>{formatPercentage(targetCoverageRate)}</span>
-              <p>{formatCurrency(planner.depositPaid)} already saved against a target of {formatCurrency(planner.budgetTarget)}.</p>
-            </article>
-            <article className={styles.insightCard}>
-              <strong>Active cost lines</strong>
-              <span>{activeCostLines}</span>
-              <p>Budget model sections currently contributing to the total estimate.</p>
-            </article>
-            <article className={styles.insightCard}>
-              <strong>Recommended buffer units</strong>
-              <span>{recommendedBuffer}</span>
-              <p>An 8% cushion based on the current {plannerProfile.unitLabel.toLowerCase()}.</p>
-            </article>
-          </div>
-
-          <div className={styles.costList}>
-            {lineItems.map((item) => {
-              const share = totalEstimate > 0 ? (item.value / totalEstimate) * 100 : 0;
+      {activeView === "budget" ? (
+        <div className={styles.budgetWorkspace}>
+          <section className={styles.clusterRail}>
+            {budgetClusters.map((cluster) => {
+              const isActive = cluster.id === activeCluster.id;
               return (
-                <article key={item.label} className={styles.costRow}>
+                <button
+                  key={cluster.id}
+                  type="button"
+                  className={`${styles.clusterCard} ${isActive ? styles.clusterCardActive : ""}`}
+                  onClick={() => setActiveClusterId(cluster.id)}
+                >
+                  <span className={styles.clusterAccent} style={{ backgroundColor: cluster.accent }} />
                   <div>
-                    <strong>{item.label}</strong>
-                    <p>{item.type === "perGuest" ? "Scales with guest count" : "Fixed supplier or venue cost"}</p>
+                    <strong>{cluster.title}</strong>
+                    <p>{cluster.description}</p>
                   </div>
-                  <div className={styles.costMeta}>
-                    <span>{formatCurrency(item.value)}</span>
-                    <small>{formatPercentage(share)}</small>
-                  </div>
-                </article>
+                  <span className={styles.clusterTotal}>{formatCurrency(cluster.total)}</span>
+                </button>
               );
             })}
-          </div>
-        </section>
+          </section>
 
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>Visual planning board</h2>
-              <p>Keep references, screenshots, suppliers, products, or inspiration beside the financial plan.</p>
+          <section className={styles.editorPanel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <h2>{activeCluster.title}</h2>
+                <p>{activeCluster.description}</p>
+              </div>
+              <span className={styles.clusterBadge}>{formatCurrency(activeCluster.total)}</span>
             </div>
-          </div>
 
-          <div className={styles.visualBoardToolbar}>
-            <label className={styles.uploadButton}>
-              <input type="file" accept="image/*" multiple onChange={handleAssetUpload} />
-              Add venue or supplier images
-            </label>
-            <span className={styles.uploadHint}>Local preview only in this workspace session.</span>
-          </div>
-
-          <div className={styles.visualBoardContent}>
-            {assets.length === 0 ? (
-              <div className={styles.emptyState}>
-                <strong>No visuals yet</strong>
-                <p>Add the venue, food, flowers, cake, or moodboard references you want to keep next to the budget.</p>
+            {activeCluster.id === "buffer" ? (
+              <div className={styles.costCardGrid}>
+                <label className={styles.costCard}>
+                  <span className={styles.costCardTitle}>Contingency %</span>
+                  <small>Extra space for uncertainty</small>
+                  <input type="number" min="0" value={planner.contingencyPercent} onChange={(event) => updateNumberField("contingencyPercent", event.target.value)} />
+                </label>
+                <article className={styles.costCard}>
+                  <span className={styles.costCardTitle}>Calculated buffer</span>
+                  <small>Applied on top of the subtotal</small>
+                  <strong className={styles.metricLarge}>{formatCurrency(contingencyAmount)}</strong>
+                </article>
               </div>
             ) : (
-              <div className={styles.assetGrid}>
-                {assets.map((asset) => (
-                  <figure key={asset.id} className={styles.assetCard}>
-                    <img src={asset.url} alt={asset.name} className={styles.assetImage} />
-                    <figcaption>
-                      <strong>{asset.name}</strong>
-                      <span>{asset.sizeLabel}</span>
-                    </figcaption>
-                    <button type="button" className={styles.removeButton} onClick={() => removeAsset(asset.id)}>
-                      Remove
-                    </button>
-                  </figure>
+              <div className={styles.costCardGrid}>
+                {activeCluster.fields.map((field) => (
+                  <label key={field} className={styles.costCard}>
+                    <span className={styles.costCardTitle}>{plannerProfile.lineItemLabels[field]}</span>
+                    <small>{SCALED_COST_FIELDS.includes(field) ? `Live total: ${formatCurrency(getFieldDisplayValue(planner, field))}` : "Fixed total in the plan"}</small>
+                    <input type="number" min="0" value={planner[field]} onChange={(event) => updateNumberField(field, event.target.value)} />
+                  </label>
                 ))}
               </div>
             )}
-          </div>
-        </section>
-      </div>
+          </section>
+
+          <aside className={styles.summaryRail}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>Live totals</h2>
+                  <p>The planner recalculates instantly while you edit one cluster at a time.</p>
+                </div>
+              </div>
+
+              <div className={styles.summaryStack}>
+                <article className={styles.summaryMetric}>
+                  <span>Total estimate</span>
+                  <strong>{formatCurrency(totalEstimate)}</strong>
+                </article>
+                <article className={styles.summaryMetric}>
+                  <span>Subtotal</span>
+                  <strong>{formatCurrency(subtotal)}</strong>
+                </article>
+                <article className={styles.summaryMetric}>
+                  <span>Budget gap</span>
+                  <strong className={isOverBudget ? styles.negativeValue : styles.positiveValue}>{formatSignedCurrency(budgetDifference)}</strong>
+                </article>
+                <article className={styles.summaryMetric}>
+                  <span>Remaining balance</span>
+                  <strong>{formatCurrency(remainingBalance)}</strong>
+                </article>
+              </div>
+
+              <div className={styles.calculationCallout}>
+                <strong>How the maths works</strong>
+                <p>Subtotal = fixed costs + scaled costs. Total estimate = subtotal + contingency. Budget gap = target budget - total estimate. Remaining balance = total estimate - already saved.</p>
+              </div>
+            </section>
+          </aside>
+        </div>
+      ) : null}
+
+      {activeView === "visuals" ? (
+        <div className={styles.visualWorkspace}>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}>
+              <div>
+                <h2>Visual board</h2>
+                <p>Build a live reference wall for the plan instead of keeping all inspiration outside Lunivo.</p>
+              </div>
+              <label className={styles.uploadButton}>
+                <input type="file" accept="image/*" multiple onChange={handleAssetUpload} />
+                Add visuals
+              </label>
+            </div>
+
+            <div className={styles.referenceStrip}>
+              {visualProfile.highlights.map((item) => (
+                <article key={item} className={styles.referenceCard}>
+                  <strong>{item}</strong>
+                  <p>{planner.planningCategory} focus area</p>
+                </article>
+              ))}
+            </div>
+
+            <div className={styles.visualMoodboard}>
+              <div className={styles.moodboardPrompt} style={{ background: visualProfile.sceneGradient } as React.CSSProperties}>
+                <strong>{visualProfile.headline}</strong>
+                <p>{visualProfile.summary}</p>
+              </div>
+              {assets.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <strong>No visuals yet</strong>
+                  <p>Add venue, supplier, styling, destination, property, or inspiration references and keep them beside the model.</p>
+                </div>
+              ) : (
+                <div className={styles.assetGrid}>
+                  {assets.map((asset) => (
+                    <figure key={asset.id} className={styles.assetCard}>
+                      <img src={asset.url} alt={asset.name} className={styles.assetImage} />
+                      <figcaption>
+                        <strong>{asset.name}</strong>
+                        <span>{asset.sizeLabel}</span>
+                      </figcaption>
+                      <button type="button" className={styles.removeButton} onClick={() => removeAsset(asset.id)}>
+                        Remove
+                      </button>
+                    </figure>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>

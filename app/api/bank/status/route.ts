@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedApiUser, unauthorizedResponse, forbiddenResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
 import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
-import { getYapilyConfig, isYapilyConfigured } from "../../../../lib/yapily";
+import { getPlaidConfig, isPlaidConfigured } from "../../../../lib/plaid";
 import BankConnection from "../../../../models/BankConnection";
 import Account from "../../../../models/Account";
 
@@ -18,17 +18,21 @@ export async function GET() {
 
   await connectToDatabase();
 
-  const connection = await BankConnection.findOne({ userId: authenticatedUser.userId, provider: "yapily" }).sort({ updatedAt: -1 });
-  const syncedAccountCount = await Account.countDocuments({ userId: authenticatedUser.userId, syncStatus: "synced", provider: "yapily", isArchived: false });
+  const connection = await BankConnection.findOne({ userId: authenticatedUser.userId, provider: "plaid" }).sort({ updatedAt: -1 });
+  const syncedAccountCount = await Account.countDocuments({ userId: authenticatedUser.userId, syncStatus: "synced", provider: "plaid", isArchived: false });
+
+  const configured = isPlaidConfigured();
+  const config = configured ? getPlaidConfig() : null;
 
   return NextResponse.json({
     accessGranted: true,
-    configured: isYapilyConfigured(),
-    config: isYapilyConfigured()
+    configured,
+    config: configured
       ? {
-          institutionId: getYapilyConfig().institutionId,
-          institutionCountryCode: getYapilyConfig().institutionCountryCode,
-          redirectUrl: getYapilyConfig().redirectUrl,
+          environment: config?.environment,
+          countryCodes: config?.countryCodes,
+          products: config?.products,
+          redirectUri: config?.redirectUri ?? null,
         }
       : null,
     connection: connection
@@ -37,8 +41,10 @@ export async function GET() {
           provider: connection.provider,
           status: connection.status,
           institutionId: connection.institutionId,
+          institutionName: connection.institutionName ?? "",
           institutionCountryCode: connection.institutionCountryCode,
-          hostedUrl: connection.hostedUrl ?? "",
+          itemId: connection.itemId ?? "",
+          linkSessionId: connection.linkSessionId ?? "",
           lastError: connection.lastError ?? "",
           connectedAt: connection.connectedAt ? new Date(connection.connectedAt).toISOString() : null,
           authorizationExpiresAt: connection.authorizationExpiresAt ? new Date(connection.authorizationExpiresAt).toISOString() : null,
