@@ -10,6 +10,10 @@ export interface IGoal extends Document {
   notes?: string;
   completed: boolean;
   completedAt?: Date;
+  linkedEventId?: mongoose.Types.ObjectId;
+  linkedTransactionIds?: mongoose.Types.ObjectId[];
+  linkedRecurringIds?: mongoose.Types.ObjectId[];
+  projectedCompletionDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +29,10 @@ const GoalSchema: Schema<IGoal> = new Schema(
     notes: { type: String, default: '' },
     completed: { type: Boolean, default: false },
     completedAt: { type: Date },
+    linkedEventId: { type: Schema.Types.ObjectId, ref: 'Event' },
+    linkedTransactionIds: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
+    linkedRecurringIds: [{ type: Schema.Types.ObjectId, ref: 'RecurringTransaction' }],
+    projectedCompletionDate: { type: Date },
   },
   { timestamps: true }
 );

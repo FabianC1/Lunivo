@@ -11,11 +11,14 @@ export interface ITransaction extends Document {
   category: string;
   description?: string;
   tags?: string[];
-  source?: 'manual' | 'bank-sync';
+  source?: 'manual' | 'bank-sync' | 'csv-import';
   provider?: string;
   providerTransactionId?: string;
   providerConnectionId?: mongoose.Types.ObjectId;
   lastSyncedAt?: Date;
+  recurringId?: mongoose.Types.ObjectId;
+  imported: boolean;
+  csvSource?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,11 +39,14 @@ const TransactionSchema: Schema<ITransaction> = new Schema(
     category: { type: String, required: true },
     description: { type: String },
     tags: { type: [String], default: [] },
-    source: { type: String, enum: ['manual', 'bank-sync'], default: 'manual' },
+    source: { type: String, enum: ['manual', 'bank-sync', 'csv-import'], default: 'manual' },
     provider: { type: String, trim: true },
     providerTransactionId: { type: String, trim: true },
     providerConnectionId: { type: Schema.Types.ObjectId, ref: 'BankConnection' },
     lastSyncedAt: { type: Date },
+    recurringId: { type: Schema.Types.ObjectId, ref: 'RecurringTransaction' },
+    imported: { type: Boolean, default: false },
+    csvSource: { type: String },
   },
   { timestamps: true }
 );

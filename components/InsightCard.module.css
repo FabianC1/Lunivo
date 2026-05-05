@@ -1,0 +1,136 @@
+.card {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &.high {
+    border-left-color: #dc2626;
+    background: #fef2f2;
+  }
+
+  &.medium {
+    border-left-color: #ea580c;
+    background: #fffbf5;
+  }
+
+  &.low {
+    border-left-color: #3b82f6;
+    background: #f0f9ff;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.type {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  .high & {
+    color: #991b1b;
+  }
+
+  .medium & {
+    color: #92400e;
+  }
+
+  .low & {
+    color: #1e40af;
+  }
+}
+
+.dismissButton {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: #333;
+  }
+}
+
+.message {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+
+  .high & {
+    color: #7f1d1d;
+  }
+
+  .medium & {
+    color: #7c2d12;
+  }
+
+  .low & {
+    color: #1e3a8a;
+  }
+}
+
+.actionButton {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  .high & {
+    color: #991b1b;
+    border-color: #dc2626;
+
+    &:hover {
+      background: #fecaca;
+    }
+  }
+
+  .medium & {
+    color: #92400e;
+    border-color: #ea580c;
+
+    &:hover {
+      background: #fed7aa;
+    }
+  }
+
+  .low & {
+    color: #1e40af;
+    border-color: #3b82f6;
+
+    &:hover {
+      background: #dbeafe;
+    }
+  }
+}

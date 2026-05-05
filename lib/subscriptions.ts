@@ -29,12 +29,19 @@ export type SubscriptionFeatureKey =
   | "transactionTags"
   | "bulkCategoryUpdates"
   | "mergeCategories"
-  | "csvExport";
+  | "csvExport"
+  | "csvImport"
+  | "recurringTransactions"
+  | "insights";
 
 type PlanCapabilities = {
   maxTransactionsPerMonth: number | null;
   maxGoals: number | null;
   maxAccounts: number | null;
+  maxRecurringTransactions: number | null;
+  maxCSVImportsPerMonth: number | null;
+  maxCSVRowsPerImport: number | null;
+  insightsPerMonth: number | null;
   reportsLevel: "basic" | "advanced" | "full";
   canUseForecasting: boolean;
   canUseExports: boolean;
@@ -61,6 +68,9 @@ const FEATURE_MINIMUM_PLAN: Record<SubscriptionFeatureKey, SubscriptionPlanSlug>
   bulkCategoryUpdates: "scale",
   mergeCategories: "scale",
   csvExport: "scale",
+  csvImport: "sync",
+  recurringTransactions: "sync",
+  insights: "sync",
 };
 
 const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
@@ -68,6 +78,10 @@ const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
     maxTransactionsPerMonth: 150,
     maxGoals: 5,
     maxAccounts: 2,
+    maxRecurringTransactions: 10,
+    maxCSVImportsPerMonth: 1,
+    maxCSVRowsPerImport: 50,
+    insightsPerMonth: 3,
     reportsLevel: "basic",
     canUseForecasting: false,
     canUseExports: false,
@@ -77,6 +91,10 @@ const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
     maxTransactionsPerMonth: 3000,
     maxGoals: 75,
     maxAccounts: 5,
+    maxRecurringTransactions: 50,
+    maxCSVImportsPerMonth: null,
+    maxCSVRowsPerImport: null,
+    insightsPerMonth: null,
     reportsLevel: "advanced",
     canUseForecasting: true,
     canUseExports: false,
@@ -86,6 +104,10 @@ const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
     maxTransactionsPerMonth: null,
     maxGoals: null,
     maxAccounts: 12,
+    maxRecurringTransactions: null,
+    maxCSVImportsPerMonth: null,
+    maxCSVRowsPerImport: null,
+    insightsPerMonth: null,
     reportsLevel: "full",
     canUseForecasting: true,
     canUseExports: true,
@@ -123,6 +145,9 @@ export const FREE_PLAN: SubscriptionPlan = {
     "Savings progress chart and contribution planning",
     "Basic dashboard insights",
     "Basic profile and preferences",
+    "Up to 10 recurring transactions",
+    "1 CSV import per month (50 rows)",
+    "3 insights per month",
   ],
 };
 
@@ -146,6 +171,10 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
       "Goal completion estimate",
       "Dashboard widget toggles",
       "Built-in theme library",
+      "Unlimited recurring transactions",
+      "Unlimited CSV imports",
+      "Weekly insights and forecasting",
+      "Subscription cost tracker",
     ],
   },
   {
@@ -168,6 +197,9 @@ export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
       "Create your own custom themes",
       "Save and reuse personal theme presets",
       "Precision event planning workspace with image boards and Excel-ready exports",
+      "Daily AI-style insights and recommendations",
+      "Advanced 12-month forecasting",
+      "Multi-user household support",
     ],
   },
 ];
