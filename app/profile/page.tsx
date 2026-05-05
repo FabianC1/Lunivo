@@ -1246,23 +1246,26 @@ export default function ProfilePage() {
 
   return (
     <main className={styles.page}>
-      <aside className={styles.sidebar}>
-        <h2 className={styles.sidebarTitle}>Settings</h2>
-        <nav className={styles.menu} aria-label="Profile settings sections">
-          {TAB_ITEMS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setTab(tab.id)}
-              className={`${styles.menuButton} ${activeTab === tab.id ? styles.menuButtonActive : ""}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+      {!session && <PageLoading />}
+      {session && (
+        <>
+          <aside className={styles.sidebar}>
+            <h2 className={styles.sidebarTitle}>Settings</h2>
+            <nav className={styles.menu} aria-label="Profile settings sections">
+              {TAB_ITEMS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setTab(tab.id)}
+                  className={`${styles.menuButton} ${activeTab === tab.id ? styles.menuButtonActive : ""}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-      <section className={styles.content}>
+          <section className={styles.content}>
         {activeTab === "account" && (
           <div className={styles.panel}>
             <h1 className={styles.heading}>Account</h1>
@@ -2119,6 +2122,8 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
+        </>
+      )}
     </main>
   );
 }
