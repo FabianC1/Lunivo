@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Lunivo',
   description: 'Financial management app',
+  icons: {
+    icon: '/icons/lunivo-logo.svg',
+  },
 }
 
 export default function RootLayout({
