@@ -1,11 +1,13 @@
 {
-  "/login/page": "app/login/page.js",
-  "/about/page": "app/about/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/page": "app/page.js",
-  "/api/login/route": "app/api/login/route.js",
-  "/dashboard/page": "app/dashboard/page.js",
   "/events/page": "app/events/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/subscriptions/page": "app/subscriptions/page.js",
-  "/events/new/page": "app/events/new/page.js"
+  "/events/new/page": "app/events/new/page.js",
+  "/api/events/route": "app/api/events/route.js",
+  "/api/profile/route": "app/api/profile/route.js",
+  "/profile/page": "app/profile/page.js",
+  "/api/session/logout/route": "app/api/session/logout/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js"
 }

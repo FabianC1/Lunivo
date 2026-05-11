@@ -75,9 +75,6 @@ export default function EventDetailPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const session = getSession();
-    if (!session?.userId) { router.push("/login"); return; }
-
     async function load() {
       try {
         const [eventRes, profileRes] = await Promise.all([
@@ -95,7 +92,7 @@ export default function EventDetailPage() {
       finally { setIsLoading(false); }
     }
     load();
-  }, [id, router]);
+  }, [id]);
 
   const updateEvent = useCallback(async (patch: Partial<EventData>) => {
     if (!event) return;

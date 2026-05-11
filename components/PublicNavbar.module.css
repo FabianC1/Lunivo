@@ -9,6 +9,23 @@
   justify-content: space-between;
   padding: 1.1rem 2.5rem;
   transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
+}
+
+/* Gradient border pseudo-element — mirrors the logged-in Navbar */
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  border-bottom-left-radius: 1.5rem;
+  border-bottom-right-radius: 1.5rem;
+  background: var(--navbar-border-gradient);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .navbarTransparent {
@@ -19,8 +36,14 @@
 
 .navbarScrolled {
   background: var(--card-color);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 3px solid transparent;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 0 0 1.5rem 1.5rem;
+}
+
+/* Show gradient border only when scrolled */
+.navbarScrolled::after {
+  opacity: 1;
 }
 
 .logo {
@@ -125,7 +148,7 @@
   font-weight: 700;
   font-size: 0.9rem;
   color: #fff;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   transition: opacity 0.2s;
   white-space: nowrap;
 }

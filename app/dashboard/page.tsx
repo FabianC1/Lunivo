@@ -58,9 +58,8 @@ export default function DashboardPage() {
   const [planSlug, setPlanSlug] = useState("free");
 
   useEffect(() => {
-    const session = getSession();
-    if (!session?.userId) { router.push("/login"); return; }
-
+    // AppShell handles redirecting unauthenticated users — no need to redirect here.
+    // Just fetch data; if the API returns 401, AppShell will have already redirected.
     async function load() {
       try {
         const [eventsRes, profileRes] = await Promise.all([
@@ -79,7 +78,7 @@ export default function DashboardPage() {
       } finally { setIsLoading(false); }
     }
     load();
-  }, [router]);
+  }, []);
 
   if (isLoading) return <PageLoading />;
 

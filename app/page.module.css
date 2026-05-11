@@ -63,7 +63,7 @@
 }
 .heroCtas { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
 .heroPrimary {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-radius: 0.85rem;
   padding: 0.9rem 1.8rem;
@@ -277,7 +277,7 @@
   top: -0.75rem;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   font-size: 0.72rem;
   font-weight: 700;
@@ -305,17 +305,17 @@
 }
 .planCta:hover { background: rgba(148,163,184,0.1); }
 .planCtaFeatured {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-color: transparent;
 }
-.planCtaFeatured:hover { opacity: 0.9; background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); }
+.planCtaFeatured:hover { opacity: 0.9; background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end)); }
 
 /* ── Final CTA ── */
 .finalCta {
   position: relative;
   padding: 8rem 1.5rem;
-  background: linear-gradient(160deg, #0a0a0f 0%, #0f0a1e 100%);
+  background: linear-gradient(160deg, var(--button-gradient-start), var(--button-gradient-end));
   display: flex;
   align-items: center;
   justify-content: center;

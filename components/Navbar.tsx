@@ -23,6 +23,9 @@ export default function Navbar() {
           <Link href="/events" className={isEventsRoute ? styles.active : ''}>My Events</Link>
         </li>
         <li>
+          <Link href="/insights" className={pathname === '/insights' ? styles.active : ''}>Insights</Link>
+        </li>
+        <li>
           <Link href="/subscriptions" className={pathname === '/subscriptions' ? styles.active : ''}>Plans &amp; Pricing</Link>
         </li>
       </ul>

@@ -343,13 +343,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const current = getSession();
     if (!current) {
-      router.replace("/login");
+      // AppShell handles the redirect — just stop loading
+      setIsProfileLoading(false);
       return;
     }
     setSessionState(current);
     setName(current.name);
     setIsProfileLoading(false);
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const currentSession = session;
