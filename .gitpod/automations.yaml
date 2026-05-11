@@ -1,0 +1,7 @@
+services:
+  dev-server:
+    name: Dev Server
+    description: Next.js development server
+    commands:
+      start: cd /workspaces/Lunivo && npm run dev
+      ready: curl -sf http://localhost:3000/api/health
