@@ -1,0 +1,178 @@
+.container { display: flex; flex-direction: column; gap: 2rem; }
+
+.countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 12%, var(--card-color)), var(--card-color));
+  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  flex-wrap: wrap;
+}
+.countdownNum { font-size: 2.5rem; font-weight: 900; color: var(--primary-color); line-height: 1; }
+.countdownUnit { font-size: 1rem; font-weight: 600; color: var(--text-color); opacity: 0.7; }
+.countdownSep { font-size: 1.2rem; color: var(--text-color); opacity: 0.4; margin: 0 0.2rem; }
+.countdownLabel { font-size: 1rem; color: var(--text-color); opacity: 0.65; margin-left: 0.5rem; }
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.statCard {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 0.85rem;
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.statLabel { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-color); opacity: 0.55; }
+.statValue { font-size: 1.3rem; font-weight: 800; color: var(--text-color); }
+.statNegative { color: #ef4444; }
+.statPositive { color: #22c55e; }
+
+.progressSection {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 0.85rem;
+  padding: 1.2rem 1.4rem;
+}
+.progressHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+.progressTitle { font-size: 0.88rem; font-weight: 700; color: var(--text-color); }
+.progressPct { font-size: 1rem; font-weight: 800; color: var(--primary-color); }
+.progressTrack { height: 10px; background: rgba(148,163,184,0.2); border-radius: 99px; overflow: hidden; }
+.progressFill { height: 100%; background: linear-gradient(90deg, var(--primary-color), var(--accent-color)); border-radius: 99px; transition: width 0.5s ease; }
+
+.section { display: flex; flex-direction: column; gap: 0.75rem; }
+.sectionHeader { display: flex; align-items: center; justify-content: space-between; }
+.sectionTitle { font-size: 1rem; font-weight: 700; color: var(--text-color); }
+
+.savingsRow { display: flex; gap: 0.75rem; align-items: center; }
+
+.input {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.95rem;
+  color: var(--text-color);
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.input:focus { outline: none; border-color: var(--primary-color); }
+
+.btnAdd {
+  background: none;
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btnAdd:hover { background: color-mix(in srgb, var(--primary-color) 8%, transparent); }
+
+.empty { font-size: 0.88rem; color: var(--text-color); opacity: 0.5; font-style: italic; }
+
+.milestoneList { display: flex; flex-direction: column; gap: 0.5rem; }
+.milestone {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: opacity 0.2s;
+}
+.milestonePaid { opacity: 0.55; }
+
+.milestoneCheck {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 2px solid rgba(148,163,184,0.4);
+  background: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.milestoneCheckDone { background: #22c55e; border-color: #22c55e; }
+
+.milestoneInfo { flex: 1; min-width: 0; }
+.milestoneLabel { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-color); }
+.milestoneMeta { font-size: 0.78rem; color: var(--text-color); opacity: 0.6; }
+
+.milestoneDelete {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  opacity: 0.35;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+.milestoneDelete:hover { opacity: 0.8; }
+
+.addMilestone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.addMilestoneActions { display: flex; gap: 0.5rem; }
+
+.btnSave {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 0.55rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btnSave:hover { opacity: 0.85; }
+
+.btnCancel {
+  background: none;
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 0.55rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.notesEdit { display: flex; flex-direction: column; gap: 0.6rem; }
+.textarea {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.95rem;
+  color: var(--text-color);
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+.textarea:focus { outline: none; border-color: var(--primary-color); }
+.notesText { font-size: 0.95rem; color: var(--text-color); line-height: 1.6; white-space: pre-wrap; }

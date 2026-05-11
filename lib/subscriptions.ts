@@ -5,92 +5,44 @@ export type SubscriptionPlan = {
   description: string;
   featured?: boolean;
   audience: string;
-  themeAccess: string;
-  reportsAccess: string;
   features: string[];
 };
 
-export type SubscriptionPlanSlug = "free" | "sync" | "scale";
+export type SubscriptionPlanSlug = 'free' | 'smart' | 'pro';
 
 export type SubscriptionFeatureKey =
-  | "bankSync"
-  | "advancedDashboardInsights"
-  | "precisionEventPlanning"
-  | "netFlowPerMonth"
-  | "endOfMonthBalanceEstimate"
-  | "monthlySavingsEstimate"
-  | "threeMonthAverageSpending"
-  | "goalCompletionEstimate"
-  | "dashboardWidgetToggles"
-  | "dashboardSectionReordering"
-  | "customDashboardVisuals"
-  | "customThemeCreation"
-  | "customCategories"
-  | "transactionTags"
-  | "bulkCategoryUpdates"
-  | "mergeCategories"
-  | "csvExport";
+  | 'multipleEvents'
+  | 'affordabilityAdvanced'
+  | 'savingsTimeline'
+  | 'scenarios'
+  | 'scenarioComparison'
+  | 'whatIfControls'
+  | 'recommendationEngine'
+  | 'csvExport'
+  | 'customThemeCreation'
+  | 'themeLibrary'
+  | 'moodboard'
+  | 'milestones'
+  | 'dashboardWidgetToggles'
+  | 'customDashboardVisuals';
 
-type PlanCapabilities = {
-  maxTransactionsPerMonth: number | null;
-  maxGoals: number | null;
-  maxAccounts: number | null;
-  reportsLevel: "basic" | "advanced" | "full";
-  canUseForecasting: boolean;
-  canUseExports: boolean;
-  canCreateThemes: boolean;
-};
-
-const PLAN_ORDER: SubscriptionPlanSlug[] = ["free", "sync", "scale"];
+const PLAN_ORDER: SubscriptionPlanSlug[] = ['free', 'smart', 'pro'];
 
 const FEATURE_MINIMUM_PLAN: Record<SubscriptionFeatureKey, SubscriptionPlanSlug> = {
-  bankSync: "sync",
-  advancedDashboardInsights: "sync",
-  precisionEventPlanning: "scale",
-  netFlowPerMonth: "sync",
-  endOfMonthBalanceEstimate: "sync",
-  monthlySavingsEstimate: "sync",
-  threeMonthAverageSpending: "sync",
-  goalCompletionEstimate: "sync",
-  dashboardWidgetToggles: "sync",
-  dashboardSectionReordering: "free",
-  customDashboardVisuals: "scale",
-  customThemeCreation: "scale",
-  customCategories: "scale",
-  transactionTags: "scale",
-  bulkCategoryUpdates: "scale",
-  mergeCategories: "scale",
-  csvExport: "scale",
-};
-
-const PLAN_CAPABILITIES: Record<SubscriptionPlanSlug, PlanCapabilities> = {
-  free: {
-    maxTransactionsPerMonth: 150,
-    maxGoals: 5,
-    maxAccounts: 2,
-    reportsLevel: "basic",
-    canUseForecasting: false,
-    canUseExports: false,
-    canCreateThemes: false,
-  },
-  sync: {
-    maxTransactionsPerMonth: 3000,
-    maxGoals: 75,
-    maxAccounts: 5,
-    reportsLevel: "advanced",
-    canUseForecasting: true,
-    canUseExports: false,
-    canCreateThemes: false,
-  },
-  scale: {
-    maxTransactionsPerMonth: null,
-    maxGoals: null,
-    maxAccounts: 12,
-    reportsLevel: "full",
-    canUseForecasting: true,
-    canUseExports: true,
-    canCreateThemes: true,
-  },
+  multipleEvents: 'smart',
+  affordabilityAdvanced: 'smart',
+  savingsTimeline: 'smart',
+  scenarios: 'smart',
+  scenarioComparison: 'pro',
+  whatIfControls: 'pro',
+  recommendationEngine: 'pro',
+  csvExport: 'pro',
+  customThemeCreation: 'pro',
+  themeLibrary: 'smart',
+  moodboard: 'free',
+  milestones: 'free',
+  dashboardWidgetToggles: 'smart',
+  customDashboardVisuals: 'pro',
 };
 
 export type SubscriptionComparisonValue = boolean | string;
@@ -107,67 +59,54 @@ export type SubscriptionComparisonSection = {
 };
 
 export const FREE_PLAN: SubscriptionPlan = {
-  slug: "free",
-  name: "Starter",
+  slug: 'free',
+  name: 'Starter',
   priceMonthly: 0,
-  description: "Manual money tracking for people who want to log spending, income, budgets, and goals themselves without automated syncing.",
-  audience: "Best for getting started",
-  themeAccess: "2 built-in themes",
-  reportsAccess: "Basic summaries",
+  description: 'Plan one life event with a full budget builder, affordability calculator, and moodboard.',
+  audience: 'Best for getting started',
   features: [
-    "Manual income entry",
-    "Manual spending entry",
-    "Core budgeting and goals tracking",
-    "Income and expense breakdowns",
-    "Monthly summary and savings rate view",
-    "Savings progress chart and contribution planning",
-    "Basic dashboard insights",
-    "Basic profile and preferences",
+    '1 event',
+    'Budget builder with cost clusters',
+    'Affordability engine (simple mode)',
+    'Milestone tracker',
+    'Moodboard & visuals',
+    '2 built-in themes',
   ],
 };
 
 export const PAID_SUBSCRIPTION_TIERS: SubscriptionPlan[] = [
   {
-    slug: "sync",
-    name: "Smart",
+    slug: 'smart',
+    name: 'Smart',
     priceMonthly: 8,
-    description: "Automatic bank-connected tracking for people who want income and spendings synced into Lunivo instead of entering everything manually.",
-    audience: "Best for automatic tracking",
+    description: 'Plan multiple events with savings forecasting, affordability analysis, and scenario building.',
+    audience: 'Best for serious planners',
     featured: true,
-    themeAccess: "12 built-in themes",
-    reportsAccess: "Breakdowns, forecasting, and planning",
     features: [
-      "Everything in Starter",
-      "Automatic bank account sync",
-      "Auto-categorised income and spending history",
-      "End-of-month balance estimate",
-      "Monthly savings estimate",
-      "3-month average spending calculation",
-      "Goal completion estimate",
-      "Dashboard widget toggles",
-      "Built-in theme library",
+      'Up to 10 events',
+      'Everything in Starter',
+      'Advanced affordability engine',
+      'Savings timeline chart',
+      'Scenario builder',
+      'Dashboard widget toggles',
+      '12 built-in themes',
     ],
   },
   {
-    slug: "scale",
-    name: "Pro",
+    slug: 'pro',
+    name: 'Pro',
     priceMonthly: 14,
-    description: "Designed for people who want exports, transaction organisation tools, theme creation, and the fullest Lunivo workspace controls.",
-    audience: "Ultimate finance tracker",
-    themeAccess: "Create your own themes",
-    reportsAccess: "Full reporting, CSV exports, and data controls",
+    description: 'Unlimited events, what-if scenario planning, exports, custom themes, and the full decision toolkit.',
+    audience: 'Ultimate planning toolkit',
     features: [
-      "Everything in Smart",
-      "Export monthly summary as CSV",
-      "Export category breakdown as CSV",
-      "Create, edit, and delete custom categories",
-      "Add tags to transactions",
-      "Bulk edit transaction categories",
-      "Merge categories",
-      "Build your own dashboard visuals",
-      "Create your own custom themes",
-      "Save and reuse personal theme presets",
-      "Precision event planning workspace with image boards and Excel-ready exports",
+      'Unlimited events',
+      'Everything in Smart',
+      'Scenario comparison table',
+      'What-if controls (live)',
+      'Recommendation engine',
+      'CSV / Excel export',
+      'Custom theme creation',
+      'Custom dashboard visuals',
     ],
   },
 ];
@@ -176,204 +115,124 @@ export const ALL_SUBSCRIPTION_PLANS = [FREE_PLAN, ...PAID_SUBSCRIPTION_TIERS];
 
 export const SUBSCRIPTION_COMPARISON_SECTIONS: SubscriptionComparisonSection[] = [
   {
-    title: "Core Money Tools",
+    title: 'Events & Planning',
     rows: [
       {
-        label: "Income tracking",
-        description: "Log income entries and review source history.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Number of events',
+        description: 'How many life events you can plan simultaneously.',
+        values: { free: '1 event', smart: 'Up to 10', pro: 'Unlimited' },
       },
       {
-        label: "Spending tracking",
-        description: "Log, edit, and review spending entries.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Budget builder',
+        description: 'Build cost clusters for your event with live totals.',
+        values: { free: true, smart: true, pro: true },
       },
       {
-        label: "Budget management",
-        description: "Set and maintain category spending limits.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Milestone tracker',
+        description: 'Add deposit deadlines and payment milestones.',
+        values: { free: true, smart: true, pro: true },
       },
       {
-        label: "Goals tracking",
-        description: "Track savings goals and completion progress.",
-        values: { free: true, sync: true, scale: true },
-      },
-      {
-        label: "Bank sync and automation",
-        description: "Connect your bank so income and spendings sync automatically into the app.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "Dashboard insights",
-        description: "See the main dashboard with current income and spending summaries.",
-        values: { free: "Basic", sync: "Advanced", scale: "Advanced" },
+        label: 'Moodboard & visuals',
+        description: 'Upload inspiration images for your event.',
+        values: { free: true, smart: true, pro: true },
       },
     ],
   },
   {
-    title: "Reports & Analysis",
+    title: 'Affordability & Forecasting',
     rows: [
       {
-        label: "Monthly summaries",
-        description: "Review month-level totals and visual summaries.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Affordability engine (simple)',
+        description: 'Calculate required monthly savings to reach your goal by event date.',
+        values: { free: true, smart: true, pro: true },
       },
       {
-        label: "Income vs expense breakdown",
-        description: "Compare income totals, expense totals, savings rate, and monthly net cash flow in one report.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Affordability engine (advanced)',
+        description: 'Factor in monthly income and commitments for a full affordability picture.',
+        values: { free: false, smart: true, pro: true },
       },
       {
-        label: "Income source breakdown",
-        description: "Break down salary, freelance, and other income sources by amount and percentage.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Savings timeline chart',
+        description: 'Visualise your savings curve toward the event date.',
+        values: { free: false, smart: true, pro: true },
       },
       {
-        label: "Savings rate calculation",
-        description: "Calculate monthly savings rate with the formula (income - expenses) / income.",
-        values: { free: true, sync: true, scale: true },
-      },
-      {
-        label: "Net flow per month",
-        description: "Show whether each month closed with positive or negative cash flow.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "Monthly summary view",
-        description: "See income, expenses, and net savings together in a single month-level view.",
-        values: { free: true, sync: true, scale: true },
-      },
-      {
-        label: "End-of-month balance estimate",
-        description: "Estimate month-end balance from current balance, expected income, and average daily spend.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "Monthly savings estimate",
-        description: "Auto-calculate expected monthly savings as income minus expenses.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "3-month average spending",
-        description: "Calculate average spending across the latest three months.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "Goal completion estimate",
-        description: "Estimate how many months remain until a goal reaches its target at the current rate.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "Savings progress chart",
-        description: "Plot savings progress over time with a line chart.",
-        values: { free: true, sync: true, scale: true },
-      },
-      {
-        label: "Manual monthly contribution planning",
-        description: "Enter a monthly contribution amount and calculate the projected completion date.",
-        values: { free: true, sync: true, scale: true },
+        label: 'Recommendation engine',
+        description: 'Get suggestions like "reduce guest count by 20 to save £3,400".',
+        values: { free: false, smart: false, pro: true },
       },
     ],
   },
   {
-    title: "Themes & Personalization",
+    title: 'Scenario Planning',
     rows: [
       {
-        label: "Theme selection",
-        description: "Choose from the available built-in theme options.",
-        values: { free: "2 themes", sync: "12 built-in themes", scale: "Full library" },
+        label: 'Scenario builder',
+        description: 'Clone your event budget into named scenarios (Budget / Standard / Luxury).',
+        values: { free: false, smart: true, pro: true },
       },
       {
-        label: "Custom theme creation",
-        description: "Create your own theme presets, save them, and reuse them anytime.",
-        values: { free: false, sync: false, scale: true },
+        label: 'Scenario comparison table',
+        description: 'Compare total cost, monthly savings, and feasibility side by side.',
+        values: { free: false, smart: false, pro: true },
       },
       {
-        label: "Dashboard widget toggles",
-        description: "Turn dashboard widgets on or off for charts, goals, and transactions.",
-        values: { free: false, sync: true, scale: true },
-      },
-      {
-        label: "Dashboard section reordering",
-        description: "Move dashboard sections up or down, or support drag-and-drop ordering later.",
-        values: { free: true, sync: true, scale: true },
-      },
-      {
-        label: "Custom dashboard visuals",
-        description: "Build and save your own extra charts from monthly metrics, categories, and month snapshots.",
-        values: { free: false, sync: false, scale: true },
+        label: 'What-if controls',
+        description: 'Adjust guest count, venue tier, or date and see financial impact in real time.',
+        values: { free: false, smart: false, pro: true },
       },
     ],
   },
   {
-    title: "Event Planning",
+    title: 'Themes & Personalisation',
     rows: [
       {
-        label: "Precision event planning workspace",
-        description: "Plan weddings and other events with detailed guest, venue, meal, seating, cake, supplier, and contingency calculations.",
-        values: { free: false, sync: false, scale: true },
+        label: 'Theme selection',
+        description: 'Choose from built-in colour themes.',
+        values: { free: '2 themes', smart: '12 themes', pro: 'Full library' },
       },
       {
-        label: "Event moodboard and image previews",
-        description: "Upload venue, food, and inspiration images so the plan stays visual while you build costs.",
-        values: { free: false, sync: false, scale: true },
+        label: 'Custom theme creation',
+        description: 'Build and save your own colour themes.',
+        values: { free: false, smart: false, pro: true },
       },
       {
-        label: "Excel-ready event export",
-        description: "Export the full event budget model and calculations into an Excel-friendly planning file.",
-        values: { free: false, sync: false, scale: true },
+        label: 'Custom dashboard visuals',
+        description: 'Build your own charts and pin them to the dashboard.',
+        values: { free: false, smart: false, pro: true },
       },
     ],
   },
   {
-    title: "Data & Advanced Access",
+    title: 'Data & Export',
     rows: [
       {
-        label: "Custom categories",
-        description: "Create, edit, and delete your own transaction categories.",
-        values: { free: false, sync: false, scale: true },
-      },
-      {
-        label: "Transaction tags",
-        description: "Add tags such as holiday or work to transactions for extra filtering.",
-        values: { free: false, sync: false, scale: true },
-      },
-      {
-        label: "Bulk category updates",
-        description: "Select multiple transactions and change their category in one action.",
-        values: { free: false, sync: false, scale: true },
-      },
-      {
-        label: "Merge categories",
-        description: "Merge one category into another and update linked transactions automatically.",
-        values: { free: false, sync: false, scale: true },
+        label: 'CSV / Excel export',
+        description: 'Export your event budget and plan as a spreadsheet.',
+        values: { free: false, smart: false, pro: true },
       },
     ],
   },
 ];
 
-export function getSubscriptionPlanBySlug(slug: string | null | undefined) {
-  if (!slug) {
-    return null;
-  }
-
-  const trimmedSlug = slug.trim().toLowerCase();
-  const normalizedSlug = trimmedSlug === "starter"
-    ? "free"
-    : trimmedSlug === "growth" || trimmedSlug === "smart"
-      ? "sync"
-      : trimmedSlug === "pro"
-        ? "scale"
-        : trimmedSlug;
-  return ALL_SUBSCRIPTION_PLANS.find((plan) => plan.slug === normalizedSlug) ?? null;
+export function getSubscriptionPlanBySlug(slug: string | null | undefined): SubscriptionPlan | null {
+  if (!slug) return null;
+  const normalized = normalizePlanSlug(slug);
+  return ALL_SUBSCRIPTION_PLANS.find((p) => p.slug === normalized) ?? null;
 }
 
 export function normalizePlanSlug(slug: string | null | undefined): SubscriptionPlanSlug {
-  const plan = getSubscriptionPlanBySlug(slug);
-  return (plan?.slug as SubscriptionPlanSlug | undefined) ?? "free";
+  const s = (slug ?? '').trim().toLowerCase();
+  if (s === 'scale' || s === 'pro') return 'pro';
+  if (s === 'sync' || s === 'smart' || s === 'growth' || s === 'starter') return 'smart';
+  return 'free';
 }
 
-export function hasPlanAccess(currentPlan: string | null | undefined, minimumPlan: SubscriptionPlanSlug) {
+export function hasPlanAccess(
+  currentPlan: string | null | undefined,
+  minimumPlan: SubscriptionPlanSlug
+): boolean {
   return PLAN_ORDER.indexOf(normalizePlanSlug(currentPlan)) >= PLAN_ORDER.indexOf(minimumPlan);
 }
 
@@ -381,27 +240,25 @@ export function getMinimumPlanForFeature(feature: SubscriptionFeatureKey): Subsc
   return FEATURE_MINIMUM_PLAN[feature];
 }
 
-export function hasFeatureAccess(currentPlan: string | null | undefined, feature: SubscriptionFeatureKey) {
+export function hasFeatureAccess(
+  currentPlan: string | null | undefined,
+  feature: SubscriptionFeatureKey
+): boolean {
   return hasPlanAccess(currentPlan, getMinimumPlanForFeature(feature));
 }
 
-export function canUseBankSyncForSandboxTesting(currentPlan: string | null | undefined) {
-  if (hasFeatureAccess(currentPlan, "bankSync")) {
-    return true;
-  }
-
-  return process.env.PLAID_SANDBOX_ALLOW_ALL_PLANS === "true";
+export function getAvailableBuiltInThemeCount(currentPlan: string | null | undefined): number {
+  const plan = normalizePlanSlug(currentPlan);
+  return plan === 'free' ? 2 : 12;
 }
 
-export function getAvailableBuiltInThemeCount(currentPlan: string | null | undefined) {
-  const normalizedPlan = normalizePlanSlug(currentPlan);
-  return normalizedPlan === "free" ? 2 : 12;
+export function getEventLimit(currentPlan: string | null | undefined): number | null {
+  const plan = normalizePlanSlug(currentPlan);
+  if (plan === 'pro') return null;
+  if (plan === 'smart') return 10;
+  return 1;
 }
 
-export function getPlanCapabilities(plan: string | null | undefined) {
-  return PLAN_CAPABILITIES[normalizePlanSlug(plan)];
-}
-
-export function formatPlanPrice(priceMonthly: number) {
-  return priceMonthly === 0 ? "Starter" : `GBP ${priceMonthly}/month`;
+export function formatPlanPrice(priceMonthly: number): string {
+  return priceMonthly === 0 ? 'Free' : `£${priceMonthly}/month`;
 }

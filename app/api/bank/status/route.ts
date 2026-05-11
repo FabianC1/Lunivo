@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedApiUser, unauthorizedResponse, forbiddenResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
+import { hasPlanAccess } from "../../../../lib/subscriptions";
 import { getPlaidConfig, isPlaidConfigured } from "../../../../lib/plaid";
 import BankConnection from "../../../../models/BankConnection";
 import Account from "../../../../models/Account";
@@ -12,7 +12,7 @@ export async function GET() {
     return unauthorizedResponse();
   }
 
-  if (!canUseBankSyncForSandboxTesting(authenticatedUser.planSlug)) {
+  if (!hasPlanAccess(authenticatedUser.planSlug, "smart")) {
     return forbiddenResponse("Bank sync is available on the Smart plan unless sandbox testing is explicitly enabled for all plans.");
   }
 

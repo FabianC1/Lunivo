@@ -19,8 +19,8 @@ export default function SubscriptionsPage() {
     <div className={styles.page}>
       <section className={styles.hero}>
         <span className={styles.eyebrow}>Pricing</span>
-        <h1>Subscriptions</h1>
-        <p>Choose the tier that matches how deeply you want to plan, review, and personalize your finance workflow.</p>
+        <h1>Plans & Pricing</h1>
+        <p>Choose the plan that matches how seriously you want to plan your life events — from a single wedding budget to unlimited events with full scenario planning.</p>
         <div className={styles.heroMeta}>
           <span>All paid plans billed monthly</span>
           <span>No hidden fees</span>
@@ -31,7 +31,7 @@ export default function SubscriptionsPage() {
       <section className={styles.matrixSection}>
         <div className={styles.sectionIntro}>
           <h2>Plan comparison</h2>
-          <p>Each row below is designed to describe what changes between manual tracking, automatic bank sync, and the full premium workspace.</p>
+          <p>See exactly what's included at each tier — from basic event budgeting to full scenario planning and affordability analysis.</p>
         </div>
 
         <div className={styles.matrixBoard}>

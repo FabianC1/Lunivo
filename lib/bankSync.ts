@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
 import BankConnection, { type IBankConnection } from "../models/BankConnection";
 import Account from "../models/Account";
-import Transaction from "../models/Transaction";
 import { getPlaidAccounts, syncPlaidTransactions } from "./plaid";
+
+// Transaction model removed in pivot to event-based planning.
+// Bank sync now only updates Account balances; transaction import is disabled.
+const Transaction = null as any;
 
 type SyncSummary = {
   importedAccounts: number;

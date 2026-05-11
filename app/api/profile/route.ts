@@ -178,11 +178,11 @@ export async function PUT(req: NextRequest) {
   if (hasCustomCategoriesUpdate) {
     const sanitizedCategories = sanitizeCustomCategories(customCategories);
 
-    if (!hasFeatureAccess(authenticatedUser.planSlug, "customCategories") && JSON.stringify(sanitizedCategories) !== JSON.stringify(currentCustomCategories)) {
+    if (!hasFeatureAccess(authenticatedUser.planSlug, "customThemeCreation") && JSON.stringify(sanitizedCategories) !== JSON.stringify(currentCustomCategories)) {
       return forbiddenResponse("Custom categories are available on the Pro plan.");
     }
 
-    updates.customCategories = hasFeatureAccess(authenticatedUser.planSlug, "customCategories")
+    updates.customCategories = hasFeatureAccess(authenticatedUser.planSlug, "customThemeCreation")
       ? sanitizedCategories
       : currentCustomCategories;
   }

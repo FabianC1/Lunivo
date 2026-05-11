@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Navbar from "./Navbar";
 import PublicNavbar from "./PublicNavbar";
+import PageLoading from "./PageLoading";
 import styles from "./AppShell.module.css";
 import { getSession, isLoggedIn, isLogoutPending, setSession } from "../lib/auth";
 
@@ -15,17 +16,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: oauthSession, status: oauthStatus } = useSession();
-  const [isReady, setIsReady] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
+
+  // Resolve auth state synchronously from localStorage on first render.
+  // This prevents the flicker: if a local session exists we know immediately.
+  const [authenticated, setAuthenticated] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return !isLogoutPending() && isLoggedIn();
+  });
+  const [isReady, setIsReady] = useState<boolean>(() => {
+    // If we already have a local session we can render immediately.
+    if (typeof window === "undefined") return false;
+    return !isLogoutPending() && isLoggedIn();
+  });
 
   useEffect(() => {
-    if (oauthStatus === "loading") {
-      return;
-    }
+    // Still waiting for NextAuth — don't override what we already know
+    if (oauthStatus === "loading") return;
 
     const logoutPending = isLogoutPending();
     const localSession = isLoggedIn() ? getSession() : null;
-    let logged = Boolean(localSession);
+    let logged = Boolean(localSession) && !logoutPending;
 
     if (!logoutPending && oauthStatus === "authenticated" && oauthSession?.user?.email) {
       const syncedSession = {
@@ -48,46 +58,43 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       logged = true;
     }
 
-    if (logoutPending) {
-      logged = false;
-    }
+    if (logoutPending) logged = false;
 
     setAuthenticated(logged);
     setIsReady(true);
 
-    if (!pathname) {
-      return;
-    }
+    if (!pathname) return;
 
-    // Public entry stays on /about, but protected routes should go to login.
     if (!logged && !PUBLIC_ROUTES.has(pathname)) {
       router.replace("/login");
       return;
     }
 
-    // Redirect unauthenticated users from / to /about
-    if (!logged && pathname === "/") {
-      router.replace("/about");
-      return;
-    }
+    // Unauthenticated users on / go to about (public landing)
+    if (!logged && pathname === "/") return;
 
-    // Redirect authenticated users from / and /login/register to /dashboard
+    // Authenticated users on auth routes or / go to dashboard
     if (logged && (AUTH_ROUTES.has(pathname) || pathname === "/")) {
       router.replace("/dashboard");
     }
   }, [oauthSession, oauthStatus, pathname, router]);
 
+  // Only show loading spinner when:
+  // - we have no local session (can't resolve immediately), AND
+  // - NextAuth is still loading
+  if (!isReady && oauthStatus === "loading") {
+    return <PageLoading />;
+  }
+
+  // Not ready yet but oauthStatus resolved — run one more tick
   if (!isReady) {
-    return null;
+    return <PageLoading />;
   }
 
   const isPublicRoute = pathname ? PUBLIC_ROUTES.has(pathname) : true;
 
   if (!authenticated) {
-    if (!isPublicRoute) {
-      return null;
-    }
-
+    if (!isPublicRoute) return <PageLoading />;
     return (
       <>
         <PublicNavbar />

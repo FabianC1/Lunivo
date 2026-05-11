@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { forbiddenResponse, getAuthenticatedApiUser, unauthorizedResponse } from "../../../../lib/apiAuth";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
+import { hasPlanAccess } from "../../../../lib/subscriptions";
 import { createPlaidLinkToken, getPlaidConfig } from "../../../../lib/plaid";
 import BankConnection from "../../../../models/BankConnection";
 
@@ -11,7 +11,7 @@ export async function POST() {
     return unauthorizedResponse();
   }
 
-  if (!canUseBankSyncForSandboxTesting(authenticatedUser.planSlug)) {
+  if (!hasPlanAccess(authenticatedUser.planSlug, "smart")) {
     return forbiddenResponse("Bank sync is available on the Smart plan unless sandbox testing is explicitly enabled for all plans.");
   }
 

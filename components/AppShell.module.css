@@ -3,7 +3,9 @@
   width: 100%;
 }
 
+/* PublicNavbar is position:fixed — pages need top clearance */
 .publicMain {
   min-height: 100vh;
   width: 100%;
+  padding-top: 68px; /* matches PublicNavbar height */
 }

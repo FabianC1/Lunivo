@@ -1,10 +1,10 @@
 .matrixGroupTitle,
 .matrixGroupTitleSpacer,
 .matrixGroupTitleSpacerFeatured {
-  background: #111;
-  color: #fff;
-  border-top: 1px solid #222;
-  border-bottom: 1px solid #222;
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--card-color));
+  color: var(--text-color);
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 .page {
   max-width: 1400px;

@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     },
   ]);
 
-  await bootstrapAdminData(String(user._id), user.email);
+  await bootstrapAdminData(String(user._id));
 
   const response = NextResponse.json({
     success: true,

@@ -506,6 +506,26 @@ export default function ProfilePage() {
     };
   }, [session?.userId, session?.isDemo]);
 
+  // Handle Plaid OAuth redirect — must live here (not after early returns) to satisfy Rules of Hooks
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const oauthStateId = searchParams?.get("oauth_state_id");
+    if (!oauthStateId || !session?.userId || session.isDemo) {
+      return;
+    }
+
+    const redirectUrl = window.location.href;
+    if (handledOauthRedirectRef.current === redirectUrl) {
+      return;
+    }
+
+    handledOauthRedirectRef.current = redirectUrl;
+    void handleBankConnect(redirectUrl);
+  }, [searchParams, session?.userId, session?.isDemo]);
+
   const initials = useMemo(() => getInitials(name || session?.name || "User"), [name, session?.name]);
 
   function setTab(tab: SettingsTab) {
@@ -1213,36 +1233,17 @@ export default function ProfilePage() {
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
   const visibleBuiltInThemes = BUILT_IN_THEME_PRESETS.slice(0, getAvailableBuiltInThemeCount(currentPlan.slug));
   const canCreateCustomThemes = hasFeatureAccess(currentPlan.slug, "customThemeCreation");
-  const canManageDataControls = hasFeatureAccess(currentPlan.slug, "customCategories");
+  const canManageDataControls = hasFeatureAccess(currentPlan.slug, "customThemeCreation");
   const canExportCsv = hasFeatureAccess(currentPlan.slug, "csvExport");
   const canUseBankSync = session.isDemo
     ? false
-    : Boolean(bankStatus?.accessGranted ?? hasFeatureAccess(currentPlan.slug, "bankSync"));
+    : Boolean(bankStatus?.accessGranted ?? hasFeatureAccess(currentPlan.slug, "savingsTimeline"));
   const formattedBankConnectedAt = bankStatus?.connection?.connectedAt
     ? new Date(bankStatus.connection.connectedAt).toLocaleString()
     : null;
   const formattedBankLastSyncAt = bankStatus?.connection?.lastSyncAt
     ? new Date(bankStatus.connection.lastSyncAt).toLocaleString()
     : null;
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const oauthStateId = searchParams?.get("oauth_state_id");
-    if (!oauthStateId || !session?.userId || session.isDemo) {
-      return;
-    }
-
-    const redirectUrl = window.location.href;
-    if (handledOauthRedirectRef.current === redirectUrl) {
-      return;
-    }
-
-    handledOauthRedirectRef.current = redirectUrl;
-    void handleBankConnect(redirectUrl);
-  }, [searchParams, session?.userId, session?.isDemo]);
 
   return (
     <main className={styles.page}>

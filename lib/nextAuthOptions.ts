@@ -65,7 +65,7 @@ export const nextAuthOptions: NextAuthOptions = {
 
       try {
         const userId = await ensureOAuthUser(email, user.name);
-        await bootstrapAdminData(userId, email);
+        await bootstrapAdminData(userId);
         (user as { id?: string }).id = userId;
       } catch {
         // Keep OAuth sign-in available even if DB is unavailable.
@@ -83,7 +83,7 @@ export const nextAuthOptions: NextAuthOptions = {
           const email = token.email.trim().toLowerCase();
           token.userId = await ensureOAuthUser(email, token.name);
           if (typeof token.userId === "string") {
-            await bootstrapAdminData(token.userId, email);
+            await bootstrapAdminData(String(token.userId));
           }
         } catch {
           // Keep the token usable even if the database is temporarily unavailable.

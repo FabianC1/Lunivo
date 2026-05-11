@@ -8,7 +8,7 @@ import LunivoLogo from "./LunivoLogo";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const isGoalsRoute = pathname === '/goals' || pathname === '/events';
+  const isEventsRoute = pathname === '/events' || pathname?.startsWith('/events/');
 
   return (
     <nav className={styles.navbar}>
@@ -20,16 +20,10 @@ export default function Navbar() {
           <Link href="/dashboard" className={pathname === '/dashboard' ? styles.active : ''}>Dashboard</Link>
         </li>
         <li>
-          <Link href="/income" className={pathname === '/income' ? styles.active : ''}>Income</Link>
+          <Link href="/events" className={isEventsRoute ? styles.active : ''}>My Events</Link>
         </li>
         <li>
-          <Link href="/budgets" className={pathname === '/budgets' ? styles.active : ''}>Budget</Link>
-        </li>
-        <li>
-          <Link href="/spendings" className={pathname === '/spendings' || pathname === '/transactions' ? styles.active : ''}>Spendings</Link>
-        </li>
-        <li>
-          <Link href="/goals" className={isGoalsRoute ? styles.active : ''}>Goals</Link>
+          <Link href="/subscriptions" className={pathname === '/subscriptions' ? styles.active : ''}>Plans &amp; Pricing</Link>
         </li>
       </ul>
       <div className={styles.actions}>

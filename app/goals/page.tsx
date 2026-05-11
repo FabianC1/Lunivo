@@ -375,7 +375,7 @@ export default function GoalsPage() {
   }
 
   const currentPlan = getSubscriptionPlanBySlug(currentPlanSlug) ?? FREE_PLAN;
-  const canUsePrecisionEventPlanning = hasFeatureAccess(currentPlan.slug, "precisionEventPlanning");
+  const canUsePrecisionEventPlanning = hasFeatureAccess(currentPlan.slug, "scenarios");
   const activeValidationMessage = activeValidationField
     ? getGoalFieldError(activeValidationField, form)
     : undefined;

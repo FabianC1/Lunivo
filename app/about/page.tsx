@@ -1,165 +1,105 @@
-"use client";
-
-import Chart from "../../components/Chart";
-import BudgetComparisonChart from "../../components/BudgetComparisonChart";
+import Link from "next/link";
 import styles from "./about.module.css";
 
-const pieExample = {
-  Food: 380,
-  Transport: 120,
-  Utilities: 220,
-  Entertainment: 175,
-  Other: 95,
-};
+const PILLARS = [
+  {
+    icon: "📊",
+    title: "Budget Builder",
+    desc: "Build your event budget across cost clusters — venue, catering, clothing, photography, entertainment, travel, and more. Every input updates your grand total in real time.",
+  },
+  {
+    icon: "📈",
+    title: "Affordability Engine",
+    desc: "Enter your event date and budget. Lunivo calculates exactly how much you need to save each month. Advanced mode factors in your income and existing commitments.",
+  },
+  {
+    icon: "🔁",
+    title: "Scenario Planner",
+    desc: "Create Budget, Standard, and Luxury versions of your event. Adjust guest count, venue tier, or date and see the financial impact instantly — before you commit.",
+  },
+  {
+    icon: "🗓️",
+    title: "Milestone Tracker",
+    desc: "Add deposit deadlines and payment milestones. Mark them paid as you go and stay on top of every financial commitment leading up to your event.",
+  },
+];
 
-const monthlyActivity = {
-  Jan: 1240,
-  Feb: 1380,
-  Mar: 1290,
-  Apr: 1510,
-  May: 1420,
-  Jun: 1675,
-};
-
-const budgets = {
-  Food: 400,
-  Transport: 160,
-  Utilities: 200,
-  Entertainment: 150,
-  Other: 100,
-};
+const EVENTS = [
+  { icon: "💍", label: "Weddings" },
+  { icon: "✈️", label: "Holidays" },
+  { icon: "🏠", label: "Home Purchase" },
+  { icon: "🎓", label: "Education" },
+  { icon: "🚗", label: "Vehicle" },
+  { icon: "🛡️", label: "Emergency Fund" },
+  { icon: "🎂", label: "Birthday" },
+  { icon: "⭐", label: "Other goals" },
+];
 
 export default function AboutPage() {
   return (
     <div className={styles.page}>
+      <div className={styles.heroWrap}>
       <section className={styles.hero}>
         <div className={styles.heroLeft}>
           <h1>About Lunivo</h1>
           <p>
-            Lunivo is a modern personal-finance workspace built to help you track spending,
-            monitor monthly trends, and keep budgets under control. It includes multi-account
-            support, recurring subscriptions, interactive reports, secure authentication, and
-            full profile settings for managing your regional preferences.
+            Lunivo is a life event financial planner. It helps you understand what your
+            wedding, holiday, or major purchase will actually cost — and whether you can
+            afford it — before you commit.
+          </p>
+          <p>
+            Instead of tracking past spending, Lunivo focuses on the future: building
+            savings timelines, simulating scenarios, and turning big life goals into
+            financial plans you can actually follow.
           </p>
           <div className={styles.heroActions}>
-            <a href="/register" className={styles.primaryCta}>
-              Create your account
-            </a>
-            <a href="/login" className={styles.secondaryCta}>
-              Log in
-            </a>
+            <Link href="/register" className={styles.primaryCta}>Start planning</Link>
+            <Link href="/login" className={styles.secondaryCta}>Log in</Link>
           </div>
         </div>
-
         <div className={styles.heroRight}>
-          <h2>Everything in one place</h2>
-          <ul className={styles.heroFeatures}>
-            <li>Dashboard with income, spending &amp; net overview</li>
-            <li>Budget planning per category with visual comparisons</li>
-            <li>Transaction log with filtering and history</li>
-            <li>Subscription &amp; recurring cost tracking</li>
-            <li>Reports: bar, line, and trend charts</li>
-            <li>Multi-account support (Main + Savings)</li>
-            <li>Secure signup, login, and bcrypt-hashed passwords</li>
-            <li>Profile with country &amp; currency preferences</li>
-          </ul>
+          <div className={styles.mockCard}>
+            <div className={styles.mockCardTitle}>💍 Our Wedding</div>
+            <div className={styles.mockCardRow}><span>Total budget</span><span className={styles.mockCardValue}>£21,450</span></div>
+            <div className={styles.mockCardRow}><span>Already saved</span><span>£4,200</span></div>
+            <div className={styles.mockCardRow}><span>Save per month</span><span className={styles.mockCardHighlight}>£650/mo</span></div>
+            <div className={styles.mockCardRow}><span>Event date</span><span>June 2026</span></div>
+            <div className={styles.mockCardBadge}>⚠️ Tight — review budget</div>
+          </div>
+        </div>
+      </section>
+      </div>
+
+      <section className={styles.pillars}>
+        <h2>What Lunivo does</h2>
+        <div className={styles.pillarGrid}>
+          {PILLARS.map((p) => (
+            <div key={p.title} className={styles.pillarCard}>
+              <span className={styles.pillarIcon}>{p.icon}</span>
+              <h3>{p.title}</h3>
+              <p>{p.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className={styles.highlights}>
-        <article className={styles.highlightCard}>
-          <h2>Built for Real Budgeting</h2>
-          <p>
-            Plan by category, compare budget versus actual spending, and adjust quickly when a
-            category goes off-track.
-          </p>
-        </article>
-        <article className={styles.highlightCard}>
-          <h2>Multiple Accounts</h2>
-          <p>
-            Keep your Main Account and Savings separate, monitor balances clearly, and prepare
-            for adding more account types over time.
-          </p>
-        </article>
-        <article className={styles.highlightCard}>
-          <h2>Transaction Visibility</h2>
-          <p>
-            Log income and expenses in one place, organize by category, and use dashboard trends
-            to understand where your money is going.
-          </p>
-        </article>
-      </section>
-
-      <section className={styles.grid}>
-        <article className={styles.card}>
-          <h2>Spending Breakdown (Pie)</h2>
-          <p>Visualize where your money goes across categories.</p>
-          <div className={styles.chartFrame}>
-            <Chart data={pieExample} type="doughnut" />
-          </div>
-        </article>
-
-        <article className={styles.card}>
-          <h2>Monthly Activity</h2>
-          <p>Track spending movement over time with trend lines.</p>
-          <div className={styles.chartFrame}>
-            <Chart data={monthlyActivity} type="line" />
-          </div>
-        </article>
-      </section>
-
-      <section className={styles.card}>
-        <h2>Budget vs Spendings</h2>
-        <p>Compare each category budget against actual spending.</p>
-        <div className={styles.chartFrameLarge}>
-          <BudgetComparisonChart spendings={pieExample} budgets={budgets} />
+      <section className={styles.events}>
+        <h2>Plan any life event</h2>
+        <p className={styles.eventsSubtitle}>One platform for every major financial goal.</p>
+        <div className={styles.eventsGrid}>
+          {EVENTS.map((e) => (
+            <div key={e.label} className={styles.eventChip}>
+              <span>{e.icon}</span>
+              <span>{e.label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className={styles.grid}>
-        <article className={styles.card}>
-          <h2>What You Can Manage in Lunivo</h2>
-          <ul className={styles.featureList}>
-            <li>Income tracking and transaction history</li>
-            <li>Category-based budgeting with comparisons</li>
-            <li>Subscriptions monitoring and recurring costs</li>
-            <li>Reports for trends, totals, and budgeting behavior</li>
-            <li>Profile settings: password, notifications, preferences</li>
-          </ul>
-        </article>
-
-        <article className={styles.card}>
-          <h2>Security and Access</h2>
-          <ul className={styles.featureList}>
-            <li>Database-backed signup and login</li>
-            <li>Password hashing with bcrypt</li>
-            <li>Session-based account experience</li>
-            <li>Demo fallback access for uptime resilience</li>
-            <li>Privacy and terms pages for transparent policies</li>
-          </ul>
-        </article>
-      </section>
-
-      <section className={styles.card}>
-        <h2>How People Use Lunivo</h2>
-        <div className={styles.steps}>
-          <div className={styles.step}>
-            <span>1</span>
-            <p>Create an account and start with default accounts already set up.</p>
-          </div>
-          <div className={styles.step}>
-            <span>2</span>
-            <p>Add income, spending, and budgets to build a full monthly picture.</p>
-          </div>
-          <div className={styles.step}>
-            <span>3</span>
-            <p>Review charts and reports weekly to spot patterns and improve decisions.</p>
-          </div>
-          <div className={styles.step}>
-            <span>4</span>
-            <p>Fine-tune notifications, currency, timezone, and profile security settings.</p>
-          </div>
-        </div>
+      <section className={styles.cta}>
+        <h2>Know if you can afford it before you commit.</h2>
+        <p>Start with one event for free. No credit card required.</p>
+        <Link href="/register" className={styles.primaryCta}>Create your account</Link>
       </section>
     </div>
   );

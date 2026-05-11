@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
-  await bootstrapAdminData(String(user._id), user.email);
+  await bootstrapAdminData(String(user._id));
 
   const response = NextResponse.json({
     success: true,

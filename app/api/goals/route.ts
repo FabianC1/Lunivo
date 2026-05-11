@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedApiUser, unauthorizedResponse, forbiddenResponse } from '../../../lib/apiAuth';
 import { connectToDatabase } from '../../../lib/mongodb';
-import { getPlanCapabilities } from '../../../lib/subscriptions';
+import { hasPlanAccess } from '../../../lib/subscriptions';
 import Goal from '../../../models/Goal';
 
 function toGoalResponse(goal: any) {
@@ -59,13 +59,7 @@ export async function POST(req: NextRequest) {
 
   await connectToDatabase();
 
-  const capabilities = getPlanCapabilities(authenticatedUser.planSlug);
-  if (capabilities.maxGoals !== null) {
-    const goalCount = await Goal.countDocuments({ userId: authenticatedUser.userId });
-    if (goalCount >= capabilities.maxGoals) {
-      return forbiddenResponse(`Your ${authenticatedUser.planSlug} plan supports up to ${capabilities.maxGoals} goals.`);
-    }
-  }
+  // No goal limit enforced in current plan structure
 
   const goal = await Goal.create({
     userId: authenticatedUser.userId,

@@ -1,244 +1,135 @@
-.page {
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 3.5rem 2rem 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-height: 80vh;
-  align-items: stretch;
-  justify-content: flex-start;
-}
+.page { display: flex; flex-direction: column; gap: 0; }
 
+/* Hero */
+.heroWrap {
+  /* Pull up to cancel publicMain's 68px padding-top so the transparent
+     navbar sits flush over the hero background with no coloured strip */
+  margin-top: -68px;
+  padding-top: 68px;
+}
 .hero {
-  width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: var(--card-color);
-  border-radius: 1rem;
-  padding: 1.4rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  gap: 3rem;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 5rem;
 }
+.heroLeft { display: flex; flex-direction: column; gap: 1.25rem; }
+.heroLeft h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; color: var(--text-color); line-height: 1.15; }
+.heroLeft p { font-size: 0.97rem; color: var(--text-color); opacity: 0.75; line-height: 1.7; }
+.heroActions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.primaryCta {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  color: #fff;
+  border-radius: 0.75rem;
+  padding: 0.8rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: opacity 0.2s;
+}
+.primaryCta:hover { opacity: 0.88; }
+.secondaryCta {
+  border: 1px solid rgba(148,163,184,0.35);
+  border-radius: 0.75rem;
+  padding: 0.8rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-color);
+  transition: background 0.2s;
+}
+.secondaryCta:hover { background: rgba(148,163,184,0.1); }
 
-.heroLeft {
+/* Mock card */
+.heroRight { display: flex; justify-content: center; }
+.mockCard {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.85rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
 }
+.mockCardTitle { font-size: 1.05rem; font-weight: 800; color: var(--text-color); }
+.mockCardRow { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-color); padding: 0.35rem 0; border-bottom: 1px solid rgba(148,163,184,0.1); }
+.mockCardRow:last-of-type { border-bottom: none; }
+.mockCardValue { font-weight: 800; color: var(--primary-color); }
+.mockCardHighlight { font-weight: 800; color: var(--accent-color); }
+.mockCardBadge { background: rgba(251,191,36,0.12); color: #b45309; border-radius: 0.5rem; padding: 0.45rem 0.75rem; font-size: 0.82rem; font-weight: 700; text-align: center; }
 
-.heroRight {
-  border-left: 1px solid rgba(148, 163, 184, 0.22);
-  padding-left: 1.4rem;
+/* Pillars */
+.pillars {
+  background: var(--bg-color, #f8fafc);
+  padding: 5rem 1.5rem;
+  text-align: center;
 }
-
-.heroRight h2 {
-  margin: 0 0 0.7rem;
-  font-size: 1.05rem;
-  color: var(--text-color);
-  opacity: 0.9;
-}
-
-.heroFeatures {
-  margin: 0;
-  padding-left: 1.1rem;
+.pillars h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; color: var(--text-color); margin-bottom: 2.5rem; }
+.pillarGrid {
   display: grid;
-  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: left;
 }
-
-.heroFeatures li {
-  color: var(--text-color);
-  opacity: 0.82;
-  font-size: 0.93rem;
-  line-height: 1.45;
+.pillarCard {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
+.pillarIcon { font-size: 1.8rem; }
+.pillarCard h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-color); }
+.pillarCard p { font-size: 0.85rem; color: var(--text-color); opacity: 0.7; line-height: 1.6; }
 
-.heroActions {
-  margin-top: 1rem;
+/* Events */
+.events { padding: 5rem 1.5rem; text-align: center; }
+.events h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; color: var(--text-color); margin-bottom: 0.5rem; }
+.eventsSubtitle { font-size: 0.95rem; color: var(--text-color); opacity: 0.65; margin-bottom: 2rem; }
+.eventsGrid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.75rem;
+  justify-content: center;
+  max-width: 700px;
+  margin: 0 auto;
 }
-
-.primaryCta,
-.secondaryCta {
-  text-decoration: none;
-  border-radius: 0.72rem;
-  padding: 0.65rem 0.95rem;
-  font-weight: 600;
-  transition: opacity 0.2s ease, transform 0.15s ease;
-}
-
-.primaryCta {
-  color: #fff;
-  background: linear-gradient(90deg, var(--button-gradient-start), var(--button-gradient-end));
-}
-
-.secondaryCta {
-  color: var(--text-color);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: color-mix(in srgb, var(--text-color) 10%, transparent);
-}
-
-.primaryCta:hover,
-.secondaryCta:hover {
-  opacity: 0.92;
-}
-
-.primaryCta:active,
-.secondaryCta:active {
-  transform: scale(0.98);
-}
-
-.hero h1 {
-  color: var(--text-color);
-  font-size: 2rem;
-  margin-bottom: 0.6rem;
-}
-
-.heroLeft p {
-  color: var(--text-color);
-  opacity: 0.85;
-  margin: 0;
-}
-
-.grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.highlights {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.highlightCard {
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: color-mix(in srgb, var(--card-color) 94%, transparent);
-  border-radius: 0.95rem;
-  padding: 1rem;
-}
-
-.highlightCard h2 {
-  margin: 0 0 0.4rem;
-  font-size: 1.04rem;
-}
-
-.highlightCard p {
-  margin: 0;
-  opacity: 0.8;
-}
-
-.card {
-  width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+.eventChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background: var(--card-color);
-  border-radius: 1rem;
-  padding: 1.2rem;
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 99px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+/* CTA */
+.cta {
+  background: linear-gradient(160deg, var(--primary-color), var(--accent-color));
+  padding: 6rem 1.5rem;
+  text-align: center;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
+.cta h2 { font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 800; color: #fff; max-width: 540px; line-height: 1.3; }
+.cta p { font-size: 0.95rem; color: rgba(255,255,255,0.75); }
+.cta .primaryCta { margin-top: 0.5rem; }
 
-.card h2 {
-  color: var(--text-color);
-  font-size: 1.25rem;
-  margin-bottom: 0.2rem;
-}
-
-.card p {
-  color: var(--text-color);
-  opacity: 0.78;
-  margin-bottom: 0.75rem;
-}
-
-.chartFrame {
-  height: 380px;
-}
-
-.chartFrameLarge {
-  height: 580px;
-}
-
-.featureList {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: 0.42rem;
-}
-
-.featureList li {
-  color: var(--text-color);
-  opacity: 0.86;
-}
-
-.steps {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.step {
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 0.8rem;
-  background: color-mix(in srgb, var(--card-color) 93%, transparent);
-  padding: 0.8rem;
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 0.65rem;
-  align-items: start;
-}
-
-.step span {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
-}
-
-.step p {
-  margin: 0.2rem 0 0;
-  opacity: 0.84;
-}
-
-@media (max-width: 960px) {
-  .page {
-    padding: 2.2rem 1rem 2.5rem;
-  }
-
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .heroRight {
-    border-left: none;
-    border-top: 1px solid rgba(148, 163, 184, 0.22);
-    padding-left: 0;
-    padding-top: 1rem;
-  }
-
-  .highlights {
-    grid-template-columns: 1fr;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
-  }
-
-  .steps {
-    grid-template-columns: 1fr;
-  }
-
-  .chartFrameLarge {
-    height: 420px;
-  }
+@media (max-width: 768px) {
+  .hero { grid-template-columns: 1fr; }
+  .heroRight { display: none; }
 }

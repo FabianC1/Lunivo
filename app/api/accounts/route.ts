@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedApiUser, unauthorizedResponse, forbiddenResponse } from '../../../lib/apiAuth';
 import { connectToDatabase } from '../../../lib/mongodb';
-import { getPlanCapabilities } from '../../../lib/subscriptions';
+import { hasPlanAccess } from '../../../lib/subscriptions';
 import Account from '../../../models/Account';
 
 export async function GET(req: NextRequest) {
@@ -43,13 +43,7 @@ export async function POST(req: NextRequest) {
 
   await connectToDatabase();
 
-  const capabilities = getPlanCapabilities(authenticatedUser.planSlug);
-  if (capabilities.maxAccounts !== null) {
-    const accountCount = await Account.countDocuments({ userId: authenticatedUser.userId, isArchived: false });
-    if (accountCount >= capabilities.maxAccounts) {
-      return forbiddenResponse(`Your ${authenticatedUser.planSlug} plan supports up to ${capabilities.maxAccounts} active accounts.`);
-    }
-  }
+  // No account limit enforced in current plan structure
 
   try {
     const account = new Account({

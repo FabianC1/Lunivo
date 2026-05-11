@@ -3,7 +3,7 @@ import { forbiddenResponse, getAuthenticatedApiUser, unauthorizedResponse } from
 import { syncBankConnection } from "../../../../lib/bankSync";
 import { connectToDatabase } from "../../../../lib/mongodb";
 import { exchangePlaidPublicToken, getPlaidConfig, getPlaidItem } from "../../../../lib/plaid";
-import { canUseBankSyncForSandboxTesting } from "../../../../lib/subscriptions";
+import { hasPlanAccess } from "../../../../lib/subscriptions";
 import BankConnection from "../../../../models/BankConnection";
 
 type ExchangeBody = {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     return unauthorizedResponse();
   }
 
-  if (!canUseBankSyncForSandboxTesting(authenticatedUser.planSlug)) {
+  if (!hasPlanAccess(authenticatedUser.planSlug, "smart")) {
     return forbiddenResponse("Bank sync is available on the Smart plan unless sandbox testing is explicitly enabled for all plans.");
   }
 

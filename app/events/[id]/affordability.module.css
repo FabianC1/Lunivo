@@ -1,0 +1,149 @@
+.container { display: flex; flex-direction: column; gap: 1.75rem; }
+
+.modeToggle {
+  display: inline-flex;
+  background: rgba(148,163,184,0.12);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  gap: 0.25rem;
+  align-self: flex-start;
+}
+.modeBtn {
+  background: none;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+.modeBtnActive { background: var(--card-color); opacity: 1; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.modeBtnLocked { cursor: default; }
+
+.upgradeHint {
+  font-size: 0.88rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+.upgradeHint a { color: var(--primary-color); font-weight: 600; }
+.upgradeHint a:hover { text-decoration: underline; }
+
+.advancedInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+.inputGroup { display: flex; flex-direction: column; gap: 0.4rem; }
+.label { font-size: 0.82rem; font-weight: 700; color: var(--text-color); opacity: 0.75; }
+.input {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.95rem;
+  color: var(--text-color);
+  width: 100%;
+}
+.input:focus { outline: none; border-color: var(--primary-color); }
+
+.disposableRow {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(148,163,184,0.2);
+}
+.disposableValue { font-weight: 800; color: var(--primary-color); }
+
+.warningBox {
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 0.75rem;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.warningBox p { font-size: 0.9rem; color: var(--text-color); }
+
+.resultCard {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 1.1rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.resultMain { display: flex; align-items: baseline; gap: 0.6rem; }
+.resultAmount { font-size: 2.8rem; font-weight: 900; color: var(--primary-color); line-height: 1; }
+.resultLabel { font-size: 1rem; color: var(--text-color); opacity: 0.65; }
+
+.feasibilityBadge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  align-self: flex-start;
+}
+.green { background: rgba(34,197,94,0.12); color: #16a34a; }
+.amber { background: rgba(251,191,36,0.12); color: #b45309; }
+.red { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+.resultDetails { display: flex; flex-direction: column; gap: 0.6rem; }
+.resultDetail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(148,163,184,0.12);
+}
+.resultDetail:last-child { border-bottom: none; }
+.positive { color: #16a34a; font-weight: 700; }
+.negative { color: #dc2626; font-weight: 700; }
+
+.chartSection { display: flex; flex-direction: column; gap: 0.75rem; }
+.chartTitle { font-size: 1rem; font-weight: 700; color: var(--text-color); }
+.chartWrap {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+.chart { width: 100%; height: 120px; display: block; }
+.chartLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-color);
+  opacity: 0.5;
+  margin-top: 0.4rem;
+}
+
+.recommendations {
+  background: color-mix(in srgb, var(--primary-color) 6%, var(--card-color));
+  border: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
+  border-radius: 1rem;
+  padding: 1.25rem 1.4rem;
+}
+.recTitle { font-size: 0.95rem; font-weight: 700; color: var(--text-color); margin-bottom: 0.75rem; }
+.recList { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+.recList li { font-size: 0.9rem; color: var(--text-color); padding-left: 1rem; position: relative; }
+.recList li::before { content: "→"; position: absolute; left: 0; color: var(--primary-color); font-weight: 700; }
+
+@media (max-width: 600px) {
+  .advancedInputs { grid-template-columns: 1fr; }
+  .resultAmount { font-size: 2rem; }
+}

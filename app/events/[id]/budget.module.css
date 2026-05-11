@@ -1,0 +1,137 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.clusters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cluster {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 0.85rem;
+  padding: 0.9rem 1.1rem;
+  gap: 1rem;
+  transition: border-color 0.2s;
+}
+.cluster:focus-within { border-color: var(--primary-color); }
+
+.clusterLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+.clusterIcon { font-size: 1.4rem; flex-shrink: 0; }
+.clusterLabel { display: block; font-size: 0.92rem; font-weight: 700; color: var(--text-color); }
+.clusterDesc { display: block; font-size: 0.75rem; color: var(--text-color); opacity: 0.55; }
+
+.clusterRight {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.currencySymbol { font-size: 0.9rem; color: var(--text-color); opacity: 0.6; }
+.costInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(148,163,184,0.3);
+  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  width: 110px;
+  text-align: right;
+  transition: border-color 0.2s;
+}
+.costInput:focus { outline: none; border-bottom-color: var(--primary-color); }
+
+/* Totals panel */
+.totalsPanel {
+  background: var(--card-color);
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 1rem;
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  position: sticky;
+  top: 5rem;
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.92rem;
+  color: var(--text-color);
+  gap: 0.5rem;
+}
+
+.grandTotal {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+.contingencyLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.contingencyControl {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(148,163,184,0.1);
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.4rem;
+}
+.pctInput {
+  background: transparent;
+  border: none;
+  width: 36px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-color);
+  text-align: center;
+}
+.pctInput:focus { outline: none; }
+
+.targetInput {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.targetInput .costInput { width: 100px; }
+
+.divider {
+  height: 1px;
+  background: rgba(148,163,184,0.2);
+  margin: 0.2rem 0;
+}
+
+.gapBadge {
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+.gapOver { background: rgba(239,68,68,0.1); color: #ef4444; }
+.gapUnder { background: rgba(34,197,94,0.1); color: #16a34a; }
+
+@media (max-width: 700px) {
+  .container { grid-template-columns: 1fr; }
+  .totalsPanel { position: static; }
+}
