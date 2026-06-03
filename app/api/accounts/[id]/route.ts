@@ -24,16 +24,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   await connectToDatabase();
 
-  const existingAccount = await Account.findOne({ _id: id, userId: authenticatedUser.userId }).select('syncStatus');
+  const existingAccount = await Account.findOne({ _id: id, userId: authenticatedUser.userId });
   if (!existingAccount) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
-  if (existingAccount.syncStatus === 'synced') {
-    const attemptedManualEdit = Object.keys(safeUpdates).some((key) => key !== 'isArchived');
-    if (attemptedManualEdit) {
-      return forbiddenResponse('Synced accounts can only be archived. Reconnect or resync the bank feed to refresh their data.');
-    }
   }
 
   const account = await Account.findOneAndUpdate({ _id: id, userId: authenticatedUser.userId }, safeUpdates, {
@@ -58,13 +51,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   await connectToDatabase();
 
-  const existingAccount = await Account.findOne({ _id: id, userId: authenticatedUser.userId }).select('syncStatus');
+  const existingAccount = await Account.findOne({ _id: id, userId: authenticatedUser.userId });
   if (!existingAccount) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
-  if (existingAccount.syncStatus === 'synced') {
-    return forbiddenResponse('Synced accounts cannot be deleted from the manual account editor. Archive them or reconnect your bank instead.');
   }
 
   const account = await Account.findOneAndDelete({ _id: id, userId: authenticatedUser.userId });
