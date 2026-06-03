@@ -29,7 +29,7 @@
 .headerActions { display: flex; gap: 0.75rem; align-items: center; }
 
 .btnCreate {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-radius: 0.75rem;
   padding: 0.75rem 1.4rem;

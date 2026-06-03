@@ -12,7 +12,7 @@
 .gate h3 { font-size: 1.2rem; font-weight: 700; color: var(--text-color); }
 .gate p { font-size: 0.9rem; color: var(--text-color); opacity: 0.65; max-width: 340px; }
 .upgradeBtn {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-radius: 0.75rem;
   padding: 0.7rem 1.4rem;
@@ -32,7 +32,7 @@
 .subtitle { font-size: 0.85rem; color: var(--text-color); opacity: 0.6; }
 
 .btnCreate {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border: none;
   border-radius: 0.7rem;

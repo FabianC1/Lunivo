@@ -256,7 +256,7 @@
 }
 
 .btnPrimary {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border: none;
   border-radius: 0.75rem;

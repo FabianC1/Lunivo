@@ -28,7 +28,7 @@
 }
 .heroSubtitle { font-size: 0.95rem; color: var(--text-color); opacity: 0.7; }
 .heroBtn {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-radius: 0.85rem;
   padding: 0.85rem 1.6rem;
@@ -77,7 +77,7 @@
 .empty h2 { font-size: 1.4rem; font-weight: 700; color: var(--text-color); }
 .empty p { font-size: 0.95rem; color: var(--text-color); opacity: 0.65; max-width: 420px; line-height: 1.6; }
 .emptyBtn {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-radius: 0.85rem;
   padding: 0.85rem 1.6rem;
@@ -160,7 +160,7 @@
 .upgradeBanner strong { display: block; font-size: 0.95rem; font-weight: 700; color: var(--text-color); margin-bottom: 0.25rem; }
 .upgradeBanner p { font-size: 0.85rem; color: var(--text-color); opacity: 0.7; }
 .upgradeBtn {
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--button-gradient-start), var(--button-gradient-end));
   color: #fff;
   border-radius: 0.7rem;
   padding: 0.65rem 1.2rem;

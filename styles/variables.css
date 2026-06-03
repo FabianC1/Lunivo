@@ -10,7 +10,7 @@
   --content-surface: #FFFFFF;
   --content-border: rgba(148, 163, 184, 0.22);
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #F97316 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #F97316 0%, #8B5CF6 100%);
   --navbar-text-color: #1E293B;
   --bg-gradient: linear-gradient(135deg, #F3E8FF 0%, #FFEDD5 100%);
 
@@ -18,8 +18,8 @@
   --foreground-rgb: 30, 41, 59;
   --background-start-rgb: 243, 232, 255;
   --background-end-rgb: 255, 237, 213;
-  --button-gradient-start: #8B5CF6;
-  --button-gradient-end: #F97316;
+  --button-gradient-start: #F97316;
+  --button-gradient-end: #8B5CF6;
 }
 
 /* explicit light mode when data-theme="light" is set */
@@ -34,21 +34,21 @@
   --content-surface: #FFFFFF;
   --content-border: rgba(148, 163, 184, 0.22);
   --navbar-color: linear-gradient(135deg, #CBD5E1 0%, #94A3B8 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #F97316 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #F97316 0%, #8B5CF6 100%);
   --navbar-text-color: #1E293B;
   --bg-gradient: linear-gradient(135deg, #F3E8FF 0%, #FFEDD5 100%);
 
   --foreground-rgb: 30, 41, 59;
   --background-start-rgb: 243, 232, 255;
   --background-end-rgb: 255, 237, 213;
-  --button-gradient-start: #8B5CF6;
-  --button-gradient-end: #F97316;
+  --button-gradient-start: #F97316;
+  --button-gradient-end: #8B5CF6;
 }
 
 /* dark mode variables triggered by data-theme attribute (takes precedence) */
 [data-theme='dark'] {
-    --button-gradient-start: #8B5CF6;
-    --button-gradient-end: #40E0D0;
+    --button-gradient-start: #40E0D0;
+    --button-gradient-end: #8B5CF6;
   --bg-color: #0F172A;
   --text-color: #F1F5F9;
   --primary-color: #60A5FA;
@@ -59,7 +59,7 @@
   --content-surface: #1E293B;
   --content-border: rgba(148, 163, 184, 0.26);
   --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-  --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
+  --navbar-border-gradient: linear-gradient(90deg, #40E0D0 0%, #8B5CF6 100%);
   --navbar-text-color: #F1F5F9;
   --bg-gradient: linear-gradient(135deg, #0C1D3D 0%, #2D1B3D 100%);
 
@@ -81,7 +81,7 @@
     --content-surface: #1E293B;
     --content-border: rgba(148, 163, 184, 0.26);
     --navbar-color: linear-gradient(135deg, #1E293B 0%, #334155 100%);
-    --navbar-border-gradient: linear-gradient(90deg, #8B5CF6 0%, #40E0D0 100%);
+    --navbar-border-gradient: linear-gradient(90deg, #40E0D0 0%, #8B5CF6 100%);
     --navbar-text-color: #F1F5F9;
     --bg-gradient: linear-gradient(135deg, #0C1D3D 0%, #2D1B3D 100%);
 
